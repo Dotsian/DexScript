@@ -15,6 +15,15 @@ if request.status_code != requests.codes.ok:
 request = request.json()
 content = base64.b64decode(request["content"])
 
+additions = {
+  "from ballsdex.core.commands import Core": (
+    "from ballsdex.core.dexscript import DexScript\n"
+  ),
+  "        await self.add_cog(Core(self))": (
+    "        await self.add_cog(DexScript(self))\n"
+  ),
+}
+
 # Create the DexScript file.
 with open("ballsdex/core/dexscript.py", "w") as opened_file:
   contents = content.decode("UTF-8")
@@ -25,14 +34,16 @@ with open("ballsdex/core/bot.py", "r") as opened_file_1:
   lines = opened_file_1.readlines()
   contents = ""
 
-  for line in lines:
-    contents += line
-  
-    if "from ballsdex.core.commands import Core" in line:
-      contents += "from ballsdex.core.dexscript import DexScript\n"
-    elif "await self.add_cog(Core(self))" in line:
-      contents += "        await self.add_cog(DexScript(self))\n"
-  
+  for index, line in enumerate(lines):
+    new_line = line.rstrip()
+    contents += new_line
+
+    for key, item in additions.items():
+      if new_line != key or lines[index + 1] == item:
+        continue
+
+      contents += item
+
   with open("ballsdex/core/bot.py", "w") as opened_file_2:
     opened_file_2.write(contents)
 
