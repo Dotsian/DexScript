@@ -206,7 +206,7 @@ class DexScript(commands.Cog):
         )
 
         embed.set_thumbnail(url="https://i.imgur.com/uKfx0qO.png")
-        embed.set_footer(text="DexScript: v0.1")
+        embed.set_footer(text=f"DexScript {__version__}")
 
         await ctx.send(embed=embed)
 
