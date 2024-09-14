@@ -17,7 +17,6 @@ with open("ballsdex/core/bot.py", "r") as opened_file_1:
 
   for index, line in enumerate(lines):
     if line.rstrip() in exclude:
-      print("I HEARD SKIPPING")
       continue
 
     content += line
