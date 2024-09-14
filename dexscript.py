@@ -198,7 +198,7 @@ class DexScript(commands.Cog):
             description=(
                 "DexScript is a set of commands created by DotZZ that allows you to easily "
                 "modify, delete, and display data about balls.\n\n"
-                "For a guide on how to use DexScript, refer to the guide on the [DexScript GitHub Page]()"
+                "For a guide on how to use DexScript, refer to the guide on the [DexScript GitHub Page](<https://github.com/DotZZ-alt/DexScript>)"
             ),
             color = discord.Color.from_str("#03BAFC")
         )
