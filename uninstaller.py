@@ -10,7 +10,7 @@ exclude = [
   "        await self.add_cog(DexScript(self))"
 ]
 
-# Add the ability to load the DexScript cog to the bot.py file.
+# Add the ability to remove DexScript-related code from the bot.py file.
 with open("ballsdex/core/bot.py", "r") as opened_file_1:
   lines = opened_file_1.readlines()
   content = ""
