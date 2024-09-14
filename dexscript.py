@@ -14,6 +14,8 @@ log = logging.getLogger("ballsdex.core.dexscript")
 if TYPE_CHECKING:
     from .bot import BallsDexBot
 
+__version__ = "0.1"
+
 
 CORE_PATH = os.path.dirname(os.path.abspath(__file__))
 START_CODE_BLOCK_RE = re.compile(r"^((```py(thon)?)(?=\s)|(```))")
