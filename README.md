@@ -1,10 +1,10 @@
 # DexScript - ALPHA
 
-![dexscript logo]([http://url/to/img.png](https://i.imgur.com/uKfx0qO.png))
-
 DexScript is a set of commands developed by DotZZ on September 14, 2024, used for BallsDex Discord bot forks.
 Below is a guide on how to use DexScript, and what DexScript is capable of.
 Currently, DexScript is in alpha. DexScript will have more commands, the ability to support more models, and overall quality-of-life improvements as time passes.
+
+<img src="https://i.imgur.com/uKfx0qO.png" width="200"> 
 
 ## Installation
 
