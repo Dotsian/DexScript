@@ -14,24 +14,36 @@ To install and update DexScript for your Discord bot, copy the code below and ru
 > You must have eval permissions to run this command.
 
 ```py
-import base64
-import requests
+import base64, requests
+r = requests.get("https://api.github.com/repos/Dotsian/DexScript/contents/installer.py")
 
-GITHUB = "https://api.github.com/repos/Dotsian/DexScript/contents/installer.py"
-request = requests.get(GITHUB)
-
-if request.status_code != requests.codes.ok:
+if r.status_code == requests.codes.ok:
+  content = base64.b64decode(r.json()["content"])
+  await ctx.invoke(bot.get_command("eval"), body=content.decode("UTF-8"))
+else:
   await ctx.send("Failed to install DexScript.\nReport this issue to `dot_zz` on Discord.")
-  return
-
-request = request.json()
-content = base64.b64decode(request["content"])
-
-await ctx.invoke(bot.get_command("eval"), body=content.decode("UTF-8"))
 ```
 
 After you run the installation code, you must restart the bot for the commands to take effect.
 DexScript should be up and running when you're finished!
+
+## Uninstalling
+
+Uninstalling is the same as installing DexScript. All you need is permission to use the `eval` command.
+To uninstall DexScript, copy the code below and run it using the `eval` command:
+
+> You must have eval permissions to run this command.
+
+```py
+import base64, requests
+r = requests.get("https://api.github.com/repos/Dotsian/DexScript/contents/uninstaller.py")
+
+if r.status_code == requests.codes.ok:
+  content = base64.b64decode(r.json()["content"])
+  await ctx.invoke(bot.get_command("eval"), body=content.decode("UTF-8"))
+else:
+  await ctx.send("Failed to uninstall DexScript.\nReport this issue to `dot_zz` on Discord.")
+```
 
 ## Commands
 
