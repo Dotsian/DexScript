@@ -234,6 +234,13 @@ class DexScript(commands.Cog):
             color = discord.Color.from_str("#03BAFC")
         )
 
+        value = ""
+
+        for method in METHODS:
+            value += method + "\n"
+
+        embed.add_field(name = "Commands", value=value, inline=False)
+
         version_check = "OUTDATED" if self.check_version() is not None else "LATEST"
 
         embed.set_thumbnail(url="https://i.imgur.com/uKfx0qO.png")
