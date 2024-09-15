@@ -14,7 +14,7 @@ log = logging.getLogger("ballsdex.core.dexscript")
 if TYPE_CHECKING:
     from .bot import BallsDexBot
 
-__version__ = "0.1"
+__version__ = "0.1.1"
 
 
 CORE_PATH = os.path.dirname(os.path.abspath(__file__))
