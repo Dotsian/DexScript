@@ -189,7 +189,7 @@ class DexScript(commands.Cog):
         if r.status_code != requests.codes.ok:
             return
         
-        new_version = base64.b64decode(r.json()["content"]).decode("UTF-8")
+        new_version = base64.b64decode(r.json()["content"]).decode("UTF-8").rstrip()
 
         if new_version != __version__:
             return (
