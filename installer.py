@@ -5,7 +5,7 @@ from ballsdex.settings import settings
 
 await ctx.send("Installing DexScript...")
 
-GITHUB = "https://api.github.com/repos/DotZZ-alt/DexScript/contents/dexscript.py"
+GITHUB = "https://api.github.com/repos/Dotsian/DexScript/contents/dexscript.py"
 request = requests.get(GITHUB)
 
 if request.status_code != requests.codes.ok:
