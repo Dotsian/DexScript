@@ -27,7 +27,7 @@ additions = {
 # Create the DexScript file.
 with open("ballsdex/core/dexscript.py", "w") as opened_file:
   contents = content.decode("UTF-8")
-  opened_file.write(contents.decode("utf-8"))
+  opened_file.write(contents)
 
 # Add the ability to load the DexScript cog to the bot.py file.
 with open("ballsdex/core/bot.py", "r") as opened_file_1:
