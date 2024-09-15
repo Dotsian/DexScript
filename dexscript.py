@@ -132,7 +132,7 @@ class DexScriptParser():
         if dir_type == "ballsdex":
             filters["country"] == formatted_ball[1]
         else:
-            filters["full_name"] == formatted_ball[1]
+            filters["short_name"] == formatted_ball[1]
 
         get_model = await Ball.get(**filters)
 
