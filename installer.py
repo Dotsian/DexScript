@@ -35,11 +35,10 @@ with open("ballsdex/core/bot.py", "r") as opened_file_1:
   contents = ""
 
   for index, line in enumerate(lines):
-    new_line = line.rstrip()
-    contents += new_line
+    contents += line
 
     for key, item in additions.items():
-      if new_line != key or lines[index + 1] == item:
+      if line.rstrip() != key or lines[index + 1] == item:
         continue
 
       contents += item
