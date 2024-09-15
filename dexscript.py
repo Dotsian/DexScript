@@ -183,7 +183,7 @@ class DexScript(commands.Cog):
         return content.strip("` \n")
     
     @staticmethod
-    def check_verson():
+    def check_version():
         r = requests.get("https://api.github.com/repos/Dotsian/DexScript/contents/version.txt")
 
         if r.status_code == requests.codes.ok:
