@@ -1,7 +1,13 @@
 import base64
 import requests
+import os
 
-from ballsdex.settings import settings
+dir_type = "ballsdex" if os.path.isdir("ballsdex") else "carfigures"
+
+if dir_type == "ballsdex":
+  from ballsdex.settings import settings
+else:
+  from carfigures.settings import settings
 
 await ctx.send("Installing DexScript...")
 
@@ -16,8 +22,8 @@ request = request.json()
 content = base64.b64decode(request["content"])
 
 additions = {
-  "from ballsdex.core.commands import Core": (
-    "from ballsdex.core.dexscript import DexScript\n"
+  f"from {dir_type}.core.commands import Core": (
+    f"from {dir_type}.core.dexscript import DexScript\n"
   ),
   "        await self.add_cog(Core(self))": (
     "        await self.add_cog(DexScript(self))\n"
@@ -25,12 +31,12 @@ additions = {
 }
 
 # Create the DexScript file.
-with open("ballsdex/core/dexscript.py", "w") as opened_file:
+with open(f"{dir_type}/core/dexscript.py", "w") as opened_file:
   contents = content.decode("UTF-8")
   opened_file.write(contents)
 
 # Add the ability to load the DexScript cog to the bot.py file.
-with open("ballsdex/core/bot.py", "r") as opened_file_1:
+with open(f"{dir_type}/core/bot.py", "r") as opened_file_1:
   lines = opened_file_1.readlines()
   contents = ""
 
@@ -43,7 +49,7 @@ with open("ballsdex/core/bot.py", "r") as opened_file_1:
 
       contents += item
 
-  with open("ballsdex/core/bot.py", "w") as opened_file_2:
+  with open(f"{dir_type}/core/bot.py", "w") as opened_file_2:
     opened_file_2.write(contents)
 
 await ctx.send(f"DexScript has been installed.\nRestart your bot for DexScript to work.\nUse `{settings.prefix}about` to test it out!")
