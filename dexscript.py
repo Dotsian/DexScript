@@ -186,9 +186,12 @@ class DexScript(commands.Cog):
     def check_version():
         r = requests.get("https://api.github.com/repos/Dotsian/DexScript/contents/version.txt")
 
-        if r.status_code == requests.codes.ok:
-            new_version = base64.b64decode(r.json()["content"]).decode("UTF-8")
+        if r.status_code != requests.codes.ok:
+            return
+        
+        new_version = base64.b64decode(r.json()["content"]).decode("UTF-8")
 
+        if new_version != __version__:
             return (
                 f"Your DexScript version ({__version__}) is outdated." 
                 f"Please update to version {new_version} using `{settings.prefix}.update-ds`."
