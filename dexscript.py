@@ -3,18 +3,19 @@ import logging
 import os
 import re
 import enum
-from typing import TYPE_CHECKING
 
 from discord.ext import commands
 
-from ballsdex.core.models import Ball
+dir_type = "ballsdex" if os.path.isdir("ballsdex") else "carfigures"
 
-log = logging.getLogger("ballsdex.core.dexscript")
+if dir_type == "ballsdex":
+    from ballsdex.core.models import Ball
+else:
+    from carfigures.core.models import Car as Ball
 
-if TYPE_CHECKING:
-    from .bot import BallsDexBot
+log = logging.getLogger(f"{dir_type}.core.dexscript")
 
-__version__ = "0.1.1"
+__version__ = "0.1.2"
 
 
 CORE_PATH = os.path.dirname(os.path.abspath(__file__))
@@ -127,7 +128,15 @@ class DexScriptParser():
     
     async def execute(self, key, item):
         formatted_ball = item["BALL"]
-        get_model = await Ball.get(country=formatted_ball[1])
+
+        filters = {}
+
+        if dir_type == "ballsdex":
+            filters["country"] == formatted_ball[1]
+        else:
+            filters["full_name"] == formatted_ball[1]
+
+        get_model = await Ball.get(**filters)
 
         match key:
             case "UPDATE":
@@ -135,12 +144,12 @@ class DexScriptParser():
 
                 await get_model.save()
 
-                await self.ctx.send(f"Updated `{get_model.country}'s` {formatted_ball[2]}")
+                await self.ctx.send(f"Updated `{formatted_ball[1]}'s` {formatted_ball[2]}")
 
             case "REMOVE":
                 await get_model.delete()
 
-                await self.ctx.send(f"Deleted `{get_model.country}`")
+                await self.ctx.send(f"Deleted `{formatted_ball[1]}`")
 
             case "DISPLAY":
                 await self.ctx.send(f"```{getattr(get_model, formatted_ball[2].lower())}```")
@@ -159,7 +168,7 @@ class DexScript(commands.Cog):
     DexScript support
     """
 
-    def __init__(self, bot: "BallsDexBot"):
+    def __init__(self, bot):
         self.bot = bot
 
     # TODO: Migrate this function over to the utilities path 
@@ -211,5 +220,5 @@ class DexScript(commands.Cog):
         await ctx.send(embed=embed)
 
 
-async def setup(bot: "BallsDexBot"):
+async def setup(bot):
     await bot.add_cog(DexScript(bot))
