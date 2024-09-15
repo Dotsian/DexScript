@@ -122,8 +122,6 @@ class DexScriptParser():
             for line2 in line1.split(" > "):
                 self.fields.append(self.grab_token(line2.replace("    ", "")))
 
-        print(self.fields)
-
         return self.parse_code()
     
     async def execute(self, key, item):
@@ -159,8 +157,6 @@ class DexScriptParser():
 
         for key, field in code_fields.items():
            await self.execute(key, field)
-
-        print(code_fields)
 
 
 class DexScript(commands.Cog):
