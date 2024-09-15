@@ -193,7 +193,7 @@ class DexScript(commands.Cog):
 
         if new_version != __version__:
             return (
-                f"Your DexScript version ({__version__}) is outdated." 
+                f"Your DexScript version ({__version__}) is outdated. " 
                 f"Please update to version {new_version} using `{settings.prefix}update-ds`."
             )
         
