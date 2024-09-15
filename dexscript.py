@@ -3,14 +3,18 @@ import logging
 import os
 import re
 import enum
+import base64
+import requests
 
 from discord.ext import commands
 
 dir_type = "ballsdex" if os.path.isdir("ballsdex") else "carfigures"
 
 if dir_type == "ballsdex":
+    from ballsdex.settings import settings
     from ballsdex.core.models import Ball
 else:
+    from carfigures.settings import settings
     from carfigures.core.models import Car as Ball
 
 log = logging.getLogger(f"{dir_type}.core.dexscript")
@@ -165,7 +169,7 @@ class DexScript(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    # TODO: Migrate this function over to the utilities path 
+    # TODO: Migrate this function to the utility path 
     # so there aren't any duplicates.
     @staticmethod
     def cleanup_code(content): 
@@ -177,6 +181,20 @@ class DexScript(commands.Cog):
             return START_CODE_BLOCK_RE.sub("", content)[:-3]
 
         return content.strip("` \n")
+    
+    @staticmethod
+    def check_verson():
+        r = requests.get("https://api.github.com/repos/Dotsian/DexScript/contents/version.txt")
+
+        if r.status_code == requests.codes.ok:
+            new_version = base64.b64decode(r.json()["content"]).decode("UTF-8")
+
+            return (
+                f"Your DexScript version ({__version__}) is outdated." 
+                f"Please update to version {new_version} using `{settings.prefix}.update-ds`."
+            )
+        
+        return None
 
     @commands.command()
     @commands.is_owner()
@@ -186,6 +204,11 @@ class DexScript(commands.Cog):
         """
 
         body = self.cleanup_code(code)
+
+        version_check = self.check_version()
+
+        if version_check:
+            await ctx.send(f"-# {version_check}")
 
         try:
             dexscript_instance = DexScriptParser(ctx, body)
@@ -203,15 +226,28 @@ class DexScript(commands.Cog):
             description=(
                 "DexScript is a set of commands created by DotZZ that allows you to easily "
                 "modify, delete, and display data about balls.\n\n"
-                "For a guide on how to use DexScript, refer to the guide on the [DexScript GitHub Page](<https://github.com/DotZZ-alt/DexScript>)"
+                "For a guide on how to use DexScript, refer to the guide on the [DexScript GitHub Page](<https://github.com/Dotsian/DexScript>)"
             ),
             color = discord.Color.from_str("#03BAFC")
         )
 
+        version_check = "OUTDATED" if self.check_version() is not None else "LATEST"
+
         embed.set_thumbnail(url="https://i.imgur.com/uKfx0qO.png")
-        embed.set_footer(text=f"DexScript {__version__}")
+        embed.set_footer(text=f"DexScript {__version__} ({version_check})")
 
         await ctx.send(embed=embed)
+
+    @commands.command(name="update-ds")
+    @commands.is_owner()
+    async def update_ds(self, ctx: commands.Context):
+        r = requests.get("https://api.github.com/repos/Dotsian/DexScript/contents/installer.py")
+
+        if r.status_code == requests.codes.ok:
+            content = base64.b64decode(r.json()["content"])
+            await ctx.invoke(self.bot.get_command("eval"), body=content.decode("UTF-8"))
+        else:
+            await ctx.send("Failed to update DexScript.\nReport this issue to `dot_zz` on Discord.")
 
 
 async def setup(bot):
