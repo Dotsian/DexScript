@@ -6,49 +6,28 @@ Currently, DexScript is in alpha. DexScript will have more commands, the ability
 
 <img src="https://i.imgur.com/uKfx0qO.png" width="200"> 
 
-## Installation
+## Installation & Updating
 
-Installing DexScript to your Discord bot is easy. All you need is permission to use the `eval` command.
-To install and update DexScript for your Discord bot, download `dexscript.py` in this repository, copy the code below, and run it using the `eval` command:
+Installing and updating DexScript to your Discord bot is easy. All you need is permission to use the `eval` command.
+To install and update DexScript for your Discord bot, copy the code below and run it using the `eval` command:
 
 > You must have eval permissions to run this command.
 
 ```py
-# THIS CODE WILL INSTALL OR UPDATE DEXSCRIPT FOR YOUR DISCORD BOT.
+import base64
+import requests
 
+GITHUB = "https://api.github.com/repos/Dotsian/DexScript/contents/installer.py"
+request = requests.get(GITHUB)
 
-from ballsdex.settings import settings
-
-await ctx.send("Installing DexScript...")
-
-if ctx.message.attachments == []:
-  await ctx.send("You must attach the `dexscript.py` file.")
+if request.status_code != requests.codes.ok:
+  await ctx.send("Failed to install DexScript.\nReport this issue to `dot_zz` on Discord.")
   return
 
-file = ctx.message.attachments[0]
+request = request.json()
+content = base64.b64decode(request["content"])
 
-# Create the DexScript file.
-with open("ballsdex/core/dexscript.py", "w") as opened_file:
-  contents = await file.read()
-  opened_file.write(contents.decode("utf-8"))
-
-# Add the ability to load the DexScript cog to the bot.py file.
-with open("ballsdex/core/bot.py", "r") as opened_file_1:
-  lines = opened_file_1.readlines()
-  contents = ""
-
-  for line in lines:
-    contents += line
-  
-    if "from ballsdex.core.commands import Core" in line:
-      contents += "from ballsdex.core.dexscript import DexScript\n"
-    elif "await self.add_cog(Core(self))" in line:
-      contents += "        await self.add_cog(DexScript(self))\n"
-  
-  with open("ballsdex/core/bot.py", "w") as opened_file_2:
-    opened_file_2.write(contents)
-
-await ctx.send(f"DexScript has been installed.\nRestart your bot for DexScript to work.\nUse `{settings.prefix}about` to test it out!")
+await ctx.invoke(bot.get_command("eval"), body=content.decode("UTF-8"))
 ```
 
 After you run the installation code, you must restart the bot for the commands to take effect.
@@ -119,5 +98,5 @@ DISPLAY > BALL > Ancient Greece > HEALTH
 
 -----------
 
-Written by DotZZ
-DexScript Version: 0.1
+Written by DotZZ <br>
+DexScript Version: 0.1.1
