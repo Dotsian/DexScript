@@ -127,14 +127,12 @@ class DexScriptParser():
     async def execute(self, key, item):
         formatted_ball = item["BALL"]
 
-        filters = {}
+        get_model = None
 
         if dir_type == "ballsdex":
-            filters["country"] == formatted_ball[1]
+            get_model = await Ball.get(country=formatted_ball[1])
         else:
-            filters["short_name"] == formatted_ball[1]
-
-        get_model = await Ball.get(**filters)
+            get_model = await Ball.get(full_name=formatted_ball[1])
 
         match key:
             case "UPDATE":
@@ -193,7 +191,7 @@ class DexScript(commands.Cog):
             dexscript_instance = DexScriptParser(ctx, body)
             await dexscript_instance.run()
         except Exception as e:
-            await ctx.send(f"```\n{e}\n```")
+            await ctx.send(f"```ERROR: \n{e}\n```")
         else:
             await ctx.message.add_reaction("✅")
 
