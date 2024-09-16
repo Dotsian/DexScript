@@ -64,8 +64,6 @@ The `UPDATE` command updates a ball depending on the field given. The function i
 UPDATE > BALL > ball_name > FIELD > value
 ```
 
-> You can not update spawn and card art, as of right now.
-
 - `ball_name` has to be replaced with the country of the ball you are trying to edit.
 - `FIELD` has to be replaced with the field you are trying to edit. (EXAMPLE: CREDITS)
 - `value` has to be replaced with the new value you want that field to be.
