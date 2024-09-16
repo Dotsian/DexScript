@@ -8,18 +8,22 @@ import requests
 
 from discord.ext import commands
 
+
 dir_type = "ballsdex" if os.path.isdir("ballsdex") else "carfigures"
 
 if dir_type == "ballsdex":
     from ballsdex.settings import settings
+    from ballsdex.packages.admin.cog import save_file
     from ballsdex.core.models import Ball
 else:
     from carfigures.settings import settings
+    from carfigures.packages.superuser.cog import save_file
     from carfigures.core.models import Car as Ball
+
 
 log = logging.getLogger(f"{dir_type}.core.dexscript")
 
-__version__ = "0.1.2"
+__version__ = "0.2.0"
 
 
 CORE_PATH = os.path.dirname(os.path.abspath(__file__))
@@ -140,7 +144,17 @@ class DexScriptParser():
 
         match key:
             case "UPDATE":
-                setattr(get_model, formatted_ball[2].lower(), formatted_ball[3])
+                new_attribute = None
+
+                if self.ctx.message.attachments != [] and hasattr(get_model, formatted_ball[2].lower()):
+                    image_path = await save_file(self.ctx.message.attachments[0])
+                    new_attribute = "/" + str(image_path)
+
+                setattr(
+                    get_model, 
+                    formatted_ball[2].lower(), 
+                    formatted_ball[3] if new_attribute is None else new_attribute
+                )
 
                 await get_model.save()
 
@@ -152,6 +166,12 @@ class DexScriptParser():
                 await self.ctx.send(f"Deleted `{formatted_ball[1]}`")
 
             case "DISPLAY":
+                attribute = getattr(get_model, formatted_ball[2].lower())
+
+                if os.path.isfile(attribute[1:]):
+                    await self.ctx.send(f"```{attribute}```", file=discord.File(attribute[1:]))
+                    return
+
                 await self.ctx.send(f"```{getattr(get_model, formatted_ball[2].lower())}```")
 
     async def run(self):
@@ -237,8 +257,8 @@ class DexScript(commands.Cog):
         value = ""
 
         for method in METHODS:
-            value += method + "\n"
-
+            value += f"* {method}\n"
+            
         embed.add_field(name = "Commands", value=value, inline=False)
 
         version_check = "OUTDATED" if self.check_version() is not None else "LATEST"

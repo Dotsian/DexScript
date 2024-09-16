@@ -1,6 +1,9 @@
 import base64
 import requests
+import datetime
+import time
 import os
+
 
 dir_type = "ballsdex" if os.path.isdir("ballsdex") else "carfigures"
 
@@ -9,7 +12,24 @@ if dir_type == "ballsdex":
 else:
   from carfigures.settings import settings
 
-await ctx.send("Installing DexScript...")
+
+updating = os.path.isfile(f"{dir_type}/core/dexscript.py")
+
+keywords = [x[0 if updating else 1] for x in [["Updating", "Installing"], ["Updated", "Installed"]]]
+
+embed = discord.Embed(
+  title = f"{keywords[0]} DexScript",
+  description = f"DexScript is being {keywords[1].lower()} on your bot.\nPlease do not turn off your bot.",
+  color = discord.Color.from_str("#03BAFC"),
+  timestamp = datetime.datetime.now()
+)
+
+embed.set_thumbnail(url="https://i.imgur.com/uKfx0qO.png")
+
+original_message = await ctx.send(embed=embed)
+
+t1 = time.time()
+
 
 GITHUB = "https://api.github.com/repos/Dotsian/DexScript/contents/dexscript.py"
 request = requests.get(GITHUB)
@@ -22,18 +42,30 @@ request = request.json()
 content = base64.b64decode(request["content"])
 
 additions = {
-  f"from {dir_type}.core.commands import Core": (
-    f"from {dir_type}.core.dexscript import DexScript\n"
-  ),
   "        await self.add_cog(Core(self))": (
-    "        await self.add_cog(DexScript(self))\n"
+    f'        await self.load_extension("{dir_type}.core.dexscript")\n'
   ),
 }
 
+deprecated = {
+  f"from {dir_type}.core.dexscript import DexScript\n": (
+    ""
+  ),
+  "        await self.add_cog(DexScript(self))": (
+    f't\tawait self.load_extension("{dir_type}.core.dexscript")'
+  )
+}
+
+def format_line(line):
+  if line in deprecated.keys():
+    return deprecated[line]
+  
+  return line
+    
+
 # Create the DexScript file.
 with open(f"{dir_type}/core/dexscript.py", "w") as opened_file:
-  contents = content.decode("UTF-8")
-  opened_file.write(contents)
+  opened_file.write(content.decode("UTF-8"))
 
 # Add the ability to load the DexScript cog to the bot.py file.
 with open(f"{dir_type}/core/bot.py", "r") as opened_file_1:
@@ -47,9 +79,38 @@ with open(f"{dir_type}/core/bot.py", "r") as opened_file_1:
       if line.rstrip() != key or lines[index + 1] == item:
         continue
 
-      contents += item
+      contents += format_line(item)
 
   with open(f"{dir_type}/core/bot.py", "w") as opened_file_2:
     opened_file_2.write(contents)
 
-await ctx.send(f"DexScript has been installed.\nRestart your bot for DexScript to work.\nUse `{settings.prefix}about` to test it out!")
+
+try:
+  await bot.load_extension(f"{dir_type}.core.dexscript")
+except commands.ExtensionAlreadyLoaded:
+  await bot.reload_extension(f"{dir_type}.core.dexscript")
+
+t2 = time.time()
+
+embed.title = f"DexScript {keywords[1]}"
+
+if updating:
+  r = requests.get("https://api.github.com/repos/Dotsian/DexScript/contents/version.txt")
+  
+  new_version = base64.b64decode(r.json()["content"]).decode("UTF-8").rstrip()
+
+  embed.description = (
+    f"DexScript has been updated to v{new_version}.\n"
+    f"Use `{settings.prefix}about` to view details about DexScript."
+  )
+else:
+  embed.description = (
+    "DexScript has been installed to your bot\n"
+    f"Use `{settings.prefix}about` to view details about DexScript."
+  )
+
+embed.set_footer(
+  text = f"DexScript took {round((t2 - t1) * 1000)}ms to {'update' if updating else 'install'}"
+)
+
+await original_message.edit(embed=embed)

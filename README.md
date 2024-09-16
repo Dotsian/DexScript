@@ -111,4 +111,4 @@ DISPLAY > BALL > Ancient Greece > HEALTH
 -----------
 
 Written by DotZZ <br>
-DexScript Version: 0.1.2
+DexScript Version: 0.2.0
