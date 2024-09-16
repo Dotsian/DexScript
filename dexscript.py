@@ -22,7 +22,7 @@ else:
 
 log = logging.getLogger(f"{dir_type}.core.dexscript")
 
-__version__ = "0.2.0"
+__version__ = "0.2.1"
 
 
 START_CODE_BLOCK_RE = re.compile(r"^((```py(thon)?)(?=\s)|(```))")
