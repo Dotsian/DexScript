@@ -61,11 +61,6 @@ def format_line(line):
     return deprecated[line]
   
   return line
-    
-
-# Remove the old DexScript file.
-if os.path.isfile(f"{dir_type}/core/dexscript.py"):
-  os.remove(f"{dir_type}/core/dexscript.py")
 
 # Create the DexScript file.
 with open(f"{dir_type}/core/dexscript.py", "w") as opened_file:
