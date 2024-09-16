@@ -8,10 +8,11 @@ Currently, DexScript is in alpha. DexScript will have more commands, the ability
 
 ## Installation & Updating
 
+> [!NOTE]
+> Using the same command to install DexScript will update if DexScript is detected in your Discord bot.
+
 Installing and updating DexScript to your Discord bot is easy. All you need is permission to use the `eval` command.
 To install and update DexScript for your Discord bot, copy the code below and run it using the `eval` command:
-
-> You must have eval permissions to run this command.
 
 ```py
 import base64, requests
@@ -31,8 +32,6 @@ DexScript should be up and running when you're finished!
 
 Uninstalling is the same as installing DexScript. All you need is permission to use the `eval` command.
 To uninstall DexScript, copy the code below and run it using the `eval` command:
-
-> You must have eval permissions to run this command.
 
 ```py
 import base64, requests
@@ -56,6 +55,9 @@ There are three commands DexScript has at the moment.
 To run a command, you must put `b.run`, swapping `b.` with your bot's prefix.
 
 -----------
+
+> [!WARNING]
+> CarFigures uses different field names for their models. Some of the examples below might not work on CarFigures.
 
 ### UPDATE
 
@@ -109,4 +111,4 @@ DISPLAY > BALL > Ancient Greece > HEALTH
 -----------
 
 Written by DotZZ <br>
-DexScript Version: 0.2.0
+DexScript Version: 0.2.1
