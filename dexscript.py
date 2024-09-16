@@ -1,24 +1,23 @@
-import discord
+import base64
+import enum
 import logging
 import os
 import re
-import enum
-import base64
+
+import discord
 import requests
-
 from discord.ext import commands
-
 
 dir_type = "ballsdex" if os.path.isdir("ballsdex") else "carfigures"
 
 if dir_type == "ballsdex":
-    from ballsdex.settings import settings
-    from ballsdex.packages.admin.cog import save_file
     from ballsdex.core.models import Ball
+    from ballsdex.packages.admin.cog import save_file
+    from ballsdex.settings import settings
 else:
-    from carfigures.settings import settings
-    from carfigures.packages.superuser.cog import save_file
     from carfigures.core.models import Car as Ball
+    from carfigures.packages.superuser.cog import save_file
+    from carfigures.settings import settings
 
 
 log = logging.getLogger(f"{dir_type}.core.dexscript")
@@ -26,7 +25,6 @@ log = logging.getLogger(f"{dir_type}.core.dexscript")
 __version__ = "0.2.0"
 
 
-CORE_PATH = os.path.dirname(os.path.abspath(__file__))
 START_CODE_BLOCK_RE = re.compile(r"^((```py(thon)?)(?=\s)|(```))")
 
 METHODS = [
@@ -40,6 +38,11 @@ class TOKENS(enum.Enum):
     METHOD = "METHOD"
     NUMBER = "NUMBER"
     STRING = "STRING"
+
+
+class DexScriptError(Exception):
+    def __init__(self, message):
+        self.message = message
 
 
 class DexScriptParser():
@@ -77,14 +80,14 @@ class DexScriptParser():
         """
 
         token = TOKENS.STRING
-        
+
         if self.format_class(line) in METHODS:
             token = TOKENS.METHOD
-        elif isinstance(line, int) or isinstance(line, float):
+        elif isinstance(line, (int, float)):
             token = TOKENS.NUMBER
 
         return (line, token)
-    
+
     def parse_code(self):
         """
         Parses a DexScript Migration file and converts it into a readable list.
@@ -120,7 +123,7 @@ class DexScriptParser():
         return class_data
 
     def parse(self, code: str):
-        if not "\n" in code:
+        if "\n" not in code:
             code = "\n" + code
 
         for line1 in code.split("\n"): 
@@ -131,7 +134,7 @@ class DexScriptParser():
                 self.fields.append(self.grab_token(line2.replace("    ", "")))
 
         return self.parse_code()
-    
+
     async def execute(self, key, item):
         formatted_ball = item["BALL"]
 
@@ -146,7 +149,10 @@ class DexScriptParser():
             case "UPDATE":
                 new_attribute = None
 
-                if self.ctx.message.attachments != [] and hasattr(get_model, formatted_ball[2].lower()):
+                if (
+                    self.ctx.message.attachments != [] and 
+                    hasattr(get_model, formatted_ball[2].lower())
+                ):
                     image_path = await save_file(self.ctx.message.attachments[0])
                     new_attribute = "/" + str(image_path)
 
@@ -158,7 +164,9 @@ class DexScriptParser():
 
                 await get_model.save()
 
-                await self.ctx.send(f"Updated `{formatted_ball[1]}'s` {formatted_ball[2]}")
+                await self.ctx.send(
+                    f"Updated `{formatted_ball[1]}'s` {formatted_ball[2]}"
+                )
 
             case "REMOVE":
                 await get_model.delete()
@@ -169,13 +177,21 @@ class DexScriptParser():
                 attribute = getattr(get_model, formatted_ball[2].lower())
 
                 if os.path.isfile(attribute[1:]):
-                    await self.ctx.send(f"```{attribute}```", file=discord.File(attribute[1:]))
+                    await self.ctx.send(
+                        f"```{attribute}```", file=discord.File(attribute[1:])
+                    )
                     return
 
-                await self.ctx.send(f"```{getattr(get_model, formatted_ball[2].lower())}```")
+                await self.ctx.send(
+                    f"```{getattr(get_model, formatted_ball[2].lower())}```"
+                )
 
     async def run(self):
         code_fields = self.parse(self.code)
+
+        if code_fields == {}:
+            method = f"{self.code.split(' > ')[0]}"
+            raise DexScriptError(f"`{method}` is not a valid command")
 
         for key, field in code_fields.items():
            await self.execute(key, field)
@@ -201,22 +217,23 @@ class DexScript(commands.Cog):
             return START_CODE_BLOCK_RE.sub("", content)[:-3]
 
         return content.strip("` \n")
-    
+
     @staticmethod
     def check_version():
         r = requests.get("https://api.github.com/repos/Dotsian/DexScript/contents/version.txt")
 
         if r.status_code != requests.codes.ok:
             return
-        
+
         new_version = base64.b64decode(r.json()["content"]).decode("UTF-8").rstrip()
 
         if new_version != __version__:
             return (
                 f"Your DexScript version ({__version__}) is outdated. " 
-                f"Please update to version {new_version} using `{settings.prefix}update-ds`."
+                f"Please update to version {new_version} "
+                f"using `{settings.prefix}update-ds`."
             )
-        
+
         return None
 
     @commands.command()
@@ -236,8 +253,8 @@ class DexScript(commands.Cog):
         try:
             dexscript_instance = DexScriptParser(ctx, body)
             await dexscript_instance.run()
-        except Exception as e:
-            await ctx.send(f"```ERROR: \n{e}\n```")
+        except Exception as error:
+            await ctx.send(f"```ERROR: \n{error}\n```")
         else:
             await ctx.message.add_reaction("✅")
 
@@ -247,9 +264,11 @@ class DexScript(commands.Cog):
         embed = discord.Embed(
             title="DexScript - ALPHA",
             description=(
-                "DexScript is a set of commands created by DotZZ that allows you to easily "
+                "DexScript is a set of commands created by DotZZ "
+                "that allows you to easily "
                 "modify, delete, and display data about balls.\n\n"
-                "For a guide on how to use DexScript, refer to the guide on the [DexScript GitHub Page](<https://github.com/Dotsian/DexScript>)"
+                "For a guide on how to use DexScript, "
+                "refer to the guide on the [DexScript GitHub Page](<https://github.com/Dotsian/DexScript>)"
             ),
             color = discord.Color.from_str("#03BAFC")
         )
@@ -258,7 +277,7 @@ class DexScript(commands.Cog):
 
         for method in METHODS:
             value += f"* {method}\n"
-            
+
         embed.add_field(name = "Commands", value=value, inline=False)
 
         version_check = "OUTDATED" if self.check_version() is not None else "LATEST"
@@ -277,7 +296,10 @@ class DexScript(commands.Cog):
             content = base64.b64decode(r.json()["content"])
             await ctx.invoke(self.bot.get_command("eval"), body=content.decode("UTF-8"))
         else:
-            await ctx.send("Failed to update DexScript.\nReport this issue to `dot_zz` on Discord.")
+            await ctx.send(
+                "Failed to update DexScript.\n"
+                "Report this issue to `dot_zz` on Discord."
+            )
 
 
 async def setup(bot):
