@@ -14,7 +14,7 @@ dir_type = "ballsdex" if os.path.isdir("ballsdex") else "carfigures"
 if dir_type == "ballsdex":
     from ballsdex.core.admin.resources import app
     from ballsdex.core.models import Ball
-    from ballsdex.core.modles import Regime
+    from ballsdex.core.models import Regime
     from ballsdex.packages.admin.cog import save_file
     from ballsdex.settings import settings
 else:
