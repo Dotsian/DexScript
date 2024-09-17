@@ -154,9 +154,9 @@ class DexScriptParser():
         return_model = None
 
         if dir_type == "ballsdex":
-            return_model = await Ball.create(country=identifier, emoji_id = int(str("0") * 17))
+            return_model = await Ball.create(country=identifier, emoji_id = 100**8))
         else:
-            return_model = await Ball.create(full_name=identifier, emoji_id = int(str("0") * 17))
+            return_model = await Ball.create(full_name=identifier, emoji_id = 100**8)
 
         return return_model
 
