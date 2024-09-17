@@ -1,35 +1,36 @@
 name: Bug Report
-description: Report a bug
+description: Report a DexScript bug
 title: "[Bug]: "
 labels: ["bug"]
 body:
   - type: markdown
     attributes:
       value: |
-        Thanks you for reporting a DexScript bug!
+        Thank you for reporting a DexScript bug!
   - type: textarea
     id: description
     attributes:
       label: Bug Description
-      description: Explain what the bug was.
-      placeholder: Bug
+      description: Explain what the bug was and where it occurred.
+      placeholder: Bug explanation...
     validations:
       required: true
   - type: dropdown
     id: version
     attributes:
       label: Version
-      description: What version of DexScript is your bot running?
+      description: What version of DexScript is your bot using?
       options:
         - 0.1
         - 0.2
         - 0.2.1
+      default: 2
     validations:
       required: true
   - type: dropdown
     id: platform
     attributes:
-      label: What bot fork are you using?
+      label: What fork are you using?
       options:
         - Ballsdex
         - CarFigures
