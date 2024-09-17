@@ -1,0 +1,44 @@
+name: Bug Report
+description: Report a bug
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks you for reporting a DexScript bug!
+  - type: textarea
+    id: description
+    attributes:
+      label: Bug Description
+      description: Explain what the bug was.
+      placeholder: Bug
+    validations:
+      required: true
+  - type: dropdown
+    id: version
+    attributes:
+      label: Version
+      description: What version of DexScript is your bot running?
+      options:
+        - 0.1
+        - 0.2
+        - 0.2.1
+      default: 0.2.1
+    validations:
+      required: true
+  - type: dropdown
+    id: platform
+    attributes:
+      label: What bot fork are you using?
+      options:
+        - Ballsdex
+        - CarFigures
+    validations:
+      required: true
+  - type: textarea
+    id: error
+    attributes:
+      label: Error Output
+      description: If there was an error, paste it below.
+      render: shell
