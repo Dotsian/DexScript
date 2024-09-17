@@ -1,9 +1,9 @@
 import base64
-import requests
 import datetime
-import time
 import os
+import time
 
+import requests
 
 dir_type = "ballsdex" if os.path.isdir("ballsdex") else "carfigures"
 
@@ -15,11 +15,16 @@ else:
 
 updating = os.path.isfile(f"{dir_type}/core/dexscript.py")
 
-keywords = [x[0 if updating else 1] for x in [["Updating", "Installing"], ["Updated", "Installed"]]]
+keywords = [x[0 if updating else 1] for x in [
+    ["Updating", "Installing"], ["Updated", "Installed"]
+]]
 
 embed = discord.Embed(
   title = f"{keywords[0]} DexScript",
-  description = f"DexScript is being {keywords[1].lower()} on your bot.\nPlease do not turn off your bot.",
+  description = (
+      f"DexScript is being {keywords[1].lower()} on your bot.\n"
+      "Please do not turn off your bot."
+  ),
   color = discord.Color.from_str("#03BAFC"),
   timestamp = datetime.datetime.now()
 )
@@ -32,10 +37,13 @@ t1 = time.time()
 
 
 GITHUB = "https://api.github.com/repos/Dotsian/DexScript/contents/dexscript.py"
-request = requests.get(GITHUB)
+request = requests.get(GITHUB, {"ref": "create-&-listing"})
 
 if request.status_code != requests.codes.ok:
-  await ctx.send("Failed to fetch the DexScript.py file\nReport this issue to dot_zz on Discord.")
+  await ctx.send(
+      "Failed to fetch the DexScript.py file\n"
+      "Report this issue to dot_zz on Discord."
+  )
   return
 
 request = request.json()
@@ -57,9 +65,9 @@ deprecated = {
 }
 
 def format_line(line):
-  if line in deprecated.keys():
+  if line in deprecated:
     return deprecated[line]
-  
+
   return line
 
 # Create the DexScript file.
@@ -95,7 +103,7 @@ embed.title = f"DexScript {keywords[1]}"
 
 if updating:
   r = requests.get("https://api.github.com/repos/Dotsian/DexScript/contents/version.txt")
-  
+
   new_version = base64.b64decode(r.json()["content"]).decode("UTF-8").rstrip()
 
   embed.description = (
@@ -109,7 +117,7 @@ else:
   )
 
 embed.set_footer(
-  text = f"DexScript took {round((t2 - t1) * 1000)}ms to {'update' if updating else 'install'}"
+  text = (f"DexScript took {round((t2 - t1) * 1000)}ms to {'update' if updating else 'install'}")
 )
 
 await original_message.edit(embed=embed)
