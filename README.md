@@ -46,69 +46,133 @@ else:
 
 ## Commands
 
-There are three commands DexScript has at the moment.
+There are five commands DexScript has at the moment. <br>
+All commands will be explained in the guide below.
 
-1. **UPDATE**
-2. **REMOVE**
-3. **DISPLAY**
+1. **CREATE**
+2. **UPDATE**
+3. **REMOVE**
+4. **DISPLAY**
+5. **LIST**
 
 To run a command, you must put `b.run`, swapping `b.` with your bot's prefix.
 
 -----------
 
 > [!WARNING]
-> CarFigures uses different field names for their models. Some of the examples below might not work on CarFigures.
+> CarFigures uses different field names for their models. Some of the examples below might not work on CarFigures. In order to find out what fields are in a model, use the `list` command.
+
+### CREATE
+
+The `CREATE` command creates a model depending on the name given. After creating a model, you must update it via the `UPDATE` command to edit it. The function is structured like this:<br>
+```sql
+CREATE > MODEL > model_name
+```
+
+- `MODEL` has to be replaced with the model you are trying to create. (REGIME, BALL, ECONOMY, etc.)
+- `model_name` has to be replaced with the model name you are trying to create.
+
+Creating a Greece ball (BALLSDEX EXAMPLE):<br>
+```sql
+CREATE > BALL > Greece
+```
+
+Creating an economy (BALLSDEX EXAMPLE):<br>
+```sql
+UPDATE > ECONOMY > Anarchism
+```
+
+-----------
 
 ### UPDATE
 
-The `UPDATE` command updates a ball depending on the field given. The function is structured like this:<br>
+The `UPDATE` command updates a model depending on the field given. The function is structured like this:<br>
 ```sql
-UPDATE > BALL > ball_name > FIELD > value
+UPDATE > MODEL > model_name > FIELD > value
 ```
 
-- `ball_name` has to be replaced with the country of the ball you are trying to edit.
+- `MODEL` has to be replaced with the model you are trying to edit. (REGIME, BALL, ECONOMY, etc.)
+- `model_name` has to be replaced with the model name you are trying to edit. (EXAMPLE: Ancient Thebes)
 - `FIELD` has to be replaced with the field you are trying to edit. (EXAMPLE: CREDITS)
 - `value` has to be replaced with the new value you want that field to be.
 
-Changing a Roman Empire ball's credits (EXAMPLE):<br>
+Changing a Roman Empire ball's credits (BALLSDEX EXAMPLE):<br>
 ```sql
 UPDATE > BALL > Roman Empire > CREDITS > dotzz (Spawn & Card)
+```
+
+Changing a regime's name (BALLSDEX EXAMPLE):<br>
+```sql
+UPDATE > REGIME > Democracy > NAME > NewRegime
 ```
 
 -----------
 
 ### REMOVE
 
-The `REMOVE` command deletes a ball depending on the name given:<br>
+The `REMOVE` command deletes a model depending on the name given:<br>
 ```sql
-REMOVE > BALL > ball_name
+REMOVE > MODEL > model_name
 ```
 
-- `ball_name` has to be replaced with the country of the ball you are trying to delete.
+- `MODEL` has to be replaced with the model you are trying to delete. (REGIME, BALL, ECONOMY, etc.)
+- `model_name` has to be replaced with the model name you are trying to delete.
 
-Deleting a Parthian Empire ball (EXAMPLE):<br>
+Deleting a Parthian Empire ball (BALLSDEX EXAMPLE):<br>
 ```sql
 REMOVE > BALL > Parthian Empire
+```
+
+Deleting an economy (BALLSDEX EXAMPLE):<br>
+```sql
+REMOVE > ECONOMY > Capitalism
 ```
 
 -----------
 
 ### DISPLAY
 
-The `DISPLAY` command displays the value of a specified field for a ball:<br>
+The `DISPLAY` command displays the value of a specified field for a model:<br>
 ```sql
-DISPLAY > BALL > ball_name > FIELD
+DISPLAY > MODEL > model_name > FIELD
 ```
 
-- `ball_name` has to be replaced with the country of the ball you are trying to access.
+- `MODEL` has to be replaced with the model you are trying to access. (REGIME, BALL, ECONOMY, etc.)
+- `model_name` has to be replaced with the model name you are trying to access.
 - `FIELD` has to be replaced with the field you are trying to view. (EXAMPLE: ATTACK)
 
-Displaying an Ancient Greece ball's health (EXAMPLE):<br>
+Displaying an Ancient Greece ball's health (BALLSDEX EXAMPLE):<br>
 ```sql
 DISPLAY > BALL > Ancient Greece > HEALTH
+```
+
+Displaying a regime's name (BALLSDEX EXAMPLE):<br>
+```sql
+DISPLAY > REGIME > Dictatorship > NAME
+```
+
+-----------
+
+### LIST
+
+The `LIST` command displays a list of all a model's fields:<br>
+```sql
+LIST > MODEL
+```
+
+- `MODEL` has to be replaced with the model you are trying to list. (REGIME, BALL, ECONOMY, etc.)
+
+Displaying a list of fields a ball has (BALLSDEX EXAMPLE):<br>
+```sql
+LIST > BALL
+```
+
+Displaying a list of fields an economy has (BALLSDEX EXAMPLE):<br>
+```sql
+LIST > ECONOMY
 ```
 
 -----------
 
 Written by DotZZ <br>
-DexScript Version: 0.2.1
+DexScript Version: 0.3
