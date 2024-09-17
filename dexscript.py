@@ -216,7 +216,7 @@ class DexScriptParser():
                     formatted_ball[3] if new_attribute is None else new_attribute
                 )
 
-                await get_model.save()
+                await returned_model.save()
 
                 await self.ctx.send(
                     f"Updated `{formatted_ball[1]}'s` {formatted_ball[2]}"
