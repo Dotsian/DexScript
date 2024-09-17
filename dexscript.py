@@ -14,11 +14,13 @@ dir_type = "ballsdex" if os.path.isdir("ballsdex") else "carfigures"
 if dir_type == "ballsdex":
     from ballsdex.core.admin.resources import app
     from ballsdex.core.models import Ball
+    from ballsdex.core.modles import Regime
     from ballsdex.packages.admin.cog import save_file
     from ballsdex.settings import settings
 else:
     from carfigures.core.admin.resources import app
     from carfigures.core.models import Car as Ball
+    from carfigures.core.models import CarType as Regime
     from carfigures.packages.superuser.cog import save_file
     from carfigures.settings import settings
 
@@ -155,7 +157,11 @@ class DexScriptParser():
 
         if dir_type == "ballsdex":
             return_model = await Ball.create(
-                country = identifier, 
+                country = identifier,
+                health = 0,
+                attack = 0,
+                rarity = 0,
+                regime = await Regime.get(name="Democracy"),
                 emoji_id = 100 ** 8,
                 wild_card = "",
                 collection_card = "",
@@ -166,6 +172,9 @@ class DexScriptParser():
         else:
             return_model = await Ball.create(
                 full_name = identifier,
+                weight = 0,
+                horsepower = 0,
+                cartype = await Regime.get(name="Union"),
                 emoji_id = 100 ** 8,
                 spawn_picture = "",
                 collection_picture = "",
