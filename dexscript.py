@@ -4,8 +4,6 @@ import logging
 import os
 import re
 
-CRASH OUT
-
 import discord
 import requests
 from discord.ext import commands
