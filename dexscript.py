@@ -158,14 +158,21 @@ class DexScriptParser():
                 country = identifier, 
                 emoji_id = 100 ** 8,
                 wild_card = "",
-                collection_card = ""
+                collection_card = "",
+                credits = "DexScript",
+                capacity_name = "New Ball",
+                capacity_description = "Update this ball by using the UPDATE command."
             )
         else:
             return_model = await Ball.create(
                 full_name = identifier,
                 emoji_id = 100 ** 8,
                 spawn_picture = "",
-                collection_picture = ""
+                collection_picture = "",
+                image_credits = "DexScript",
+                car_suggester = "",
+                capacity_name = "New Ball",
+                capacity_description = "Update this ball by using the UPDATE command."
             )
 
         return return_model
