@@ -165,7 +165,7 @@ class DexScriptParser():
 
         match key:
             case "CREATE":
-                new_creation = await create_model(model, formatted_ball[1])
+                new_creation = await self.create_model(model, formatted_ball[1])
 
                 await self.ctx.send(
                     f"Created `{formatted_ball[1]}`\n"
@@ -173,7 +173,7 @@ class DexScriptParser():
                 )
 
             case "UPDATE":
-                returned_model = await get_model(model, formatted_ball[1])
+                returned_model = await self.get_model(model, formatted_ball[1])
 
                 new_attribute = None
 
@@ -197,14 +197,14 @@ class DexScriptParser():
                 )
 
             case "REMOVE":
-                returned_model = await get_model(model, formatted_ball[1])
+                returned_model = await self.get_model(model, formatted_ball[1])
 
                 await returned_model.delete()
 
                 await self.ctx.send(f"Deleted `{formatted_ball[1]}`")
 
             case "DISPLAY":
-                returned_model = await get_model(model, formatted_ball[1])
+                returned_model = await self.get_model(model, formatted_ball[1])
 
                 #if formatted_ball[2] == "-ALL":
                     #pass
