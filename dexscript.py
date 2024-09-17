@@ -7,14 +7,17 @@ import re
 import discord
 import requests
 from discord.ext import commands
+from fastapi_admin.resources import Field, Resource
 
 dir_type = "ballsdex" if os.path.isdir("ballsdex") else "carfigures"
 
 if dir_type == "ballsdex":
+    from ballsdex.core.admin.resources import app
     from ballsdex.core.models import Ball
     from ballsdex.packages.admin.cog import save_file
     from ballsdex.settings import settings
 else:
+    from carfigures.core.admin.resources import app
     from carfigures.core.models import Car as Ball
     from carfigures.packages.superuser.cog import save_file
     from carfigures.settings import settings
@@ -137,8 +140,8 @@ class DexScriptParser():
 
         return self.parse_code()
 
-    async def execute(self, key, item):
-        formatted_ball = item["BALL"]
+    async def execute(self, key, item, model):
+        formatted_ball = item[model]
 
         get_model = None
 
@@ -188,6 +191,23 @@ class DexScriptParser():
                     f"```{getattr(get_model, formatted_ball[2].lower())}```"
                 )
 
+            case "LIST":
+                selected_resource: type[Resource] = [
+                    x for x in app.resources if x.__name__ == model.title() + "Resource"
+                ][0]
+
+                parameters = f"{model} FIELDS:\n\n"
+
+                for field in selected_resource.fields:
+                    if not isinstance(field, str) and not isinstance(field, Field):
+                        continue
+
+                    label = field if not isinstance(field, Field) else field.label
+
+                    parameters += f"- {label.replace(' ', '_').upper()}\n"
+
+                await self.ctx.send(f"```\n{parameters}\n```")
+
     async def run(self):
         code_fields = self.parse(self.code)
 
@@ -196,7 +216,7 @@ class DexScriptParser():
             raise DexScriptError(f"`{method}` is not a valid command")
 
         for key, field in code_fields.items():
-           await self.execute(key, field)
+           await self.execute(key, field, "BALL")
 
 
 class DexScript(commands.Cog):
@@ -256,7 +276,7 @@ class DexScript(commands.Cog):
             dexscript_instance = DexScriptParser(ctx, body)
             await dexscript_instance.run()
         except Exception as error:
-            await ctx.send(f"```ERROR: \n{error}\n```")
+            await ctx.send(f"```ERROR: \n\n{error}\n```")
         else:
             await ctx.message.add_reaction("✅")
 
