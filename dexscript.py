@@ -31,11 +31,11 @@ __version__ = "0.3"
 START_CODE_BLOCK_RE = re.compile(r"^((```py(thon)?)(?=\s)|(```))")
 
 METHODS = [
+    "CREATE",
     "UPDATE",
     "REMOVE",
     "DISPLAY",
     "LIST",
-    "CREATE"
 ]
 
 
@@ -52,8 +52,8 @@ class DexScriptError(Exception):
 
 class DexScriptParser():
     """
-    Class used for parsing DexScript contents into Python code.
-    Ported over from DotZZ's DexScript Migrations JavaScript file.
+    This class is used to parse DexScript contents into Python code.
+    This was ported over from DotZZ's DexScript Migrations JavaScript file.
     """
 
     def __init__(self, ctx: commands.Context, code: str):
@@ -64,7 +64,7 @@ class DexScriptParser():
     def format_class(self, field):
         """
         Returns a class's identifier. 
-        If there is a token attached to the class, it will exclude the token.
+        If a token is attached to the class, it will exclude the token.
 
         Parameters
         ----------
@@ -81,7 +81,7 @@ class DexScriptParser():
         Parameters
         ----------
         line: str
-            The string you want to grab the token from.
+            The string from which you want to grab the token.
         """
 
         token = TOKENS.STRING
@@ -140,29 +140,52 @@ class DexScriptParser():
 
         return self.parse_code()
 
+    async def get_model(self, model, identifier):
+        return_model = None
+
+        if dir_type == "ballsdex":
+            return_model = await Ball.get(country=identifier)
+        else:
+            return_model = await Ball.get(full_name=identifier)
+
+        return return_model
+
+    async def create_model(self, model, identifier):
+        return_model = None
+
+        if dir_type == "ballsdex":
+            return_model = await Ball.create(country=identifier)
+        else:
+            return_model = await Ball.create(full_name=identifier)
+
+        return return_model
+
     async def execute(self, key, item, model):
         formatted_ball = item[model]
 
-        get_model = None
-
-        if dir_type == "ballsdex":
-            get_model = await Ball.get(country=formatted_ball[1])
-        else:
-            get_model = await Ball.get(full_name=formatted_ball[1])
-
         match key:
+            case "CREATE":
+                new_creation = await create_model(model, formatted_ball[1])
+
+                await self.ctx.send(
+                    f"Created `{formatted_ball[1]}`\n"
+                    f"-# Use the `UPDATE` command to update this {model.lower()}."
+                )
+
             case "UPDATE":
+                returned_model = await get_model(model, formatted_ball[1])
+
                 new_attribute = None
 
                 if (
                     self.ctx.message.attachments != [] and 
-                    hasattr(get_model, formatted_ball[2].lower())
+                    hasattr(returned_model, formatted_ball[2].lower())
                 ):
                     image_path = await save_file(self.ctx.message.attachments[0])
                     new_attribute = "/" + str(image_path)
 
                 setattr(
-                    get_model, 
+                    returned_model, 
                     formatted_ball[2].lower(), 
                     formatted_ball[3] if new_attribute is None else new_attribute
                 )
@@ -174,12 +197,19 @@ class DexScriptParser():
                 )
 
             case "REMOVE":
-                await get_model.delete()
+                returned_model = await get_model(model, formatted_ball[1])
+
+                await returned_model.delete()
 
                 await self.ctx.send(f"Deleted `{formatted_ball[1]}`")
 
             case "DISPLAY":
-                attribute = getattr(get_model, formatted_ball[2].lower())
+                returned_model = await get_model(model, formatted_ball[1])
+
+                #if formatted_ball[2] == "-ALL":
+                    #pass
+
+                attribute = getattr(returned_model, formatted_ball[2].lower())
 
                 if os.path.isfile(attribute[1:]):
                     await self.ctx.send(
@@ -188,7 +218,7 @@ class DexScriptParser():
                     return
 
                 await self.ctx.send(
-                    f"```{getattr(get_model, formatted_ball[2].lower())}```"
+                    f"```{getattr(returned_model, formatted_ball[2].lower())}```"
                 )
 
             case "LIST":
