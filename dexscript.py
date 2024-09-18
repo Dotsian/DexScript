@@ -6,6 +6,7 @@ import re
 
 import discord
 import requests
+from difflib import SequenceMatcher
 from discord.ext import commands
 from fastapi_admin.resources import Field, Resource
 
@@ -142,6 +143,23 @@ class DexScriptParser():
 
         return self.parse_code()
 
+    def check_ratio(self, string1, string2):
+        return SequenceMatcher(None, string1, string2).ratio()
+
+    def autocorrect_model(self, string, model):
+        autocorrection = (None, 0)
+
+        for field in model.all():
+            if check_ratio(string, field.country) < autocorrection[1]:
+                continue
+
+            autocorrection = (string, check_ratio(string, field.country))
+
+            if autocorrection[1] == 1:
+                break
+
+        return autocorrection
+
     async def get_model(self, model, identifier):
         return_model = None
 
@@ -154,6 +172,11 @@ class DexScriptParser():
 
     async def create_model(self, model, identifier):
         return_model = None
+        identifier = self.autocorrect_model(identifier, Ball)
+
+        if identifier[1] != 1:
+            print(f"Could  not find {identifier}. Did you mean {identifier[0]}?")
+            return
 
         if dir_type == "ballsdex":
             return_model = await Ball.create(
