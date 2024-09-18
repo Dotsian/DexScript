@@ -151,12 +151,10 @@ class DexScriptParser():
         for ball in await Ball.all():
             print(ball)
 
-            continue
-
-            if self.check_ratio(string, field.country) < autocorrection[1]:
+            if self.check_ratio(string, ball.country) < autocorrection[1]:
                 continue
 
-            autocorrection = (string, self.check_ratio(string, field.country))
+            autocorrection = (string, self.check_ratio(string, ball.country))
 
             if autocorrection[1] == 1:
                 break
@@ -165,18 +163,18 @@ class DexScriptParser():
 
     async def get_model(self, model, identifier):
         return_model = None
-        identifier = await self.autocorrect_model(identifier, model)
+        new_identity = await self.autocorrect_model(identifier, model)
 
-        print(identifier)
+        print(new_identity)
 
-        if identifier[1] != 1:
-            print(f"Could  not find {identifier}. Did you mean {identifier[0]}?")
+        if new_identity[1] < 1:
+            print(f"Could not find {identifier}. Did you mean {new_identity[0]}?")
             return
 
         if dir_type == "ballsdex":
-            return_model = await Ball.get(country=identifier)
+            return_model = await Ball.get(country=new_identity[0])
         else:
-            return_model = await Ball.get(full_name=identifier)
+            return_model = await Ball.get(full_name=new_identity[0])
 
         return return_model
 
@@ -259,6 +257,10 @@ class DexScriptParser():
 
             case "DISPLAY":
                 returned_model = await self.get_model(model, formatted_ball[1])
+
+                print(returned_model)
+
+                return
 
                 #if formatted_ball[2] == "-ALL":
                     #pass
