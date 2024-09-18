@@ -79,7 +79,7 @@ CREATE > BALL > Greece
 
 Creating an economy (BALLSDEX EXAMPLE):<br>
 ```sql
-UPDATE > ECONOMY > Anarchism
+CREATE > ECONOMY > Anarchism
 ```
 
 -----------
