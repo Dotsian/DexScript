@@ -7,6 +7,13 @@ body:
     attributes:
       value: |
         Thank you for reporting a DexScript bug!
+  - type: checkboxes
+    attributes:
+      label: Error Page
+      description: The [error page](https://github.com/Dotsian/DexScript/wiki/Errors) explains what common errors mean and how to solve them.
+      options:
+        - label: Did you read the error page and view the common errors?
+          required: true
   - type: textarea
     id: description
     attributes:
@@ -24,6 +31,7 @@ body:
         - 0.1
         - 0.2
         - 0.2.1
+        - 0.3
       default: 2
     validations:
       required: true
