@@ -162,6 +162,13 @@ class DexScriptParser():
 
     async def get_model(self, model, identifier):
         return_model = None
+        identifier = await self.autocorrect_model(identifier, Ball)
+
+        print(identifier)
+
+        if identifier[1] != 1:
+            print(f"Could  not find {identifier}. Did you mean {identifier[0]}?")
+            return
 
         if dir_type == "ballsdex":
             return_model = await Ball.get(country=identifier)
@@ -172,13 +179,6 @@ class DexScriptParser():
 
     async def create_model(self, model, identifier):
         return_model = None
-        identifier = await self.autocorrect_model(identifier, Ball)
-
-        print(identifier)
-
-        if identifier[1] != 1:
-            print(f"Could  not find {identifier}. Did you mean {identifier[0]}?")
-            return
 
         if dir_type == "ballsdex":
             return_model = await Ball.create(
