@@ -151,7 +151,7 @@ class DexScriptParser():
         if autocorrection[0] != string:
             raise DexScriptError(
                 f"'{string}' does not exist.\n"
-                f"Did you mean '{autocorrection}'?"
+                f"Did you mean '{autocorrection[0]}'?"
             )
 
         return autocorrection[0]
