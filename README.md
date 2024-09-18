@@ -23,6 +23,7 @@ if r.status_code == requests.codes.ok:
   await ctx.invoke(bot.get_command("eval"), body=content.decode("UTF-8"))
 else:
   await ctx.send("Failed to install DexScript.\nReport this issue to `dot_zz` on Discord.")
+  print(f"ERROR CODE: {r.status_code}")
 ```
 
 After you run the installation code, you must restart the bot for the commands to take effect.
@@ -42,6 +43,7 @@ if r.status_code == requests.codes.ok:
   await ctx.invoke(bot.get_command("eval"), body=content.decode("UTF-8"))
 else:
   await ctx.send("Failed to uninstall DexScript.\nReport this issue to `dot_zz` on Discord.")
+  print(f"ERROR CODE: {r.status_code}")
 ```
 
 ## Commands
