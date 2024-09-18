@@ -143,7 +143,7 @@ class DexScriptParser():
         return self.parse_code()
 
     async def autocorrect_model(self, string, model):
-        autocorrection = get_close_matches(string, [x.country for x in await Ball.all()])
+        autocorrection = get_close_matches(string, [x.country for x in await Ball.all()])[0]
 
         if autocorrection is None:
             raise DexScriptError(f"'{string}' does not exist.")
