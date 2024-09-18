@@ -149,7 +149,9 @@ class DexScriptParser():
     async def autocorrect_model(self, string, model):
         autocorrection = (None, 0)
 
-        for field in await model.all():
+        for field in await Ball.all():
+            print(field)
+
             if self.check_ratio(string, field.country) < autocorrection[1]:
                 continue
 
@@ -162,7 +164,7 @@ class DexScriptParser():
 
     async def get_model(self, model, identifier):
         return_model = None
-        identifier = await self.autocorrect_model(identifier, Ball)
+        identifier = await self.autocorrect_model(identifier)
 
         print(identifier)
 
