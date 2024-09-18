@@ -164,7 +164,7 @@ class DexScriptParser():
 
     async def get_model(self, model, identifier):
         return_model = None
-        identifier = await self.autocorrect_model(identifier)
+        identifier = await self.autocorrect_model(identifier, model)
 
         print(identifier)
 
