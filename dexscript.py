@@ -14,8 +14,7 @@ dir_type = "ballsdex" if os.path.isdir("ballsdex") else "carfigures"
 
 if dir_type == "ballsdex":
     from ballsdex.core.admin.resources import app
-    from ballsdex.core.models import Ball
-    from ballsdex.core.models import Regime
+    from ballsdex.core.models import Ball, Regime
     from ballsdex.packages.admin.cog import save_file
     from ballsdex.settings import settings
 else:
@@ -149,8 +148,10 @@ class DexScriptParser():
     async def autocorrect_model(self, string, model):
         autocorrection = (None, 0)
 
-        for field in await Ball.all():
-            print(field)
+        for ball in await Ball.all():
+            print(ball)
+
+            continue
 
             if self.check_ratio(string, field.country) < autocorrection[1]:
                 continue
