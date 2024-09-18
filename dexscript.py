@@ -143,18 +143,18 @@ class DexScriptParser():
         return self.parse_code()
 
     async def autocorrect_model(self, string, model):
-        autocorrection = get_close_matches(string, [x.country for x in await Ball.all()])[0]
+        autocorrection = get_close_matches(string, [x.country for x in await Ball.all()])
 
         if autocorrection == []:
             raise DexScriptError(f"'{string}' does not exist.")
 
-        if autocorrection != string:
+        if autocorrection[0] != string:
             raise DexScriptError(
                 f"'{string}' does not exist.\n"
                 f"Did you mean '{autocorrection}'?"
             )
 
-        return autocorrection
+        return autocorrection[0]
 
     async def get_model(self, model, identifier):
         return_model = None
@@ -246,10 +246,6 @@ class DexScriptParser():
 
             case "DISPLAY":
                 returned_model = await self.get_model(model, formatted_ball[1])
-
-                print(returned_model)
-
-                return
 
                 #if formatted_ball[2] == "-ALL":
                     #pass
