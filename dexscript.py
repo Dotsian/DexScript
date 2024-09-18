@@ -146,14 +146,14 @@ class DexScriptParser():
     def check_ratio(self, string1, string2):
         return SequenceMatcher(None, string1, string2).ratio()
 
-    def autocorrect_model(self, string, model):
+    async def autocorrect_model(self, string, model):
         autocorrection = (None, 0)
 
-        for field in model.all():
-            if check_ratio(string, field.country) < autocorrection[1]:
+        for field in await model.all():
+            if self.check_ratio(string, field.country) < autocorrection[1]:
                 continue
 
-            autocorrection = (string, check_ratio(string, field.country))
+            autocorrection = (string, self.check_ratio(string, field.country))
 
             if autocorrection[1] == 1:
                 break
@@ -172,7 +172,9 @@ class DexScriptParser():
 
     async def create_model(self, model, identifier):
         return_model = None
-        identifier = self.autocorrect_model(identifier, Ball)
+        identifier = await self.autocorrect_model(identifier, Ball)
+
+        print(identifier)
 
         if identifier[1] != 1:
             print(f"Could  not find {identifier}. Did you mean {identifier[0]}?")
