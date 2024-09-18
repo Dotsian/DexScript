@@ -53,10 +53,10 @@ async def display_error(error, log=None):
   )
   embed.color = discord.Color.red()
 
-  await ctx.send(embed=embed)
+  await original_message.edit(embed=embed)
 
 if request.status_code != requests.codes.ok:
-  await display_error("Failed to fetch the `DexScript.py` file.")
+  await display_error("Failed to fetch the `dexscript.py` file.")
   return
 
 request = request.json()
@@ -116,7 +116,7 @@ try:
   await install()
 except Exception as e:
   embed.set_footer(
-    text = f"Error occured {round((time.time() - t1) * 1000)}ms into installation"
+    text = f"Error occurred {round((time.time() - t1) * 1000)}ms into {keywords[0].lower()}"
   )
   
   await display_error(f"Failed to {keyword} DexScript.", e)
