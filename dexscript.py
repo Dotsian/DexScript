@@ -6,7 +6,7 @@ import re
 
 import discord
 import requests
-from difflib import SequenceMatcher
+from difflib import get_close_matches
 from discord.ext import commands
 from fastapi_admin.resources import Field, Resource
 
@@ -142,39 +142,28 @@ class DexScriptParser():
 
         return self.parse_code()
 
-    def check_ratio(self, string1, string2):
-        return SequenceMatcher(None, string1, string2).ratio()
-
     async def autocorrect_model(self, string, model):
-        autocorrection = (None, 0)
+        autocorrection = get_close_matches(string, [x.country for x in await Ball.all()])
 
-        for ball in await Ball.all():
-            print(ball)
+        if autocorrect is None:
+            raise DexScriptError(f"'{string}' does not exist.")
 
-            if self.check_ratio(string, ball.country) < autocorrection[1]:
-                continue
-
-            autocorrection = (string, self.check_ratio(string, ball.country))
-
-            if autocorrection[1] == 1:
-                break
+        if autocorrection != string:
+            raise DexScriptError(
+                f"'{string}' does not exist.\n"
+                f"Did you mean '{autocorrection}'?"
+            )
 
         return autocorrection
 
     async def get_model(self, model, identifier):
         return_model = None
         new_identity = await self.autocorrect_model(identifier, model)
-
-        print(new_identity)
-
-        if new_identity[1] < 1:
-            print(f"Could not find {identifier}. Did you mean {new_identity[0]}?")
-            return
-
+        
         if dir_type == "ballsdex":
-            return_model = await Ball.get(country=new_identity[0])
+            return_model = await Ball.get(country=new_identity)
         else:
-            return_model = await Ball.get(full_name=new_identity[0])
+            return_model = await Ball.get(full_name=new_identity)
 
         return return_model
 
