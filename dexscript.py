@@ -134,11 +134,11 @@ class DexScriptParser():
         if "\n" not in code:
             code = "\n" + code
 
+        code = code.encode("UTF-8")
+
         parsed_code = []
 
-        for line1 in code.encode("UTF-8").replace("b'", "").split("\n'"):
-            print(line1)
-
+        for line1 in code.decode("UTF-8").split("\n"):
             if line1.startswith("//") or line1 == "":
                 continue
 
