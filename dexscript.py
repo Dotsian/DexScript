@@ -139,6 +139,8 @@ class DexScriptParser():
         parsed_code = []
 
         for line1 in code.decode("UTF-8").split("\n"):
+            print(line1)
+
             if line1.startswith("//") or line1 == "":
                 continue
 
