@@ -420,6 +420,8 @@ class DexScript(commands.Cog):
     @commands.command(name="toggle-advanced-errors")
     @commands.is_owner()
     async def toggle_advanced_errors(self, ctx: commands.Context):
+        global ADVANCED_ERRORS
+
         ADVANCED_ERRORS = not ADVANCED_ERRORS
 
         await ctx.send(f"ADVANCED_ERRORS has been set to {str(ADVANCED_ERRORS)}")
