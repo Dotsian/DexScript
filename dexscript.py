@@ -28,7 +28,7 @@ else:
 
 log = logging.getLogger(f"{dir_type}.core.dexscript")
 
-__version__ = "0.3"
+__version__ = "0.3.1"
 
 
 START_CODE_BLOCK_RE = re.compile(r"^((```sql?)(?=\s)|(```))")
@@ -153,9 +153,14 @@ class DexScriptParser():
         return parsed_code
 
     async def autocorrect_model(self, string, model):
-        autocorrection = get_close_matches(
-            string, [x.country for x in await Ball.all()]
-        )
+        correction_list = []
+
+        if dir_type == "ballsdex":
+            correction_list = [x.country for x in await Ball.all()]
+        else:
+            correction_list = [x.full_name for x in await Ball.all()]
+
+        autocorrection = get_close_matches(string, correction_list)
 
         if autocorrection == []:
             raise DexScriptError(f"'{string}' does not exist.")
@@ -417,6 +422,14 @@ class DexScript(commands.Cog):
                 "Report this issue to `dot_zz` on Discord."
             )
 
+    @commands.command(name="toggle-advanced-errors")
+    @commands.is_owner()
+    async def toggle_advanced_errors(self, ctx: commands.Context):
+        global ADVANCED_ERRORS
+
+        ADVANCED_ERRORS = not ADVANCED_ERRORS
+
+        await ctx.send(f"ADVANCED_ERRORS has been set to {str(ADVANCED_ERRORS)}")
 
 async def setup(bot):
     await bot.add_cog(DexScript(bot))
