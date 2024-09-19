@@ -3,34 +3,44 @@ import enum
 import logging
 import os
 import re
+import traceback
+from difflib import get_close_matches
 
 import discord
 import requests
 from discord.ext import commands
+from fastapi_admin.resources import Field, Resource
 
 dir_type = "ballsdex" if os.path.isdir("ballsdex") else "carfigures"
 
 if dir_type == "ballsdex":
-    from ballsdex.core.models import Ball
+    from ballsdex.core.admin.resources import app
+    from ballsdex.core.models import Ball, Regime
     from ballsdex.packages.admin.cog import save_file
     from ballsdex.settings import settings
 else:
+    from carfigures.core.admin.resources import app
     from carfigures.core.models import Car as Ball
+    from carfigures.core.models import CarType as Regime
     from carfigures.packages.superuser.cog import save_file
     from carfigures.settings import settings
 
 
 log = logging.getLogger(f"{dir_type}.core.dexscript")
 
-__version__ = "0.2.2"
+__version__ = "0.3"
 
 
-START_CODE_BLOCK_RE = re.compile(r"^((```py(thon)?)(?=\s)|(```))")
+START_CODE_BLOCK_RE = re.compile(r"^((```sql?)(?=\s)|(```))")
+ENABLE_VERSION_WARNING = True
+ADVANCED_ERRORS = False
 
 METHODS = [
+    "CREATE",
     "UPDATE",
-    "REMOVE",
-    "DISPLAY"
+    "DELETE",
+    "DISPLAY",
+    "LIST",
 ]
 
 
@@ -47,8 +57,8 @@ class DexScriptError(Exception):
 
 class DexScriptParser():
     """
-    Class used for parsing DexScript contents into Python code.
-    Ported over from DotZZ's DexScript Migrations JavaScript file.
+    This class is used to parse DexScript contents into Python code.
+    This was ported over from DotZZ's DexScript Migrations JavaScript file.
     """
 
     def __init__(self, ctx: commands.Context, code: str):
@@ -59,7 +69,7 @@ class DexScriptParser():
     def format_class(self, field):
         """
         Returns a class's identifier. 
-        If there is a token attached to the class, it will exclude the token.
+        If a token is attached to the class, it will exclude the token.
 
         Parameters
         ----------
@@ -76,7 +86,7 @@ class DexScriptParser():
         Parameters
         ----------
         line: str
-            The string you want to grab the token from.
+            The string from which you want to grab the token.
         """
 
         token = TOKENS.STRING
@@ -122,59 +132,137 @@ class DexScriptParser():
 
         return class_data
 
-    def parse(self, code: str):
+    def parse(self, code):
         if "\n" not in code:
             code = "\n" + code
 
-        for line1 in code.split("\n"): 
-            if line1.startswith("//") or line1 == "" or line1 == "\n":
+        code = code.encode("UTF-8")
+
+        parsed_code = []
+
+        for line1 in code.decode("UTF-8").split("\n"):
+            if line1.startswith("//") or line1 == "":
                 continue
 
             for line2 in line1.split(" > "):
                 self.fields.append(self.grab_token(line2.replace("    ", "")))
 
-        return self.parse_code()
+            parsed_code.append(self.parse_code())
+            self.fields = []
 
-    async def execute(self, key, item):
-        formatted_ball = item["BALL"]
+        return parsed_code
 
-        get_model = None
+    async def autocorrect_model(self, string, model):
+        autocorrection = get_close_matches(
+            string, [x.country for x in await Ball.all()]
+        )
+
+        if autocorrection == []:
+            raise DexScriptError(f"'{string}' does not exist.")
+
+        if autocorrection[0] != string:
+            raise DexScriptError(
+                f"'{string}' does not exist.\n"
+                f"Did you mean '{autocorrection[0]}'?"
+            )
+
+        return autocorrection[0]
+
+    async def get_model(self, model, identifier):
+        return_model = None
+        new_identity = await self.autocorrect_model(identifier, model)
 
         if dir_type == "ballsdex":
-            get_model = await Ball.get(country=formatted_ball[1])
+            return_model = await Ball.get(country=new_identity)
         else:
-            get_model = await Ball.get(full_name=formatted_ball[1])
+            return_model = await Ball.get(full_name=new_identity)
+
+        return return_model
+
+    async def create_model(self, model, identifier):
+        return_model = None
+
+        if dir_type == "ballsdex":
+            return_model = await Ball.create(
+                country = identifier,
+                health = 0,
+                attack = 0,
+                rarity = 0,
+                regime = await Regime.get(name="Democracy"),
+                emoji_id = 100 ** 8,
+                wild_card = "",
+                collection_card = "",
+                credits = "DexScript",
+                capacity_name = "New Ball",
+                capacity_description = "Update this ball by using the UPDATE command."
+            )
+        else:
+            return_model = await Ball.create(
+                full_name = identifier,
+                weight = 0,
+                horsepower = 0,
+                cartype = await Regime.get(name="Union"),
+                emoji_id = 100 ** 8,
+                spawn_picture = "",
+                collection_picture = "",
+                image_credits = "DexScript",
+                car_suggester = "",
+                capacity_name = "New Ball",
+                capacity_description = "Update this ball by using the UPDATE command."
+            )
+
+        return return_model
+
+    async def execute(self, key, item, model):
+        formatted_ball = item[model]
 
         match key:
+            case "CREATE":
+                await self.create_model(model, formatted_ball[1])
+
+                await self.ctx.send(
+                    f"Created `{formatted_ball[1]}`\n"
+                    f"-# Use the `UPDATE` command to update this {model.lower()}."
+                )
+
             case "UPDATE":
+                returned_model = await self.get_model(model, formatted_ball[1])
+
                 new_attribute = None
 
                 if (
                     self.ctx.message.attachments != [] and 
-                    hasattr(get_model, formatted_ball[2].lower())
+                    hasattr(returned_model, formatted_ball[2].lower())
                 ):
                     image_path = await save_file(self.ctx.message.attachments[0])
                     new_attribute = "/" + str(image_path)
 
                 setattr(
-                    get_model, 
+                    returned_model, 
                     formatted_ball[2].lower(), 
                     formatted_ball[3] if new_attribute is None else new_attribute
                 )
 
-                await get_model.save()
+                await returned_model.save()
 
                 await self.ctx.send(
                     f"Updated `{formatted_ball[1]}'s` {formatted_ball[2]}"
                 )
 
-            case "REMOVE":
-                await get_model.delete()
+            case "DELETE":
+                returned_model = await self.get_model(model, formatted_ball[1])
+
+                await returned_model.delete()
 
                 await self.ctx.send(f"Deleted `{formatted_ball[1]}`")
 
             case "DISPLAY":
-                attribute = getattr(get_model, formatted_ball[2].lower())
+                returned_model = await self.get_model(model, formatted_ball[1])
+
+                #if formatted_ball[2] == "-ALL":
+                    #pass
+
+                attribute = getattr(returned_model, formatted_ball[2].lower())
 
                 if isinstance(attribute, str) and os.path.isfile(attribute[1:]):
                     await self.ctx.send(
@@ -183,8 +271,25 @@ class DexScriptParser():
                     return
 
                 await self.ctx.send(
-                    f"```{getattr(get_model, formatted_ball[2].lower())}```"
+                    f"```{getattr(returned_model, formatted_ball[2].lower())}```"
                 )
+
+            case "LIST":
+                selected_resource: type[Resource] = [
+                    x for x in app.resources if x.__name__ == model.title() + "Resource"
+                ][0]
+
+                parameters = f"{model} FIELDS:\n\n"
+
+                for field in selected_resource.fields:
+                    if not isinstance(field, str) and not isinstance(field, Field):
+                        continue
+
+                    label = field if not isinstance(field, Field) else field.label
+
+                    parameters += f"- {label.replace(' ', '_').upper()}\n"
+
+                await self.ctx.send(f"```\n{parameters}\n```")
 
     async def run(self):
         code_fields = self.parse(self.code)
@@ -193,8 +298,9 @@ class DexScriptParser():
             method = f"{self.code.split(' > ')[0]}"
             raise DexScriptError(f"`{method}` is not a valid command")
 
-        for key, field in code_fields.items():
-           await self.execute(key, field)
+        for item in code_fields:
+            for key, field in item.items():
+                await self.execute(key, field, "BALL")
 
 
 class DexScript(commands.Cog):
@@ -220,6 +326,9 @@ class DexScript(commands.Cog):
 
     @staticmethod
     def check_version():
+        if not ENABLE_VERSION_WARNING:
+            return None
+
         r = requests.get("https://api.github.com/repos/Dotsian/DexScript/contents/version.txt")
 
         if r.status_code != requests.codes.ok:
@@ -254,7 +363,12 @@ class DexScript(commands.Cog):
             dexscript_instance = DexScriptParser(ctx, body)
             await dexscript_instance.run()
         except Exception as error:
-            await ctx.send(f"```ERROR: \n{error}\n```")
+            full_error = error
+
+            if ADVANCED_ERRORS:
+                full_error = traceback.format_exc()
+            
+            await ctx.send(f"```ERROR:\n\n{full_error}\n```")
         else:
             await ctx.message.add_reaction("✅")
 
@@ -268,7 +382,7 @@ class DexScript(commands.Cog):
                 "that allows you to easily "
                 "modify, delete, and display data about balls.\n\n"
                 "For a guide on how to use DexScript, "
-                "refer to the guide on the [DexScript GitHub Page](<https://github.com/Dotsian/DexScript>)"
+                "refer to the official [DexScript Guide](<https://github.com/Dotsian/DexScript/wiki/Commands>)."
             ),
             color = discord.Color.from_str("#03BAFC")
         )

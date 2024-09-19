@@ -11,4 +11,4 @@ Currently, DexScript is in alpha. DexScript will have more commands, the ability
 If you want information on installing, updating, and using DexScript, check out the [DexScript official guide](https://github.com/Dotsian/DexScript/wiki).
 
 > Written by DotZZ <br>
-> DexScript Version: 0.2.2
+> DexScript Version: 0.3
