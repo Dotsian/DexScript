@@ -37,7 +37,7 @@ t1 = time.time()
 
 GITHUB = [
   "https://api.github.com/repos/Dotsian/DexScript/contents/",
-  {"ref": "beta"}
+  {"ref": "main"}
 ]
 BUGLINK = "<https://github.com/Dotsian/DexScript/issues/new/choose>"
 request = requests.get(f"{GITHUB[0]}/dexscript.py", GITHUB[1])
