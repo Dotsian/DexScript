@@ -3,6 +3,7 @@ import enum
 import logging
 import os
 import re
+import traceback
 
 import discord
 import requests
@@ -365,7 +366,7 @@ class DexScript(commands.Cog):
             dexscript_instance = DexScriptParser(ctx, body)
             await dexscript_instance.run()
         except Exception as error:
-            await ctx.send(f"```ERROR: \n\n{error}\n```")
+            await ctx.send(f"```ERROR:\n\n{traceback.format_exc()}\n```")
         else:
             await ctx.message.add_reaction("✅")
 
