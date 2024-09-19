@@ -22,7 +22,7 @@ else:
 
 log = logging.getLogger(f"{dir_type}.core.dexscript")
 
-__version__ = "0.2.1"
+__version__ = "0.2.2"
 
 
 START_CODE_BLOCK_RE = re.compile(r"^((```py(thon)?)(?=\s)|(```))")
@@ -176,7 +176,7 @@ class DexScriptParser():
             case "DISPLAY":
                 attribute = getattr(get_model, formatted_ball[2].lower())
 
-                if os.path.isfile(attribute[1:]):
+                if isinstance(attribute, str) and os.path.isfile(attribute[1:]):
                     await self.ctx.send(
                         f"```{attribute}```", file=discord.File(attribute[1:])
                     )
