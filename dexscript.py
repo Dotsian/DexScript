@@ -151,6 +151,7 @@ class DexScriptParser():
                 self.fields.append(self.grab_token(line2.replace("    ", "")))
 
             parsed_code.append(self.parse_code())
+            self.fields = []
 
         print(parsed_code)
 
