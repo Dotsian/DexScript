@@ -287,7 +287,8 @@ class DexScriptParser():
             raise DexScriptError(f"`{method}` is not a valid command")
 
         for key, field in code_fields.items():
-           await self.execute(key, field, "BALL")
+            print(key, field)
+            await self.execute(key, field, "BALL")
 
 
 class DexScript(commands.Cog):
