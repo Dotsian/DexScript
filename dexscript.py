@@ -417,6 +417,12 @@ class DexScript(commands.Cog):
                 "Report this issue to `dot_zz` on Discord."
             )
 
+    @commands.command(name="toggle-advanced-errors")
+    @commands.is_owner()
+    async def toggle_advanced_errors(self, ctx: commands.Context):
+        ADVANCED_ERRORS = not ADVANCED_ERRORS
+
+        await ctx.send(f"ADVANCED_ERRORS has been set to {str(ADVANCED_ERRORS)}")
 
 async def setup(bot):
     await bot.add_cog(DexScript(bot))
