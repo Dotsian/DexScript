@@ -4,10 +4,10 @@ import logging
 import os
 import re
 import traceback
+from difflib import get_close_matches
 
 import discord
 import requests
-from difflib import get_close_matches
 from discord.ext import commands
 from fastapi_admin.resources import Field, Resource
 
@@ -32,12 +32,13 @@ __version__ = "0.3"
 
 
 START_CODE_BLOCK_RE = re.compile(r"^((```sql?)(?=\s)|(```))")
-ENABLE_VERSION_WARNING = False
+ENABLE_VERSION_WARNING = True
+ADVANCED_ERRORS = False
 
 METHODS = [
     "CREATE",
     "UPDATE",
-    "REMOVE",
+    "DELETE",
     "DISPLAY",
     "LIST",
 ]
@@ -131,7 +132,7 @@ class DexScriptParser():
 
         return class_data
 
-    def parse(self, code: str):
+    def parse(self, code):
         if "\n" not in code:
             code = "\n" + code
 
@@ -148,11 +149,13 @@ class DexScriptParser():
 
             parsed_code.append(self.parse_code())
             self.fields = []
-            
+
         return parsed_code
 
     async def autocorrect_model(self, string, model):
-        autocorrection = get_close_matches(string, [x.country for x in await Ball.all()])
+        autocorrection = get_close_matches(
+            string, [x.country for x in await Ball.all()]
+        )
 
         if autocorrection == []:
             raise DexScriptError(f"'{string}' does not exist.")
@@ -168,7 +171,7 @@ class DexScriptParser():
     async def get_model(self, model, identifier):
         return_model = None
         new_identity = await self.autocorrect_model(identifier, model)
-        
+
         if dir_type == "ballsdex":
             return_model = await Ball.get(country=new_identity)
         else:
@@ -215,7 +218,7 @@ class DexScriptParser():
 
         match key:
             case "CREATE":
-                new_creation = await self.create_model(model, formatted_ball[1])
+                await self.create_model(model, formatted_ball[1])
 
                 await self.ctx.send(
                     f"Created `{formatted_ball[1]}`\n"
@@ -246,7 +249,7 @@ class DexScriptParser():
                     f"Updated `{formatted_ball[1]}'s` {formatted_ball[2]}"
                 )
 
-            case "REMOVE":
+            case "DELETE":
                 returned_model = await self.get_model(model, formatted_ball[1])
 
                 await returned_model.delete()
@@ -360,7 +363,12 @@ class DexScript(commands.Cog):
             dexscript_instance = DexScriptParser(ctx, body)
             await dexscript_instance.run()
         except Exception as error:
-            await ctx.send(f"```ERROR:\n\n{traceback.format_exc()}\n```")
+            full_error = error
+
+            if ADVANCED_ERRORS:
+                full_error = traceback.format_exc()
+            
+            await ctx.send(f"```ERROR:\n\n{full_error}\n```")
         else:
             await ctx.message.add_reaction("✅")
 
@@ -374,7 +382,7 @@ class DexScript(commands.Cog):
                 "that allows you to easily "
                 "modify, delete, and display data about balls.\n\n"
                 "For a guide on how to use DexScript, "
-                "refer to the guide on the [DexScript GitHub Page](<https://github.com/Dotsian/DexScript>)"
+                "refer to the official [DexScript Guide](<https://github.com/Dotsian/DexScript/wiki/Commands>)."
             ),
             color = discord.Color.from_str("#03BAFC")
         )
