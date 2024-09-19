@@ -31,6 +31,7 @@ __version__ = "0.3"
 
 
 START_CODE_BLOCK_RE = re.compile(r"^((```py(thon)?)(?=\s)|(```))")
+ENABLE_VERSION_WARNING = False
 
 METHODS = [
     "CREATE",
@@ -133,6 +134,8 @@ class DexScriptParser():
         if "\n" not in code:
             code = "\n" + code
 
+        parsed_code = []
+
         for line1 in code.split("\n"): 
             if line1.startswith("//") or line1 == "" or line1 == "\n":
                 continue
@@ -140,7 +143,9 @@ class DexScriptParser():
             for line2 in line1.split(" > "):
                 self.fields.append(self.grab_token(line2.replace("    ", "")))
 
-        return self.parse_code()
+            parsed_code.append(self.parse_code())
+
+        return parsed_code
 
     async def autocorrect_model(self, string, model):
         autocorrection = get_close_matches(string, [x.country for x in await Ball.all()])
@@ -286,9 +291,10 @@ class DexScriptParser():
             method = f"{self.code.split(' > ')[0]}"
             raise DexScriptError(f"`{method}` is not a valid command")
 
-        for key, field in code_fields.items():
-            print(key, field)
-            await self.execute(key, field, "BALL")
+        for item in code_fields:
+            for key, field in item.items():
+                print(key, field)
+                await self.execute(key, field, "BALL")
 
 
 class DexScript(commands.Cog):
@@ -314,6 +320,9 @@ class DexScript(commands.Cog):
 
     @staticmethod
     def check_version():
+        if not ENABLE_VERSION_WARNING:
+            return None
+
         r = requests.get("https://api.github.com/repos/Dotsian/DexScript/contents/version.txt")
 
         if r.status_code != requests.codes.ok:
