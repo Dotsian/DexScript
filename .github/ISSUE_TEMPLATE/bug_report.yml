@@ -1,0 +1,53 @@
+name: Bug Report
+description: Report a DexScript bug
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for reporting a DexScript bug!
+  - type: checkboxes
+    attributes:
+      label: Error Page
+      description: The [error page](https://github.com/Dotsian/DexScript/wiki/Errors) explains what common errors mean and how to solve them.
+      options:
+        - label: Did you read the error page and view the common errors?
+          required: true
+  - type: textarea
+    id: description
+    attributes:
+      label: Bug Description
+      description: Explain what the bug was and where it occurred.
+      placeholder: Bug explanation...
+    validations:
+      required: true
+  - type: dropdown
+    id: version
+    attributes:
+      label: Version
+      description: What version of DexScript is your bot using?
+      options:
+        - 0.1
+        - 0.2
+        - 0.2.1
+        - 0.2.2
+        - 0.3
+      default: 2
+    validations:
+      required: true
+  - type: dropdown
+    id: platform
+    attributes:
+      label: What fork are you using?
+      options:
+        - Ballsdex
+        - CarFigures
+    validations:
+      required: true
+  - type: textarea
+    id: error
+    attributes:
+      label: Error Output
+      description: If there was an error, paste it below.
+      render: shell
