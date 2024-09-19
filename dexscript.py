@@ -149,6 +149,8 @@ class DexScriptParser():
 
             parsed_code.append(self.parse_code())
 
+        print(parsed_code)
+
         return parsed_code
 
     async def autocorrect_model(self, string, model):
