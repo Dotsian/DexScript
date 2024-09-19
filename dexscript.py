@@ -30,7 +30,7 @@ log = logging.getLogger(f"{dir_type}.core.dexscript")
 __version__ = "0.3"
 
 
-START_CODE_BLOCK_RE = re.compile(r"^((```py(thon)?)(?=\s)|(```))")
+START_CODE_BLOCK_RE = re.compile(r"^((```sql?)(?=\s)|(```))")
 ENABLE_VERSION_WARNING = False
 
 METHODS = [
@@ -137,7 +137,7 @@ class DexScriptParser():
         parsed_code = []
 
         for line1 in code.split("\n"):
-            print(code)
+            print(code.encode("UTF-8"))
 
             if line1.startswith("//") or line1 == "" or line1 == "\n":
                 continue
