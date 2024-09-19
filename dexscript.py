@@ -382,7 +382,9 @@ class DexScript(commands.Cog):
                 "that allows you to easily "
                 "modify, delete, and display data about balls.\n\n"
                 "For a guide on how to use DexScript, "
-                "refer to the official [DexScript Guide](<https://github.com/Dotsian/DexScript/wiki/Commands>)."
+                "refer to the official [DexScript Guide](<https://github.com/Dotsian/DexScript/wiki/Commands>).\n\n"
+                "If you want to follow DexScript, "
+                "join the official [DexScript Discord](<https://discord.gg/EhCxuNQfzt>) server."
             ),
             color = discord.Color.from_str("#03BAFC")
         )
