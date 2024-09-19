@@ -297,7 +297,6 @@ class DexScriptParser():
 
         for item in code_fields:
             for key, field in item.items():
-                print(key, field)
                 await self.execute(key, field, "BALL")
 
 
