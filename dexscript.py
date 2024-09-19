@@ -145,6 +145,8 @@ class DexScriptParser():
                 continue
 
             for line2 in line1.split(" > "):
+                print(line2)
+
                 self.fields.append(self.grab_token(line2.replace("    ", "")))
 
             parsed_code.append(self.parse_code())
