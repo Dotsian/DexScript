@@ -261,7 +261,7 @@ class DexScriptParser():
 
                 attribute = getattr(returned_model, formatted_ball[2].lower())
 
-                if os.path.isfile(attribute[1:]):
+                if isinstance(attribute, str) and os.path.isfile(attribute[1:]):
                     await self.ctx.send(
                         f"```{attribute}```", file=discord.File(attribute[1:])
                     )
