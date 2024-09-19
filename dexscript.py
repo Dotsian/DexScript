@@ -136,10 +136,10 @@ class DexScriptParser():
 
         parsed_code = []
 
-        for line1 in code.split("\n"):
-            print(code.encode("UTF-8"))
+        for line1 in code.encode("UTF-8").replace("b'", "").split("\n'"):
+            print(line1)
 
-            if line1.startswith("//") or line1 == "" or line1 == "\n":
+            if line1.startswith("//") or line1 == "":
                 continue
 
             for line2 in line1.split(" > "):
