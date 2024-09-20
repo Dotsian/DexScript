@@ -1,6 +1,6 @@
 # DexScript - ALPHA
 
-[![Discord server](https://img.shields.io/discord/0?color=7489d5&logo=discord&logoColor=ffffff)](https://discord.gg/EhCxuNQfzt)
+[![Discord server](https://img.shields.io/discord/1285082099862470717?color=7489d5&logo=discord&logoColor=ffffff)](https://discord.gg/EhCxuNQfzt)
 [![Issues](https://img.shields.io/github/issues/Dotsian/DexScript)](https://github.com/Dotsian/DexScript/issues)
 [![discord.py](https://img.shields.io/badge/discord-py-blue.svg)](https://github.com/Rapptz/discord.py)
 
