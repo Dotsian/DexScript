@@ -113,13 +113,14 @@ class DexScriptParser():
         return (line, token)
 
     def parse_keyword(self, field, index):
-        next_field = self.fields[index + 1][0]
+        identity = self.fields[index + 1][0]
+        value = self.fields[index + 2][0]
 
         match field[0]:
             case "LOCAL":
-                self.locals[field[0]] = next_field
+                self.locals[identity] = value
             case "GLOBAL":
-                globals[field[0]] = next_field
+                globals[identity] = value
 
     def get_variable(self, identifier):
         if identifier not in locals and identifier not in globals:
@@ -502,7 +503,7 @@ class DexScript(commands.Cog):
                 response = f"Debug mode has been set to `{str(ADVANCED_ERRORS)}`"
             case "OUTDATED-WARNING":
                 ENABLE_VERSION_WARNING = not ENABLE_VERSION_WARNING
-                response = f"Outdated warnings have been set to `{str(ADVANCED_ERRORS)}`"
+                response = f"Outdated warnings have been set to `{str(ENABLE_VERSION_WARNING)}`"
 
         await ctx.send(response)
 
