@@ -124,7 +124,10 @@ class DexScriptParser():
                 dex_globals[identity] = value
 
     def get_variable(self, identifier):
-        print(identifier)
+        if not isinstance(identifier, str):
+            return None
+
+        identifier = identifier.replace("$", "")
 
         if identifier not in self.dex_locals and identifier not in dex_globals:
             return None
@@ -133,8 +136,6 @@ class DexScriptParser():
 
         if identifier in dex_globals:
             list_type = dex_globals
-
-        print(list_type[identifier])
 
         return list_type[identifier]
 
@@ -354,7 +355,7 @@ class DexScriptParser():
                 await self.ctx.send(f"```\n{parameters}\n```")
 
             case "PRINT":
-                formatted_values = list(item.values())
+                formatted_values = list(item.values())[0]
                 await self.ctx.send(f"```\n{formatted_values[0]}\n```")
 
     async def run(self):
