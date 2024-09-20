@@ -28,7 +28,7 @@ else:
 
 log = logging.getLogger(f"{dir_type}.core.dexscript")
 
-__version__ = "0.3.1"
+__version__ = "0.3.2"
 
 
 START_CODE_BLOCK_RE = re.compile(r"^((```sql?)(?=\s)|(```))")
@@ -132,6 +132,21 @@ class DexScriptParser():
 
         return class_data
 
+    @staticmethod()
+    def translate(string):
+        """
+        For CarFigure support
+        """
+
+        if dir_type == "ballsdex":
+            return string
+        
+        translation = {
+            "BALL": "CAR"
+        }
+
+        return translation[string]
+
     def parse(self, code):
         if "\n" not in code:
             code = "\n" + code
@@ -206,6 +221,7 @@ class DexScriptParser():
                 full_name = identifier,
                 weight = 0,
                 horsepower = 0,
+                rarity = 0,
                 cartype = await Regime.get(name="Union"),
                 emoji_id = 100 ** 8,
                 spawn_picture = "",
@@ -280,8 +296,10 @@ class DexScriptParser():
                 )
 
             case "LIST":
+                translated_title = self.translate(model.title())
+                
                 selected_resource: type[Resource] = [
-                    x for x in app.resources if x.__name__ == model.title() + "Resource"
+                    x for x in app.resources if x.__name__ == translated_title + "Resource"
                 ][0]
 
                 parameters = f"{model} FIELDS:\n\n"
