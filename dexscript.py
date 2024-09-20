@@ -159,7 +159,7 @@ class DexScriptParser():
                 continue
 
             if field[1] == TOKENS.KEYWORD:
-                self.parse_keyword(field)
+                self.parse_keyword(field, index)
 
             formatted_class = self.format_class(tracked_field)
 
