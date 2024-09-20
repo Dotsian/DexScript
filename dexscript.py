@@ -48,7 +48,7 @@ KEYWORDS = [
     "GLOBAL"
 ]
 
-globals = {}
+_globals_ = {}
 
 
 class TOKENS(enum.Enum):
@@ -120,16 +120,16 @@ class DexScriptParser():
             case "LOCAL":
                 self.locals[identity] = value
             case "GLOBAL":
-                globals[identity] = value
+                _globals_[identity] = value
 
     def get_variable(self, identifier):
-        if identifier not in locals and identifier not in globals:
+        if identifier not in locals and identifier not in _globals_:
             return None
 
         list_type = self.locals
 
-        if identifier in globals:
-            list_type = globals
+        if identifier in _globals_:
+            list_type = _globals_
 
         return list_type[identifier]
 
