@@ -499,10 +499,10 @@ class DexScript(commands.Cog):
         match setting:
             case "DEBUG":
                 ADVANCED_ERRORS = not ADVANCED_ERRORS
-                response = f"Debug mode has been set to `{str(ADVANCED_ERRORS}`"
+                response = f"Debug mode has been set to `{str(ADVANCED_ERRORS)}`"
             case "OUTDATED-WARNING":
                 ENABLE_VERSION_WARNING = not ENABLE_VERSION_WARNING
-                response = f"Outdated warnings have been set to `{str(ADVANCED_ERRORS}`"
+                response = f"Outdated warnings have been set to `{str(ADVANCED_ERRORS)}`"
 
         await ctx.send(response)
 
