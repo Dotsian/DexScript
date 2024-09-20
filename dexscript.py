@@ -354,7 +354,7 @@ class DexScriptParser():
                 await self.ctx.send(f"```\n{parameters}\n```")
 
             case "PRINT":
-                await self.ctx.send(f"```\nTest\n```")
+                await self.ctx.send(f"```\n{item}\n```")
 
     async def run(self):
         code_fields = self.parse(self.code)
