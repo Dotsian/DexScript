@@ -32,8 +32,6 @@ __version__ = "0.4"
 
 
 START_CODE_BLOCK_RE = re.compile(r"^((```sql?)(?=\s)|(```))")
-ENABLE_VERSION_WARNING = True
-ADVANCED_ERRORS = False
 
 METHODS = [
     "CREATE",
@@ -50,6 +48,9 @@ KEYWORDS = [
 ]
 
 dex_globals = {}
+
+outdated_warning = True
+advanced_errors = False
 
 
 class TOKENS(enum.Enum):
@@ -393,7 +394,7 @@ class DexScript(commands.Cog):
 
     @staticmethod
     def check_version():
-        if not ENABLE_VERSION_WARNING:
+        if not outdated_warning:
             return None
 
         r = requests.get("https://api.github.com/repos/Dotsian/DexScript/contents/version.txt")
@@ -437,7 +438,7 @@ class DexScript(commands.Cog):
         except Exception as error:
             full_error = error
 
-            if ADVANCED_ERRORS:
+            if advanced_errors:
                 full_error = traceback.format_exc()
             
             await ctx.send(f"```ERROR: {full_error}\n```")
@@ -510,18 +511,18 @@ class DexScript(commands.Cog):
             The setting you want to toggle. (DEBUG & OUTDATED-WARNING)
         """
 
-        global ADVANCED_ERRORS
-        global ENABLE_VERSION_WARNING
+        global advanced_errors
+        global outdated_warning
 
         response = "Setting could not be found."
 
         match setting:
             case "DEBUG":
-                ADVANCED_ERRORS = not ADVANCED_ERRORS
-                response = f"Debug mode has been set to `{str(ADVANCED_ERRORS)}`"
+                advanced_errors = not advanced_errors
+                response = f"Debug mode has been set to `{str(advanced_errors)}`"
             case "OUTDATED-WARNING":
-                ENABLE_VERSION_WARNING = not ENABLE_VERSION_WARNING
-                response = f"Outdated warnings have been set to `{str(ENABLE_VERSION_WARNING)}`"
+                outdated_warning = not outdated_warning
+                response = f"Outdated warnings have been set to `{str(outdated_warning)}`"
 
         await ctx.send(response)
 
