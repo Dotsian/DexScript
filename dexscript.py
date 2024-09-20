@@ -296,10 +296,10 @@ class DexScriptParser():
                 )
 
             case "LIST":
-                translated_title = self.translate(model.title())
+                translated_title = self.translate(model)
                 
                 selected_resource: type[Resource] = [
-                    x for x in app.resources if x.__name__ == translated_title + "Resource"
+                    x for x in app.resources if x.__name__ == f"{translated_title.title()}Resource"
                 ][0]
 
                 parameters = f"{model} FIELDS:\n\n"
