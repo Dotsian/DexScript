@@ -142,7 +142,7 @@ class DexScriptParser():
             return string
         
         translation = {
-            "BALL": "CAR"
+            "BALL": "ENTITY"
         }
 
         return translation[string.upper()]
