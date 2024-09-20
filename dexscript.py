@@ -260,7 +260,7 @@ class DexScriptParser():
 
             fields[key] = 1
 
-            if key == "country" or key == "full_name":
+            if key == "country" or key == "full_name" or key == "catch_names":
                 fields[key] = identifier
             if key == "emoji_id":
                 fields[key] = 100 ** 8
@@ -349,13 +349,13 @@ class DexScriptParser():
                     if not isinstance(field, str) and not isinstance(field, Field):
                         continue
 
-                    label = field if not isinstance(field, Field) else field.label
+                    label = field
 
                     parameters += f"- {label.replace(' ', '_').upper()}\n"
 
                 await self.ctx.send(f"```\n{parameters}\n```")
 
-            case "PRINT":
+            case "SHOW":
                 formatted_values = list(item.values())[0]
                 await self.ctx.send(f"```\n{formatted_values[0]}\n```")
 
