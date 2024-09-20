@@ -168,7 +168,7 @@ class DexScriptParser():
                 class_data[formatted_class][class_name] = []
 
             use_field = field[0]
-            field_variable = get_variable(use_field)
+            field_variable = self.get_variable(use_field)
 
             if field_variable is not None:
                 use_field = field_variable
