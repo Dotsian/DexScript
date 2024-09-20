@@ -41,6 +41,7 @@ METHODS = [
     "DELETE",
     "DISPLAY",
     "LIST",
+    "PRINT",
 ]
 
 KEYWORDS = [
@@ -343,6 +344,9 @@ class DexScriptParser():
                     parameters += f"- {label.replace(' ', '_').upper()}\n"
 
                 await self.ctx.send(f"```\n{parameters}\n```")
+
+            case "PRINT":
+                await self.ctx.send(f"```\n{formatted_ball[1]}\n```")
 
     async def run(self):
         code_fields = self.parse(self.code)
