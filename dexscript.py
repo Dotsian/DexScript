@@ -145,7 +145,7 @@ class DexScriptParser():
             "BALL": "CAR"
         }
 
-        return translation[string]
+        return translation[string.upper()]
 
     def parse(self, code):
         if "\n" not in code:
