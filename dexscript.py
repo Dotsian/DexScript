@@ -28,7 +28,7 @@ else:
 
 log = logging.getLogger(f"{dir_type}.core.dexscript")
 
-__version__ = "0.3.2"
+__version__ = "0.4"
 
 
 START_CODE_BLOCK_RE = re.compile(r"^((```sql?)(?=\s)|(```))")
@@ -43,11 +43,20 @@ METHODS = [
     "LIST",
 ]
 
+KEYWORDS = [
+    "LOCAL"
+    "GLOBAL"
+]
+
+globals = {}
+
 
 class TOKENS(enum.Enum):
     METHOD = "METHOD"
     NUMBER = "NUMBER"
     STRING = "STRING"
+    VARIABLE = "VARIABLE"
+    KEYWORD = "KEYWORD"
 
 
 class DexScriptError(Exception):
@@ -64,6 +73,7 @@ class DexScriptParser():
     def __init__(self, ctx: commands.Context, code: str):
         self.code = code
         self.fields = []
+        self.locals = {}
         self.ctx = ctx
 
     def format_class(self, field):
@@ -95,8 +105,32 @@ class DexScriptParser():
             token = TOKENS.METHOD
         elif isinstance(line, (int, float)):
             token = TOKENS.NUMBER
+        elif self.format_class(line) in KEYWORDS:
+            token = TOKENS.KEYWORD
+        elif isinstance(line, str) and line.startswith("$"):
+            token = TOKENS.VARIABLE
 
         return (line, token)
+
+    def parse_keyword(self, field, index):
+        next_field = self.fields[index + 1][0]
+
+        match field[0]:
+            case "LOCAL":
+                self.locals[field[0]] = next_field
+            case "GLOBAL":
+                globals[field[0]] = next_field
+
+    def get_variable(self, identifier):
+        if identifier not in locals and identifier not in globals:
+            return None
+
+        list_type = self.locals
+
+        if identifier in globals:
+            list_type = globals
+
+        return list_type[identifier]
 
     def parse_code(self):
         """
@@ -104,6 +138,7 @@ class DexScriptParser():
         """
 
         tracked_field = None
+
         class_name = ""
         class_data = {}
 
@@ -115,6 +150,9 @@ class DexScriptParser():
 
             if tracked_field is None or tracked_field[1] != TOKENS.METHOD:
                 continue
+
+            if field[1] == TOKENS.KEYWORD:
+                self.parse_keyword(field)
 
             formatted_class = self.format_class(tracked_field)
 
@@ -128,7 +166,13 @@ class DexScriptParser():
 
                 class_data[formatted_class][class_name] = []
 
-            class_data[formatted_class][class_name].append(field[0])
+            use_field = field[0]
+            field_variable = get_variable(use_field)
+
+            if field_variable is not None:
+                use_field = field_variable
+
+            class_data[formatted_class][class_name].append(use_field)
 
         return class_data
 
@@ -200,39 +244,20 @@ class DexScriptParser():
         return return_model
 
     async def create_model(self, model, identifier):
-        return_model = None
+        fields = []
 
-        if dir_type == "ballsdex":
-            return_model = await Ball.create(
-                country = identifier,
-                health = 0,
-                attack = 0,
-                rarity = 0,
-                regime = await Regime.get(name="Democracy"),
-                emoji_id = 100 ** 8,
-                wild_card = "",
-                collection_card = "",
-                credits = "DexScript",
-                capacity_name = "New Ball",
-                capacity_description = "Update this ball by using the UPDATE command."
-            )
-        else:
-            return_model = await Ball.create(
-                full_name = identifier,
-                weight = 0,
-                horsepower = 0,
-                rarity = 0,
-                cartype = await Regime.get(name="Union"),
-                emoji_id = 100 ** 8,
-                spawn_picture = "",
-                collection_picture = "",
-                image_credits = "DexScript",
-                car_suggester = "",
-                capacity_name = "New Ball",
-                capacity_description = "Update this ball by using the UPDATE command."
-            )
+        for key, field in vars(Ball()).items():
+            if field is None:
+                continue
 
-        return return_model
+            fields[key] = 1
+
+            if key == "country" or key == "full_name":
+                fields[key] = identifier
+            if key == "emoji_id":
+                fields[key] = 100 ** 8
+
+        await Ball.create(**fields)
 
     async def execute(self, key, item, model):
         formatted_ball = item[model]
@@ -362,7 +387,7 @@ class DexScript(commands.Cog):
         if new_version != __version__:
             return (
                 f"Your DexScript version ({__version__}) is outdated. " 
-                f"Please update to version {new_version} "
+                f"Please update to version ({new_version}) "
                 f"using `{settings.prefix}update-ds`."
             )
 
@@ -391,7 +416,7 @@ class DexScript(commands.Cog):
             if ADVANCED_ERRORS:
                 full_error = traceback.format_exc()
             
-            await ctx.send(f"```ERROR:\n\n{full_error}\n```")
+            await ctx.send(f"```ERROR: {full_error}\n```")
         else:
             await ctx.message.add_reaction("✅")
 
@@ -405,7 +430,7 @@ class DexScript(commands.Cog):
                 "that allows you to easily "
                 "modify, delete, and display data about balls.\n\n"
                 "For a guide on how to use DexScript, "
-                "refer to the official [DexScript Guide](<https://github.com/Dotsian/DexScript/wiki/Commands>).\n\n"
+                "refer to the official [DexScript guide](<https://github.com/Dotsian/DexScript/wiki/Commands>).\n\n"
                 "If you want to follow DexScript, "
                 "join the official [DexScript Discord](<https://discord.gg/EhCxuNQfzt>) server."
             ),
@@ -439,15 +464,25 @@ class DexScript(commands.Cog):
                 "Failed to update DexScript.\n"
                 "Report this issue to `dot_zz` on Discord."
             )
+            print(f"ERROR CODE: {r.status_code}")
 
-    @commands.command(name="toggle-advanced-errors")
+    @commands.command()
     @commands.is_owner()
-    async def toggle_advanced_errors(self, ctx: commands.Context):
+    async def toggle(self, ctx: commands.Context, setting: str):
         global ADVANCED_ERRORS
+        global ENABLE_VERSION_WARNING
 
-        ADVANCED_ERRORS = not ADVANCED_ERRORS
+        response = "Setting could not be found."
 
-        await ctx.send(f"ADVANCED_ERRORS has been set to {str(ADVANCED_ERRORS)}")
+        match setting:
+            case "DEBUG":
+                ADVANCED_ERRORS = not ADVANCED_ERRORS
+                response = f"Debug mode has been set to `{str(ADVANCED_ERRORS}`"
+            case "OUTDATED-WARNING":
+                ENABLE_VERSION_WARNING = not ENABLE_VERSION_WARNING
+                response = f"Outdated warnings have been set to `{str(ADVANCED_ERRORS}`"
+
+        await ctx.send(response)
 
 async def setup(bot):
     await bot.add_cog(DexScript(bot))
