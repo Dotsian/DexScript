@@ -398,6 +398,11 @@ class DexScript(commands.Cog):
     async def run(self, ctx: commands.Context, *, code: str):
         """
         Executes DexScript code.
+
+        Parameters
+        ----------
+        code: str
+            The code you'd like to execute.
         """
 
         body = self.cleanup_code(code)
@@ -423,6 +428,10 @@ class DexScript(commands.Cog):
     @commands.command()
     @commands.is_owner()
     async def about(self, ctx: commands.Context):
+        """
+        Displays information about DexScript.
+        """
+
         embed = discord.Embed(
             title="DexScript - ALPHA",
             description=(
@@ -454,6 +463,10 @@ class DexScript(commands.Cog):
     @commands.command(name="update-ds")
     @commands.is_owner()
     async def update_ds(self, ctx: commands.Context):
+        """
+        Updates DexScript to the latest version.
+        """
+
         r = requests.get("https://api.github.com/repos/Dotsian/DexScript/contents/installer.py")
 
         if r.status_code == requests.codes.ok:
@@ -469,6 +482,15 @@ class DexScript(commands.Cog):
     @commands.command()
     @commands.is_owner()
     async def toggle(self, ctx: commands.Context, setting: str):
+        """
+        Toggles a setting on and off.
+
+        Parameters
+        ----------
+        setting: str
+            The setting you want to toggle. (DEBUG & OUTDATED-WARNING)
+        """
+
         global ADVANCED_ERRORS
         global ENABLE_VERSION_WARNING
 
