@@ -73,7 +73,7 @@ class DexScriptParser():
     def __init__(self, ctx: commands.Context, code: str):
         self.code = code
         self.fields = []
-        self.locals = {}
+        self.dex_locals = {}
         self.ctx = ctx
 
     def format_class(self, field):
