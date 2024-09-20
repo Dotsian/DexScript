@@ -266,10 +266,10 @@ class DexScriptParser():
         await Ball.create(**fields)
 
     async def execute(self, key, item, model):
-        formatted_ball = item[model]
-
         match key:
             case "CREATE":
+                formatted_ball = item[model]
+
                 await self.create_model(model, formatted_ball[1])
 
                 await self.ctx.send(
@@ -278,6 +278,8 @@ class DexScriptParser():
                 )
 
             case "UPDATE":
+                formatted_ball = item[model]
+
                 returned_model = await self.get_model(model, formatted_ball[1])
 
                 new_attribute = None
@@ -302,6 +304,8 @@ class DexScriptParser():
                 )
 
             case "DELETE":
+                formatted_ball = item[model]
+
                 returned_model = await self.get_model(model, formatted_ball[1])
 
                 await returned_model.delete()
@@ -309,6 +313,8 @@ class DexScriptParser():
                 await self.ctx.send(f"Deleted `{formatted_ball[1]}`")
 
             case "DISPLAY":
+                formatted_ball = item[model]
+
                 returned_model = await self.get_model(model, formatted_ball[1])
 
                 #if formatted_ball[2] == "-ALL":
@@ -327,6 +333,8 @@ class DexScriptParser():
                 )
 
             case "LIST":
+                formatted_ball = item[model]
+
                 translated_title = self.translate(model)
                 
                 selected_resource: type[Resource] = [
@@ -346,7 +354,7 @@ class DexScriptParser():
                 await self.ctx.send(f"```\n{parameters}\n```")
 
             case "PRINT":
-                await self.ctx.send(f"```\n{formatted_ball[1]}\n```")
+                await self.ctx.send(f"```\nTest\n```")
 
     async def run(self):
         code_fields = self.parse(self.code)
