@@ -39,7 +39,7 @@ METHODS = [
     "DELETE",
     "DISPLAY",
     "LIST",
-    "PRINT",
+    "SHOW",
 ]
 
 KEYWORDS = [
@@ -127,6 +127,8 @@ class DexScriptParser():
     def get_variable(self, identifier):
         if not isinstance(identifier, str):
             return None
+
+        print(identifier)
 
         identifier = identifier.replace("$", "")
 
