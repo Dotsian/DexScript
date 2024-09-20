@@ -123,6 +123,8 @@ class DexScriptParser():
                 dex_globals[identity] = value
 
     def get_variable(self, identifier):
+        print(identifier)
+
         if identifier not in self.dex_locals and identifier not in dex_globals:
             return None
 
@@ -130,6 +132,8 @@ class DexScriptParser():
 
         if identifier in dex_globals:
             list_type = dex_globals
+
+        print(list_type[identifier])
 
         return list_type[identifier]
 
