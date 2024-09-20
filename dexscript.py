@@ -132,7 +132,7 @@ class DexScriptParser():
 
         return class_data
 
-    @staticmethod()
+    @staticmethod
     def translate(string):
         """
         For CarFigure support
