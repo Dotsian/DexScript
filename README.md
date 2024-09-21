@@ -3,7 +3,7 @@
 <img src="https://i.imgur.com/uKfx0qO.png" width="200"> 
 
 ## What is DexScript?
-DexScript is a set of commands made by ``DotZZ``. The commands simplify things like editing, adding, and deleting things you want in your bot. Basically making your life easier.
+DexScript is a set of commands made by ``DotZZ``. The commands simplify models like editing, adding, and deleting things you want in your bot. Basically making your life easier.
 
 ## What bots can it be used for?
 
@@ -12,27 +12,7 @@ DexScript can be used for BallsDex and CarFigures Instances, each of them has it
 ## What commands are there?  
 
 
-So, you are probably wondering what commands are there and for that, there is the list of commands down below. 
-The list of commands is:
-```
-- COUNTRY 
-- SHORT_NAME 
-- CATCH_NAMES 
-- CREATED_AT 
-- REGIME 
-- ECONOMY 
-- HEALTH 
-- ATTACK 
-- RARITY 
-- ENABLED 
-- TRADEABLE 
-- EMOJI_ID 
-- WILD_CARD 
-- COLLECTION_CARD 
-- IMAGE_CREDITS 
-- CAPACITY_NAME 
-- CAPACITY_DESCRIPTION
-```
+So, you are probably wondering what commands are there and for that, there is the list of commands that you can check with the command ``LIST``. 
 
 These commands are for BallsDex Instances but they can be used for CarFigures too. 
 ## How do I install it?
