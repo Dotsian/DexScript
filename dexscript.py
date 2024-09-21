@@ -43,8 +43,8 @@ METHODS = [
 ]
 
 KEYWORDS = [
-    "LOCAL"
-    "GLOBAL"
+    "LOCAL",
+    "GLOBAL",
 ]
 
 dex_globals = {}
@@ -125,14 +125,12 @@ class DexScriptParser():
                 dex_globals[identity] = value
 
     def get_variable(self, identifier):
-        if not isinstance(identifier, str):
+        if not isinstance(identifier, str) or not identifier.startswith("$"):
             return None
-
-        print(identifier)
 
         identifier = identifier.replace("$", "")
 
-        if identifier not in self.dex_locals and identifier not in dex_globals:
+        if identifier not in self.dex_locals.keys() and identifier not in dex_globals.keys():
             return None
 
         list_type = self.dex_locals
@@ -155,14 +153,14 @@ class DexScriptParser():
         for index, field in enumerate(self.fields):
             previous_field = self.fields[index - 1]
 
+            if field[1] == TOKENS.KEYWORD:
+                self.parse_keyword(field, index)
+
             if previous_field is not None and previous_field[1] == TOKENS.METHOD:
                 tracked_field = previous_field
 
             if tracked_field is None or tracked_field[1] != TOKENS.METHOD:
                 continue
-
-            if field[1] == TOKENS.KEYWORD:
-                self.parse_keyword(field, index)
 
             formatted_class = self.format_class(tracked_field)
 
@@ -254,7 +252,7 @@ class DexScriptParser():
         return return_model
 
     async def create_model(self, model, identifier):
-        fields = []
+        fields = {}
 
         for key, field in vars(Ball()).items():
             if field is None:
@@ -500,6 +498,16 @@ class DexScript(commands.Cog):
                 "Report this issue to `dot_zz` on Discord."
             )
             print(f"ERROR CODE: {r.status_code}")
+
+    @commands.command(name="reload-ds")
+    @commands.is_owner()
+    async def reload_ds(self, ctx: commands.Context):
+        """
+        Reloads DexScript.
+        """
+
+        await self.bot.reload_extension(f"{dir_type}.core.dexscript")
+        await ctx.send("Reloaded DexScript")
 
     @commands.command()
     @commands.is_owner()
