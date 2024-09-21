@@ -255,15 +255,17 @@ class DexScriptParser():
         fields = {}
 
         for key, field in vars(Ball()).items():
-            if field is None:
+            if field is not None:
                 continue
-
-            fields[key] = 1
 
             if key == "country" or key == "full_name" or key == "catch_names":
                 fields[key] = identifier
-            if key == "emoji_id":
+            elif key == "emoji_id":
                 fields[key] = 100 ** 8
+            elif key == "id":
+                continue
+            else:
+                fields[key] = 1
 
         await Ball.create(**fields)
 
