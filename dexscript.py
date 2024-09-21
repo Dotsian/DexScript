@@ -58,6 +58,7 @@ class TOKENS(enum.Enum):
     METHOD = "METHOD"
     NUMBER = "NUMBER"
     STRING = "STRING"
+    BOOLEAN = "BOOLEAN"
     VARIABLE = "VARIABLE"
     KEYWORD = "KEYWORD"
 
@@ -106,12 +107,14 @@ class DexScriptParser():
 
         if self.format_class(line) in METHODS:
             token = TOKENS.METHOD
-        elif isinstance(line, (int, float)):
-            token = TOKENS.NUMBER
         elif self.format_class(line) in KEYWORDS:
             token = TOKENS.KEYWORD
         elif isinstance(line, str) and line.startswith("$"):
             token = TOKENS.VARIABLE
+        elif isinstance(line, (int, float)):
+            token = TOKENS.NUMBER
+        elif isinstance(line, str) and line.lower() == "true" or line.lower() == "false":
+            token = TOKENS.BOOLEAN
 
         return (line, token)
 
@@ -181,7 +184,7 @@ class DexScriptParser():
             if field_variable is not None:
                 use_field = field_variable
 
-            class_data[formatted_class][class_name].append(use_field)
+            class_data[formatted_class][class_name].append((use_field, field[1]))
 
         return class_data
 
@@ -271,62 +274,69 @@ class DexScriptParser():
 
         await Ball.create(**fields)
 
+    @staticmethod
+    def format_value(value, token):
+        match token:
+            case TOKENS.BOOLEAN:
+                return True if value.lower() == "true" else False
+            
+        return value
+
     async def execute(self, key, item, model):
+        formatted_values = list(item.values())[0]
+
         match key:
             case "CREATE":
-                formatted_ball = item[model]
-
-                await self.create_model(model, formatted_ball[1])
+                await self.create_model(model, formatted_values[1][0])
 
                 await self.ctx.send(
-                    f"Created `{formatted_ball[1]}`\n"
+                    f"Created `{formatted_values[1][0]}`\n"
                     f"-# Use the `UPDATE` command to update this {model.lower()}."
                 )
 
             case "UPDATE":
-                formatted_ball = item[model]
+                returned_model = await self.get_model(model, formatted_values[1][0])
 
-                returned_model = await self.get_model(model, formatted_ball[1])
-
-                new_attribute = None
+                new_attribute = formatted_values[3]
 
                 if (
                     self.ctx.message.attachments != [] and 
-                    hasattr(returned_model, formatted_ball[2].lower())
+                    hasattr(returned_model, formatted_values[2][0].lower())
                 ):
                     image_path = await save_file(self.ctx.message.attachments[0])
-                    new_attribute = "/" + str(image_path)
+                    new_attribute = ("/" + str(image_path), TOKENS.STRING)
+
+                if formatted_values[2][0].lower() not in list(vars(Ball()).keys()):
+                    raise DexScriptError(f"'{formatted_values[2][0]}' is an uknown field.")
+                
+                value = self.format_value(new_attribute[0], new_attribute[1])
 
                 setattr(
                     returned_model, 
-                    formatted_ball[2].lower(), 
-                    formatted_ball[3] if new_attribute is None else new_attribute
+                    formatted_values[2][0].lower(), 
+                    value
                 )
 
                 await returned_model.save()
 
                 await self.ctx.send(
-                    f"Updated `{formatted_ball[1]}'s` {formatted_ball[2]}"
+                    f"Updated `{formatted_values[1][0]}'s` {formatted_values[2][0]} to `{value}`"
                 )
 
             case "DELETE":
-                formatted_ball = item[model]
-
-                returned_model = await self.get_model(model, formatted_ball[1])
+                returned_model = await self.get_model(model, formatted_values[1][0])
 
                 await returned_model.delete()
 
-                await self.ctx.send(f"Deleted `{formatted_ball[1]}`")
+                await self.ctx.send(f"Deleted `{formatted_values[1][0]}`")
 
             case "DISPLAY":
-                formatted_ball = item[model]
+                returned_model = await self.get_model(model, formatted_values[1][0])
 
-                returned_model = await self.get_model(model, formatted_ball[1])
-
-                #if formatted_ball[2] == "-ALL":
+                #if formatted_ball[2][0] == "-ALL":
                     #pass
 
-                attribute = getattr(returned_model, formatted_ball[2].lower())
+                attribute = getattr(returned_model, formatted_values[2][0].lower())
 
                 if isinstance(attribute, str) and os.path.isfile(attribute[1:]):
                     await self.ctx.send(
@@ -335,12 +345,10 @@ class DexScriptParser():
                     return
 
                 await self.ctx.send(
-                    f"```{getattr(returned_model, formatted_ball[2].lower())}```"
+                    f"```{getattr(returned_model, formatted_values[2][0].lower())}```"
                 )
 
             case "LIST":
-                formatted_ball = item[model]
-
                 translated_title = self.translate(model)
                 
                 selected_resource: type[Resource] = [
@@ -360,28 +368,25 @@ class DexScriptParser():
                 await self.ctx.send(f"```\n{parameters}\n```")
 
             case "FILE":
-                formatted_values = list(item.values())[0]
-
-                if formatted_values[0] == "WRITE":
+                if formatted_values[0][0] == "WRITE":
                     file = self.ctx.message.attachments[0]
 
-                    with open(formatted_values[1] , "w") as opened_file:
+                    with open(formatted_values[1][0] , "w") as opened_file:
                       contents = await file.read()
                       opened_file.write(contents.decode("utf-8"))
 
-                    await self.ctx.send(f"Wrote to `{formatted_values[1]}`")
-                elif formatted_values[0] == "READ":
-                    await self.ctx.send(file=discord.File(formatted_values[1]))
-                elif formatted_values[0] == "DELETE":
-                    os.remove(formatted_values[1])
+                    await self.ctx.send(f"Wrote to `{formatted_values[1][0]}`")
+                elif formatted_values[0][0] == "READ":
+                    await self.ctx.send(file=discord.File(formatted_values[1][0]))
+                elif formatted_values[0][0] == "DELETE":
+                    os.remove(formatted_values[1][0])
                     
-                    await self.ctx.send(f"Deleted `{formatted_values[1]}`")
+                    await self.ctx.send(f"Deleted `{formatted_values[1][0]}`")
                 else:
-                    raise DexScriptError(f"'{formatted_values[0]}' is not a valid file operation. (READ or WRITE)")
+                    raise DexScriptError(f"'{formatted_values[0][0]}' is not a valid file operation. (READ, WRITE, or DELETE)")
 
             case "SHOW":
-                formatted_values = list(item.values())[0]
-                await self.ctx.send(f"```\n{formatted_values[0]}\n```")
+                await self.ctx.send(f"```\n{formatted_values[0][0]}\n```")
 
     async def run(self):
         code_fields = self.parse(self.code)
