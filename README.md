@@ -28,7 +28,7 @@ Yes, you can test beta things, and if you are wondering how to do that, follow t
 ## Information
 
 >  ``Made by dot_zz`` <br>
->  ``Version 0.4.0`` <br>
+>  ``Version 0.3.2`` <br>
 >  ``MIT License`` <br>
 >  ``Made on September 14th`` <br>
 >  [``Discord``](https://discord.gg/pkKvMdP74Z) </br>
