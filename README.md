@@ -47,8 +47,9 @@ You've probably been using this for a while and if a new version is released you
 Yes, you can test beta things, and if you are wondering how to do that, follow the guide in the [wiki](https://github.com/Dotsian/DexScript/wiki/Installing,-Updating,-and-Uninstalling) below the uninstall one. If there are any bugs please report them at [bug report](https://github.com/Dotsian/DexScript/issues/new/choose).
 ## Information
 
->  ``Made by dot_zz``
+>  ``Made by dot_zz`` <br>
 >  ``Version 0.4.0``
 >  ``MIT License``
 >  ``Made on September 14th``
 >  [``Discord``](https://discord.gg/pkKvMdP74Z)
+</br>
