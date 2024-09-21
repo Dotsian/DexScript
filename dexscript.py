@@ -40,6 +40,7 @@ METHODS = [
     "DISPLAY",
     "LIST",
     "SHOW",
+    "FILE",
 ]
 
 KEYWORDS = [
@@ -258,14 +259,15 @@ class DexScriptParser():
             if field is not None:
                 continue
 
+            if key == "id" or key == "short_name":
+                continue
+
+            fields[key] = 1
+
             if key == "country" or key == "full_name" or key == "catch_names":
                 fields[key] = identifier
             elif key == "emoji_id":
                 fields[key] = 100 ** 8
-            elif key == "id":
-                continue
-            else:
-                fields[key] = 1
 
         await Ball.create(**fields)
 
@@ -351,11 +353,31 @@ class DexScriptParser():
                     if not isinstance(field, str) and not isinstance(field, Field):
                         continue
 
-                    label = field
+                    label = field if isinstance(field, str) else field.name
 
                     parameters += f"- {label.replace(' ', '_').upper()}\n"
 
                 await self.ctx.send(f"```\n{parameters}\n```")
+
+            case "FILE":
+                formatted_values = list(item.values())[0]
+
+                if formatted_values[0] == "WRITE":
+                    file = self.ctx.message.attachments[0]
+
+                    with open(formatted_values[1] , "w") as opened_file:
+                      contents = await file.read()
+                      opened_file.write(contents.decode("utf-8"))
+
+                    await self.ctx.send(f"Wrote to `{formatted_values[1]}`")
+                elif formatted_values[0] == "READ":
+                    await self.ctx.send(file=discord.File(formatted_values[1]))
+                elif formatted_values[0] == "DELETE":
+                    os.remove(formatted_values[1])
+                    
+                    await self.ctx.send(f"Deleted `{formatted_values[1]}`")
+                else:
+                    raise DexScriptError(f"'{formatted_values[0]}' is not a valid file operation. (READ or WRITE)")
 
             case "SHOW":
                 formatted_values = list(item.values())[0]
@@ -364,9 +386,9 @@ class DexScriptParser():
     async def run(self):
         code_fields = self.parse(self.code)
 
-        if code_fields == {}:
+        if code_fields == [{}]:
             method = f"{self.code.split(' > ')[0]}"
-            raise DexScriptError(f"`{method}` is not a valid command")
+            raise DexScriptError(f"`{method}` is not a valid keyword or method")
 
         for item in code_fields:
             for key, field in item.items():
