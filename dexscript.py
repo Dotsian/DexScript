@@ -295,19 +295,18 @@ class DexScriptParser():
                 )
 
             case "UPDATE":
-                returned_model = await self.get_model(model, formatted_values[1][0])
-
-                new_attribute = formatted_values[3]
-
-                if (
-                    self.ctx.message.attachments != [] and 
-                    hasattr(returned_model, formatted_values[2][0].lower())
-                ):
-                    image_path = await save_file(self.ctx.message.attachments[0])
-                    new_attribute = ("/" + str(image_path), TOKENS.STRING)
-
                 if formatted_values[2][0].lower() not in list(vars(Ball()).keys()):
                     raise DexScriptError(f"'{formatted_values[2][0]}' is an uknown field.")
+                                    
+                returned_model = await self.get_model(model, formatted_values[1][0])
+
+                new_attribute = None
+
+                if self.ctx.message.attachments != []:
+                    image_path = await save_file(self.ctx.message.attachments[0])
+                    new_attribute = ("/" + str(image_path), TOKENS.STRING)
+                else:
+                    new_attribute = formatted_values[3]
                 
                 value = self.format_value(new_attribute[0], new_attribute[1])
 
