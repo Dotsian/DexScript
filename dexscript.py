@@ -390,9 +390,9 @@ class DexScriptParser():
     async def run(self):
         code_fields = self.parse(self.code)
 
-        if code_fields == [{}]:
-            method = f"{self.code.split(' > ')[0]}"
-            raise DexScriptError(f"`{method}` is not a valid keyword or method")
+        #if code_fields == [{}]:
+            #method = f"{self.code.split(' > ')[0]}"
+            #raise DexScriptError(f"`{method}` is not a valid keyword or method")
 
         for item in code_fields:
             for key, field in item.items():
