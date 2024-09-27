@@ -63,10 +63,9 @@ class CodeStatus(Enum):
   
 
 class Value():
-  def __init__(self, name: str, type: Types, level: int):
+  def __init__(self, name: str, type: Types):
     self.name = name
     self.type = type
-    self.level = level
 
   def __repr__(self):
     return self.name
@@ -176,10 +175,10 @@ class DexScriptParser():
       case "global":
           dex_globals[identity] = value
 
-  def create_value(self, line, level):
+  def create_value(self, line):
     type = Types.VARIABLE
     
-    value = Value(line, type, level)
+    value = Value(line, type)
     lower = line.lower()
   
     if lower in vars(Methods):
@@ -222,8 +221,7 @@ class DexScriptParser():
         
         if char in [">"] or index2 == len(line) - 1:
           line_code.append(self.create_value(
-            full_line.replace(">", "").strip(), 
-            level
+            full_line.replace(">", "").strip()
           ))
           
           full_line = ""
