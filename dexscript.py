@@ -77,8 +77,7 @@ class Methods():
     self, 
     parser, 
     ctx, 
-    args: list[Value], 
-    str_arg: str
+    args: list[Value]
   ):
     self.ctx = ctx
     self.args = args
@@ -92,7 +91,7 @@ class Methods():
     pass
 
   async def show(self):
-    await self.ctx.send(f"```\n{self.args[0]}\n```")
+    await self.ctx.send(f"```\n{self.args[1]}\n```")
     
     
 class DexScriptParser():
@@ -237,8 +236,10 @@ class DexScriptParser():
         parsed_code.append(line_code)
   
     try:
+      await self.ctx.send(parsed_code)
+
       for line2 in parsed_code:
-        for index, value in enumerate(line2):
+        for value in line2:
           if value.type == Types.KEYWORD:
             self.keyword(parsed_code)
             continue
@@ -249,8 +250,7 @@ class DexScriptParser():
           new_method = Methods(
             self,
             self.ctx,
-            line2,
-            split_code[index]
+            line2
           )
           
           await getattr(new_method, value.name.lower())()
