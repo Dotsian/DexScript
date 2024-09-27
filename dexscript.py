@@ -1,7 +1,9 @@
+import base64
 import os
 import time
 import logging
 import re
+import requests
 from difflib import get_close_matches
 from enum import Enum
 
