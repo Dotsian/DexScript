@@ -140,6 +140,8 @@ class DexScriptParser():
           return_value = self.dex_locals[value.name]
         elif value.name in dex_globals:
           return_value = dex_globals[value.name]
+        else:
+          raise NameError(f"'{value.name}' is an uknown variable.")
 
       case Types.BOOLEAN:
         return_value = value.lower() == "true"
@@ -252,7 +254,6 @@ class DexScriptParser():
           
           await getattr(new_method, value.name.lower())()
     except Exception as error:
-      print(error)
       return (error, CodeStatus.FAILURE)
   
     return (None, CodeStatus.SUCCESS)
@@ -316,10 +317,10 @@ class DexScript(commands.Cog):
       if version_check:
         await ctx.send(f"-# {version_check}")
 
-      try:
-        dexscript_instance = DexScriptParser(ctx)
-        await dexscript_instance.execute(body)
-      except Exception as error:
+      dexscript_instance = DexScriptParser(ctx)
+      result, status = await dexscript_instance.execute(body)
+
+      if status == CodeStatus.FAILURE:
         full_error = error
 
         if advanced_errors:
