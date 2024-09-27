@@ -306,7 +306,7 @@ class DexScriptParser():
                 )
 
             case "UPDATE":
-                if in_list(formatted_values, 2) and formatted_values[2][0].lower() not in list(vars(Ball()).keys()):
+                if self.in_list(formatted_values, 2) and formatted_values[2][0].lower() not in list(vars(Ball()).keys()):
                     raise DexScriptError(f"'{formatted_values[2][0]}' is an uknown field.")
                                     
                 returned_model = await self.get_model(model, formatted_values[1][0])
