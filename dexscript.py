@@ -321,7 +321,7 @@ class DexScript(commands.Cog):
       result, status = await dexscript_instance.execute(body)
 
       if status == CodeStatus.FAILURE:
-        full_error = error
+        full_error = result
 
         if advanced_errors:
           full_error = traceback.format_exc()
