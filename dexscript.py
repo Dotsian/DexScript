@@ -210,8 +210,6 @@ class DexScriptParser():
     for index, line in enumerate(split_code):
       line_code: list[Value] = []
       full_line = ""
-
-      level = line.count("  ")
     
       for index2, char in enumerate(line):
         if char == "":
@@ -221,9 +219,6 @@ class DexScriptParser():
 
         if full_line == "--":
           continue
-
-        if full_line.count("  ") > 0:
-          full_line = full_line[(full_line.count("  ") * 2):]
         
         if char in [">"] or index2 == len(line) - 1:
           line_code.append(self.create_value(
@@ -233,11 +228,10 @@ class DexScriptParser():
           
           full_line = ""
 
-        parsed_code.append(line_code)
+          if len(line_code) == len(line.split(">")):
+            parsed_code.append(line_code)
   
     try:
-      await self.ctx.send(parsed_code)
-
       for line2 in parsed_code:
         for value in line2:
           if value.type == Types.KEYWORD:
