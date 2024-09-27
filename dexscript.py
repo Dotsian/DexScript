@@ -4,6 +4,7 @@ import time
 import logging
 import re
 import requests
+import traceback
 from difflib import get_close_matches
 from enum import Enum
 
@@ -91,7 +92,7 @@ class Methods():
     pass
 
   async def show(self):
-    await ctx.send(f"```\n{self.args[0]}\n```")
+    await self.ctx.send(f"```\n{self.args[0]}\n```")
     
     
 class DexScriptParser():
