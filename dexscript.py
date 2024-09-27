@@ -143,7 +143,10 @@ class DexScriptParser():
           raise NameError(f"'{value.name}' is an uknown variable.")
 
       case Types.BOOLEAN:
-        return_value = value.lower() == "true"
+        return_value = value.name.lower() == "true"
+
+      case Types.STRING:
+        value.name = value.name[1:][:-1]
 
     return return_value
 
@@ -199,37 +202,37 @@ class DexScriptParser():
     return self.var(value)
         
   async def execute(self, code: str):
-    if (seperator := "\n") not in code:
-      seperator = ";"
-
-    split_code = [x for x in code.split(seperator) if x.strip() != ""]
-
-    parsed_code: list[list[Value]] = []
-    
-    for index, line in enumerate(split_code):
-      line_code: list[Value] = []
-      full_line = ""
-    
-      for index2, char in enumerate(line):
-        if char == "":
-          continue
-          
-        full_line += char
-
-        if full_line == "--":
-          continue
-        
-        if char in [">"] or index2 == len(line) - 1:
-          line_code.append(self.create_value(
-            full_line.replace(">", "").strip()
-          ))
-          
-          full_line = ""
-
-          if len(line_code) == len(line.split(">")):
-            parsed_code.append(line_code)
-  
     try:
+      if (seperator := "\n") not in code:
+        seperator = ";"
+  
+      split_code = [x for x in code.split(seperator) if x.strip() != ""]
+  
+      parsed_code: list[list[Value]] = []
+      
+      for index, line in enumerate(split_code):
+        line_code: list[Value] = []
+        full_line = ""
+      
+        for index2, char in enumerate(line):
+          if char == "":
+            continue
+            
+          full_line += char
+  
+          if full_line == "--":
+            continue
+          
+          if char in [">"] or index2 == len(line) - 1:
+            line_code.append(self.create_value(
+              full_line.replace(">", "").strip()
+            ))
+            
+            full_line = ""
+  
+            if len(line_code) == len(line.split(">")):
+              parsed_code.append(line_code)
+  
       for line2 in parsed_code:
         for value in line2:
           if value.type == Types.KEYWORD:
