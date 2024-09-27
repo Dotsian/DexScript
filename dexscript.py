@@ -272,7 +272,8 @@ class DexScriptParser():
             elif key == "emoji_id":
                 fields[key] = 100 ** 8
             elif key == "regime_id":
-                fields[key] = await Regime.first().pk
+                first_regime = await Regime.first()
+                fields[key] = first_regime.pk
 
         await Ball.create(**fields)
 
