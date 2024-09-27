@@ -5,6 +5,7 @@ import re
 from difflib import get_close_matches
 from enum import Enum
 
+import discord
 from discord.ext import commands
 
 dir_type = "ballsdex" if os.path.isdir("ballsdex") else "carfigures"
