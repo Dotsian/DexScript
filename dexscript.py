@@ -203,6 +203,14 @@ class DexScriptParser():
 
         return translation[string.upper()]
 
+    @staticmethod
+    def in_list(list_attempt, index):
+        try:
+            list_attempt[index]
+            return True
+        except:
+            return False
+
     def parse(self, code):
         if "\n" not in code:
             code = "\n" + code
@@ -298,7 +306,7 @@ class DexScriptParser():
                 )
 
             case "UPDATE":
-                if formatted_values[2][0].lower() not in list(vars(Ball()).keys()):
+                if in_list(formatted_values, 2) and formatted_values[2][0].lower() not in list(vars(Ball()).keys()):
                     raise DexScriptError(f"'{formatted_values[2][0]}' is an uknown field.")
                                     
                 returned_model = await self.get_model(model, formatted_values[1][0])
