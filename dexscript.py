@@ -1,18 +1,31 @@
 import os
+import time
+import logging
+import re
 from difflib import get_close_matches
 from enum import Enum
+
+from discord.ext import commands
 
 dir_type = "ballsdex" if os.path.isdir("ballsdex") else "carfigures"
 
 if dir_type == "ballsdex":
-    from ballsdex.core.models import Ball, Regime
-    from ballsdex.packages.admin.cog import save_file
-    from ballsdex.settings import settings
+  from ballsdex.core.models import Ball, Regime
+  from ballsdex.packages.admin.cog import save_file
+  from ballsdex.settings import settings
 else:
-    from carfigures.core.models import Car as Ball
-    from carfigures.core.models import CarType as Regime
-    from carfigures.packages.superuser.cog import save_file
-    from carfigures.settings import settings
+  from carfigures.core.models import Car as Ball
+  from carfigures.core.models import CarType as Regime
+  from carfigures.packages.superuser.cog import save_file
+  from carfigures.settings import settings
+
+
+log = logging.getLogger(f"{dir_type}.core.dexscript")
+
+__version__ = "0.4"
+
+
+START_CODE_BLOCK_RE = re.compile(r"^((```sql?)(?=\s)|(```))")
 
 MODELS = {
   "ball": Ball,
@@ -25,15 +38,6 @@ KEYWORDS = [
 ]
 
 dex_globals = {}
-
-
-def dexmethod(function):
-  def wrapper(*args):
-    args[0].args.pop(0)
-    
-    return function(*args)
-
-  return wrapper
   
 
 class Types(Enum):
@@ -52,87 +56,36 @@ class CodeStatus(Enum):
   
 
 class Value():
-  def __init__(self, name, type):
+  def __init__(self, name: str, type: Types, level: int):
     self.name = name
     self.type = type
+    self.level = level
 
   def __repr__(self):
     return self.name
     
 
 class Methods():
-  def __init__(self, parser, ctx, args):
+  def __init__(
+    self, 
+    parser, 
+    ctx, 
+    args: list[Value], 
+    str_arg: str
+  ):
     self.ctx = ctx
     self.args = args
+    
     self.parser = parser
 
-  @dexmethod
-  async def create(self):
-    fields = {}
-
-    for key, field in vars(self.args[0]()).items():
-      if field is not None:
-          continue
-
-      if key == "id" or key == "short_name":
-          continue
-
-      fields[key] = 1
-
-      if key in [self.parser.translate("country"), "catch_names", "name", "username"]:
-          fields[key] = self.args[1]
-      elif key == "emoji_id":
-          fields[key] = 100 ** 8
-
-    await self.args[0].create(**fields)
-    
-    await self.ctx.send(
-      f"Created `{self.args[1]}` {self.args[0].lower()}\n"
-      f"-# Use the `UPDATE` command to update this {self.args[0].lower()}."
-    )
-
-  @dexmethod
-  def delete(self):
+  async def delete(self):
     pass
 
-  @dexmethod
-  def update(self):
+  async def update(self):
     pass
 
-  @dexmethod
-  def view(self):
-    await self.parser.get_model(model, formatted_values[1][0])
-
-    #if formatted_ball[2][0] == "-ALL":
-        #pass
-
-    attribute = getattr(returned_model, formatted_values[2][0].lower())
-
-    if isinstance(attribute, str) and os.path.isfile(attribute[1:]):
-        await self.ctx.send(
-            f"```{attribute}```", file=discord.File(attribute[1:])
-        )
-        return
-
-    await self.ctx.send(
-        f"```{getattr(returned_model, formatted_values[2][0].lower())}```"
-    )
-    
-  @dexmethod
-  async def list(self):
-    final = f"{str(self.args[0])} FIELDS:\n\n"
-    
-    for field in vars(self.args[0]()):
-      if field.startswith("_"):
-        continue
-
-      final += f"- {field}\n"
-
-    await self.ctx.send(f"```{final}```")
-
-  @dexmethod
   async def show(self):
-    await self.ctx.send(f"```{self.args[0]}```")
+    await ctx.send(f"```\n{self.args[0]}\n```")
     
     
 class DexScriptParser():
@@ -144,6 +97,7 @@ class DexScriptParser():
     self.ctx = ctx
     
     self.dex_locals = {}
+    
     self.values = []
 
   @staticmethod
@@ -204,17 +158,6 @@ class DexScriptParser():
 
     return getattr(item, translated_string) if item else translated_string
 
-  async def get_model(self, model, identifier):
-    return_model = None
-    new_identity = await self.autocorrect(identifier, [])
-
-    if dir_type == "ballsdex":
-        return_model = await Ball.get(country=new_identity)
-    else:
-        return_model = await Ball.get(full_name=new_identity)
-
-    return return_model
-
   def keyword(self, line):
     identity = line[1].name
     value = line[2].name
@@ -225,10 +168,10 @@ class DexScriptParser():
       case "global":
           dex_globals[identity] = value
 
-  def create_value(self, line):
+  def create_value(self, line, level):
     type = Types.VARIABLE
     
-    value = Value(line, type)
+    value = Value(line, type, level)
     lower = line.lower()
   
     if lower in vars(Methods):
@@ -248,16 +191,21 @@ class DexScriptParser():
   
     return self.var(value)
         
-  def execute(self, code: str):
+  async def execute(self, code: str):
     if (seperator := "\n") not in code:
       seperator = ";"
+
+    split_code = [x for x in code.split(seperator) if x.strip() != ""]
+
+    parsed_code: list[list[Value]] = []
     
-    for line in code.split(seperator):
-      parsed_code = []
-    
+    for index, line in enumerate(split_code):
+      line_code: list[Value] = []
       full_line = ""
+
+      level = line.count("  ")
     
-      for index, char in enumerate(line):
+      for index2, char in enumerate(line):
         if char == "":
           continue
           
@@ -265,22 +213,200 @@ class DexScriptParser():
 
         if full_line == "--":
           continue
+
+        if full_line.count("  ") > 0:
+          full_line = full_line[(full_line.count("  ") * 2):]
         
-        if char in [">"] or index == len(line) - 1:
-          value_line = full_line.replace(">", "").strip()
-          parsed_code.append(self.create_value(value_line))
+        if char in [">"] or index2 == len(line) - 1:
+          line_code.append(self.create_value(
+            full_line.replace(">", "").strip(), 
+            level
+          ))
+          
           full_line = ""
+
+        parsed_code.append(line_code)
   
-      try:
-        for value in parsed_code:
-          if value.type == Types.METHOD:
-            getattr(
-              Methods(self, self.ctx, parsed_code), 
-              value.name.lower()
-            )()
-          elif value.type == Types.KEYWORD:
+    try:
+      for line2 in parsed_code:
+        for index, value in enumerate(line2):
+          if value.type == Types.KEYWORD:
             self.keyword(parsed_code)
-      except Exception as error:
-        return (error, CodeStatus.FAILURE)
+            continue
+
+          if value.type != Types.METHOD:
+            continue
+            
+          new_method = Methods(
+            self,
+            self.ctx,
+            line2,
+            split_code[index]
+          )
+          
+          await getattr(new_method, value.name.lower())()
+    except Exception as error:
+      print(error)
+      return (error, CodeStatus.FAILURE)
   
     return (None, CodeStatus.SUCCESS)
+
+class DexScript(commands.Cog):
+    """
+    DexScript commands
+    """
+
+    def __init__(self, bot):
+      self.bot = bot
+
+    @staticmethod
+    def cleanup_code(content): 
+      """
+      Automatically removes code blocks from the code.
+      """
+
+      if content.startswith("```") and content.endswith("```"):
+        return START_CODE_BLOCK_RE.sub("", content)[:-3]
+
+      return content.strip("` \n")
+
+    @staticmethod
+    def check_version():
+      if not outdated_warning:
+        return None
+
+      r = requests.get("https://api.github.com/repos/Dotsian/DexScript/contents/version.txt")
+
+      if r.status_code != requests.codes.ok:
+        return
+
+      new_version = base64.b64decode(r.json()["content"]).decode("UTF-8").rstrip()
+
+      if new_version != __version__:
+        return (
+          f"Your DexScript version ({__version__}) is outdated. " 
+          f"Please update to version ({new_version}) "
+          f"using `{settings.prefix}update-ds`."
+        )
+
+      return None
+
+    @commands.command()
+    @commands.is_owner()
+    async def run(self, ctx: commands.Context, *, code: str):
+      """
+      Executes DexScript code.
+
+      Parameters
+      ----------
+      code: str
+        The code you'd like to execute.
+      """
+
+      body = self.cleanup_code(code)
+
+      version_check = self.check_version()
+
+      if version_check:
+        await ctx.send(f"-# {version_check}")
+
+      try:
+        dexscript_instance = DexScriptParser(ctx)
+        await dexscript_instance.execute(body)
+      except Exception as error:
+        full_error = error
+
+        if advanced_errors:
+          full_error = traceback.format_exc()
+          
+        await ctx.send(f"```ERROR: {full_error}\n```")
+      else:
+        await ctx.message.add_reaction("✅")
+
+    @commands.command()
+    @commands.is_owner()
+    async def about(self, ctx: commands.Context):
+      """
+      Displays information about DexScript.
+      """
+
+      embed = discord.Embed(
+        title="DexScript - ALPHA",
+        description=(
+          "DexScript is a set of commands created by DotZZ "
+          "that allows you to easily "
+          "modify, delete, and display model data.\n\n"
+          "For a guide on how to use DexScript, "
+          "refer to the official [DexScript guide](<https://github.com/Dotsian/DexScript/wiki/Commands>).\n\n"
+          "If you want to follow DexScript, "
+          "join the official [DexScript Discord](<https://discord.gg/EhCxuNQfzt>) server."
+        ),
+        color = discord.Color.from_str("#03BAFC")
+      )
+
+      value = ""
+      version_check = "OUTDATED" if self.check_version() is not None else "LATEST"
+
+      embed.set_thumbnail(url="https://i.imgur.com/uKfx0qO.png")
+      embed.set_footer(text=f"DexScript {__version__} ({version_check})")
+
+      await ctx.send(embed=embed)
+
+    @commands.command(name="update-ds")
+    @commands.is_owner()
+    async def update_ds(self, ctx: commands.Context):
+      """
+      Updates DexScript to the latest version.
+      """
+
+      r = requests.get("https://api.github.com/repos/Dotsian/DexScript/contents/installer.py")
+
+      if r.status_code == requests.codes.ok:
+        content = base64.b64decode(r.json()["content"])
+        await ctx.invoke(self.bot.get_command("eval"), body=content.decode("UTF-8"))
+      else:
+        await ctx.send(
+          "Failed to update DexScript.\n"
+          "Report this issue to `dot_zz` on Discord."
+        )
+        print(f"ERROR CODE: {r.status_code}")
+
+    @commands.command(name="reload-ds")
+    @commands.is_owner()
+    async def reload_ds(self, ctx: commands.Context):
+      """
+      Reloads DexScript.
+      """
+
+      await self.bot.reload_extension(f"{dir_type}.core.dexscript")
+      await ctx.send("Reloaded DexScript")
+
+    @commands.command()
+    @commands.is_owner()
+    async def toggle(self, ctx: commands.Context, setting: str):
+      """
+      Toggles a setting on and off.
+
+      Parameters
+      ----------
+      setting: str
+        The setting you want to toggle. (DEBUG & OUTDATED-WARNING)
+      """
+
+      global advanced_errors
+      global outdated_warning
+
+      response = "Setting could not be found."
+
+      match setting:
+        case "DEBUG":
+          advanced_errors = not advanced_errors
+          response = f"Debug mode has been set to `{str(advanced_errors)}`"
+        case "OUTDATED-WARNING":
+          outdated_warning = not outdated_warning
+          response = f"Outdated warnings have been set to `{str(outdated_warning)}`"
+
+      await ctx.send(response)
+
+async def setup(bot):
+  await bot.add_cog(DexScript(bot))
