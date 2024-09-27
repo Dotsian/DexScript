@@ -39,6 +39,9 @@ KEYWORDS = [
 ]
 
 dex_globals = {}
+
+outdated_warning = True
+advanced_errors = False
   
 
 class Types(Enum):
