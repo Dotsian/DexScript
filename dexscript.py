@@ -223,7 +223,7 @@ class Methods():
 
     parameters = f"GLOBAL YIELDS:\n\n"
 
-    model_name == model if isinstance(model, str) else model.__name__
+    model_name = model if isinstance(model, str) else model.__name__
 
     if model_name.lower() != "-yields":
       parameters = f"{model_name.upper()} FIELDS:\n\n"
