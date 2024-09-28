@@ -25,6 +25,7 @@ if dir_type == "ballsdex":
   from ballsdex.packages.admin.cog import save_file
   from ballsdex.settings import settings
 else:
+  from carfigures.core.models import Admin as User
   from carfigures.core.models import Car as Ball
   from carfigures.core.models import CarType as Regime
   from carfigures.core.models import GuildConfig
