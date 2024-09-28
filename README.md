@@ -1,9 +1,9 @@
 
-# DexScript - ALPHA
+# DexScript - BETA
 <img src="https://i.imgur.com/uKfx0qO.png" width="200"> 
 
 ## What is DexScript?
-DexScript is a set of commands made by ``DotZZ``. The commands simplify models like editing, adding, and deleting things you want in your bot. Basically making your life easier.
+DexScript is a set of commands made by ``DotZZ``. The commands simplify models like editing, adding, and deleting models you want in your bot. Basically making your life easier.
 
 ## What bots can it be used for?
 
@@ -31,3 +31,4 @@ Yes, you can test beta things, and if you are wondering how to do that, follow t
 >  ``MIT License`` <br>
 >  ``Made on September 14, 2024`` <br>
 >  ``Last updated on September 28, 2024`` <br>
+> [``DexScript Discord server``](https://discord.gg/pkKvMdP74Z) </br>
