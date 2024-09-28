@@ -11,7 +11,6 @@ DexScript can be used for BallsDex and CarFigures Instances, each of them has it
 
 ## What commands are there?  
 
-
 You are probably wondering what commands are there, and for that, there is a list of commands that you can check with the command "LIST." 
 
 These commands are for BallsDex Instances, but can also be used for CarFigures. 
@@ -32,4 +31,3 @@ Yes, you can test beta things, and if you are wondering how to do that, follow t
 >  ``MIT License`` <br>
 >  ``Made on September 14, 2024`` <br>
 >  ``Last updated on September 28, 2024`` <br>
->  [``Discord``](https://discord.gg/pkKvMdP74Z) </br>
