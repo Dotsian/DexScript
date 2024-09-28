@@ -1,6 +1,6 @@
 import base64
+from decimal import InvalidOperation
 import os
-import time
 import logging
 import re
 import requests
@@ -14,12 +14,22 @@ from discord.ext import commands
 dir_type = "ballsdex" if os.path.isdir("ballsdex") else "carfigures"
 
 if dir_type == "ballsdex":
-  from ballsdex.core.models import Ball, Regime
+  from ballsdex.core.models import (
+    User, 
+    GuildConfig, 
+    Ball, 
+    Regime, 
+    Economy,
+    Special
+  )
   from ballsdex.packages.admin.cog import save_file
   from ballsdex.settings import settings
 else:
   from carfigures.core.models import Car as Ball
   from carfigures.core.models import CarType as Regime
+  from carfigures.core.models import GuildConfig
+  from carfigures.core.models import Country as Economy
+  from carfigures.core.models import Event as Special
   from carfigures.packages.superuser.cog import save_file
   from carfigures.settings import settings
 
@@ -32,8 +42,12 @@ __version__ = "0.4"
 START_CODE_BLOCK_RE = re.compile(r"^((```sql?)(?=\s)|(```))")
 
 MODELS = {
-  "ball": Ball,
-  "regime": Regime,
+  "user":           [User,          "USERNAME"],
+  "guildconfig":    [GuildConfig,   "ID"],
+  "ball":           [Ball,          "COUNTRY"],
+  "regime":         [Regime,        "NAME"],
+  "economy":        [Economy,       "NAME"],
+  "special":        [Special,       "NAME"]
 }
 
 KEYWORDS = [
@@ -41,10 +55,14 @@ KEYWORDS = [
   "global",
 ]
 
-dex_globals = {}
+SETTINGS = {
+  "DEBUG": False,
+  "OUTDATED-WARNING": False,
+  "REFERENCE": "main",
+}
 
-outdated_warning = True
-advanced_errors = False
+dex_globals = {}
+dex_yields = []
   
 
 class Types(Enum):
@@ -56,20 +74,36 @@ class Types(Enum):
   KEYWORD = 5
   MODEL = 6
 
+class YieldType(Enum):
+  CREATE_MODEL = 0
 
 class CodeStatus(Enum):
-   SUCCESS = 0
-   FAILURE = 1
+  SUCCESS = 0
+  FAILURE = 1
   
+
+def in_list(list_attempt, index):
+  try:
+    list_attempt[index]
+    return True
+  except:
+    return False
 
 class Value():
   def __init__(self, name: str, type: Types):
     self.name = name
     self.type = type
+    self.extra_data = []
 
   def __repr__(self):
     return self.name
-    
+  
+class Yield():
+  def __init__(self, model, identifier, value, type: YieldType):
+    self.model = model
+    self.identifier = identifier
+    self.value = value
+    self.type = type
 
 class Methods():
   def __init__(
@@ -83,11 +117,152 @@ class Methods():
     
     self.parser = parser
 
+  async def push(self):
+    global dex_yields
+
+    if in_list(self.args, 1) and self.args[1].name.lower() == "-clear":
+      dex_yields = []
+
+      await self.ctx.send("Cleared yield cache.")
+      return
+    
+    for index, yield_object in enumerate(dex_yields, start=1):
+      if in_list(self.args, 1) and int(self.args[1].name) >= index:
+        break
+
+      match yield_object.type:
+        case YieldType.CREATE_MODEL:
+          await yield_object.model.create(**yield_object.value)
+
+    plural = "" if len(dex_yields) == 1 else "s"
+
+    await self.ctx.send(
+      f"Pushed `{self.args[1].name if in_list(self.args, 1) else len(dex_yields)}` yield{plural}."
+    )
+
+    dex_yields = []
+
+  async def create(self):
+    result = await self.parser.create_model(
+      self.args[1].name,
+      self.args[2], 
+      self.args[3] if in_list(self.args, 3) else False
+    )
+
+    suffix = ""
+
+    if result is not None:
+      suffix = " and yielded it until `push`"
+      dex_yields.append(result)
+
+    await self.ctx.send(
+      f"Created `{self.args[2]}`{suffix}"
+    )
+
   async def delete(self):
-    pass
+    returned_model = await self.parser.get_model(
+      self.args[1], 
+      self.args[2].name
+    )
+
+    await returned_model.delete()
+
+    await self.ctx.send(f"Deleted `{self.args[2]}`")
 
   async def update(self):
-    pass
+    # UPDATE > BALL > "British Empire" > "COUNTRY" > "Newfoundland"
+    found_yield = self.parser.get_yield(
+      self.args[1].name, 
+      self.args[2].name
+    )
+
+    new_attribute = None
+
+    if self.ctx.message.attachments != []:
+      image_path = await save_file(self.ctx.message.attachments[0])
+      new_attribute = Value(f"/{image_path}", Types.STRING)
+    else:
+      new_attribute = self.args[4]
+
+    update_message = f"`{self.args[2]}'s` {self.args[3]} to {new_attribute.name}"
+
+    if found_yield is None:
+      returned_model = await self.parser.get_model(self.args[1], self.args[2].name)
+
+      setattr(returned_model, self.args[3].name.lower(), new_attribute)
+
+      await returned_model.save()
+
+      await self.ctx.send(f"Updated {update_message}")
+
+      return
+    
+    found_yield.value[self.args[3].name.lower()] = new_attribute.name
+
+    await self.ctx.send(f"Updated yielded {update_message}")
+
+  async def view(self):
+    returned_model = await self.parser.get_model(self.args[1], self.args[2].name)
+
+    #if self.args[2] == "-ALL":
+      #pass
+
+    attribute = getattr(returned_model, self.args[3].name.lower())
+
+    if isinstance(attribute, str) and os.path.isfile(attribute[1:]):
+      await self.ctx.send(
+          f"```{attribute}```", file=discord.File(attribute[1:])
+      )
+      return
+
+    await self.ctx.send(f"```{attribute}```")
+
+  async def list(self):
+    model = self.args[1].name
+
+    parameters = f"GLOBAL YIELDS:\n\n"
+
+    if model.lower() != "-yields":
+      parameters = f"{model.__name__.upper()} FIELDS:\n\n"
+
+      for field in vars(model()):
+        if field[:1] == "_":
+          continue
+
+        parameters += f"- {field.replace(' ', '_').upper()}\n"
+    else:
+      for index, dex_yield in enumerate(dex_yields, start=1):
+        parameters += f"{index}. {dex_yield.identifier.name.upper()}\n"
+
+    await self.ctx.send(f"```\n{parameters}\n```")
+
+  async def file(self):
+    match self.args[1].lower():
+      case "write":
+        new_file = self.ctx.message.attachments[0]
+
+        with open(self.args[2], "w") as opened_file:
+          contents = await new_file.read()
+          opened_file.write(contents.decode("utf-8"))
+
+        await self.ctx.send(f"Wrote to `{self.args[2]}`")
+
+      case "clear":
+        with open(self.args[2], "w") as opened_file:
+          pass
+
+        await self.ctx.send(f"Cleared `{self.args[2]}`")
+
+      case "read":
+        await self.ctx.send(file=discord.File(self.args[2]))
+
+      case "delete":
+        os.remove(self.args[1])
+      
+        await self.ctx.send(f"Deleted `{self.args[1]}`")
+
+      case _:
+        raise InvalidOperation(f"'{self.args[0]}' is not a valid file operation. (READ, WRITE, CLEAR, or DELETE)")
 
   async def show(self):
     await self.ctx.send(f"```\n{self.args[1]}\n```")
@@ -114,9 +289,9 @@ class DexScriptParser():
       return False
 
   @staticmethod
-  def enclosed(string, border):
-    return string[:1] == border and string[-1:] == border
-
+  def enclosed(string, borders):
+    return string[:1] in borders and string[-1:] in borders
+  
   @staticmethod
   def autocorrect(string, correction_list, error="does not exist."):
     autocorrection = get_close_matches(string, correction_list)
@@ -127,6 +302,48 @@ class DexScriptParser():
       raise ValueError(f"'{string}' {error}{suggestion}")
 
     return autocorrection[0]
+  
+  async def create_model(self, model, identifier, yield_creation):
+    fields = {}
+
+    for key, field in vars(model()).items():
+      if field is not None:
+        continue
+
+      if key in ["id", "short_name"]:
+        continue
+
+      fields[key] = 1
+
+      if key in ["country", "full_name", "catch_names", "name", "username"]:
+        fields[key] = identifier
+      elif key == "emoji_id":
+        fields[key] = 100 ** 8
+      elif key == "regime_id":
+        first_regime = await Regime.first()
+        fields[key] = first_regime.pk
+
+    if yield_creation:
+      return Yield(model, identifier, fields, YieldType.CREATE_MODEL)
+
+    await model.create(**fields)
+
+  async def get_model(self, model, identifier):
+    returned_model = await model.name.filter(**{
+      self.translate(model.extra_data[0].lower()): self.autocorrect(
+        identifier, 
+        [str(x) for x in await model.name.all()]
+      )
+    })
+
+    return returned_model[0]
+  
+  def get_yield(self, model, identifier):
+    for item in dex_yields:
+      if item.model != model or item.identifier.name != identifier:
+        continue
+
+      return item
 
   def var(self, value):
     return_value = value
@@ -140,10 +357,19 @@ class DexScriptParser():
         elif value.name in dex_globals:
           return_value = dex_globals[value.name]
         else:
-          raise NameError(f"'{value.name}' is an uknown variable.")
+          raise NameError(
+            f"'{value.name}' is an uknown variable.\n"
+            "Perhaps you forgot to enclose it in quotes?"
+          )
+        
+      case Types.MODEL:
+        current_model = MODELS[value.name.lower()]
+
+        value.name = current_model[0]
+        value.extra_data.append(current_model[1])
 
       case Types.BOOLEAN:
-        return_value = value.name.lower() == "true"
+        value.name = value.name.lower() == "true"
 
       case Types.STRING:
         value.name = value.name[1:][:-1]
@@ -151,9 +377,14 @@ class DexScriptParser():
     return return_value
 
   @staticmethod
-  def translate(string, item=None):
+  def translate(string: str, item=None):
     """
-    CarFigure support.
+    Translates model and field names into a format for both Ballsdex and CarFigures.
+
+    Parameters
+    ----------
+    string: str
+      The string you want to translate.
     """
 
     if dir_type == "ballsdex":
@@ -194,7 +425,7 @@ class DexScriptParser():
       type = Types.NUMBER
     elif lower in ["true", "false"]:
       type = Types.BOOLEAN
-    elif self.enclosed(lower, '"') or self.enclosed(lower, "'"):
+    elif self.enclosed(lower, ['"', "'"]):
       type = Types.STRING
 
     value.type = type
@@ -210,7 +441,7 @@ class DexScriptParser():
   
       parsed_code: list[list[Value]] = []
       
-      for index, line in enumerate(split_code):
+      for line in split_code:
         line_code: list[Value] = []
         full_line = ""
       
@@ -250,7 +481,7 @@ class DexScriptParser():
           
           await getattr(new_method, value.name.lower())()
     except Exception as error:
-      return (error, CodeStatus.FAILURE)
+      return ((error, traceback.format_exc()), CodeStatus.FAILURE)
   
     return (None, CodeStatus.SUCCESS)
 
@@ -275,10 +506,13 @@ class DexScript(commands.Cog):
 
     @staticmethod
     def check_version():
-      if not outdated_warning:
+      if not SETTINGS["OUTDATED-WARNING"]:
         return None
 
-      r = requests.get("https://api.github.com/repos/Dotsian/DexScript/contents/version.txt")
+      r = requests.get(
+        "https://api.github.com/repos/Dotsian/DexScript/contents/version.txt",
+        {"ref": SETTINGS["REFERENCE"]}
+      )
 
       if r.status_code != requests.codes.ok:
         return
@@ -317,12 +551,7 @@ class DexScript(commands.Cog):
       result, status = await dexscript_instance.execute(body)
 
       if status == CodeStatus.FAILURE:
-        full_error = result
-
-        if advanced_errors:
-          full_error = traceback.format_exc()
-          
-        await ctx.send(f"```ERROR: {full_error}\n```")
+        await ctx.send(f"```ERROR: {result[1 if SETTINGS['DEBUG'] else 0]}\n```")
       else:
         await ctx.message.add_reaction("✅")
 
@@ -334,11 +563,11 @@ class DexScript(commands.Cog):
       """
 
       embed = discord.Embed(
-        title="DexScript - ALPHA",
+        title="DexScript - BETA",
         description=(
           "DexScript is a set of commands created by DotZZ "
           "that allows you to easily "
-          "modify, delete, and display model data.\n\n"
+          "modify, delete, and display data for models.\n\n"
           "For a guide on how to use DexScript, "
           "refer to the official [DexScript guide](<https://github.com/Dotsian/DexScript/wiki/Commands>).\n\n"
           "If you want to follow DexScript, "
@@ -347,7 +576,6 @@ class DexScript(commands.Cog):
         color = discord.Color.from_str("#03BAFC")
       )
 
-      value = ""
       version_check = "OUTDATED" if self.check_version() is not None else "LATEST"
 
       embed.set_thumbnail(url="https://i.imgur.com/uKfx0qO.png")
@@ -362,7 +590,10 @@ class DexScript(commands.Cog):
       Updates DexScript to the latest version.
       """
 
-      r = requests.get("https://api.github.com/repos/Dotsian/DexScript/contents/installer.py")
+      r = requests.get(
+        "https://api.github.com/repos/Dotsian/DexScript/contents/installer.py", 
+        {"ref": SETTINGS["REFERENCE"]}
+      )
 
       if r.status_code == requests.codes.ok:
         content = base64.b64decode(r.json()["content"])
@@ -386,28 +617,29 @@ class DexScript(commands.Cog):
 
     @commands.command()
     @commands.is_owner()
-    async def toggle(self, ctx: commands.Context, setting: str):
+    async def setting(self, ctx: commands.Context, setting: str, value: str):
       """
-      Toggles a setting on and off.
+      Changes a setting based on the value provided.
 
       Parameters
       ----------
       setting: str
-        The setting you want to toggle. (DEBUG & OUTDATED-WARNING)
+        The setting you want to toggle.
+      value: str
+        The value you want to set the setting to.
       """
 
-      global advanced_errors
-      global outdated_warning
+      response = f"`{setting}` is not a valid setting."
 
-      response = "Setting could not be found."
+      if setting in SETTINGS:
+        selected_setting = SETTINGS[setting]
 
-      match setting:
-        case "DEBUG":
-          advanced_errors = not advanced_errors
-          response = f"Debug mode has been set to `{str(advanced_errors)}`"
-        case "OUTDATED-WARNING":
-          outdated_warning = not outdated_warning
-          response = f"Outdated warnings have been set to `{str(outdated_warning)}`"
+        if isinstance(selected_setting, bool):
+          SETTINGS[setting] = bool(value)
+        elif isinstance(selected_setting, str):
+          SETTINGS[setting] = value
+
+        response = f"`{setting}` has been set to `{value}`"
 
       await ctx.send(response)
 
