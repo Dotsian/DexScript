@@ -190,7 +190,7 @@ class Methods():
     if found_yield is None:
       returned_model = await self.parser.get_model(self.args[1], self.args[2].name)
 
-      setattr(returned_model, self.args[3].name.lower(), new_attribute)
+      setattr(returned_model, self.args[3].name.lower(), new_attribute.name)
 
       await returned_model.save()
 
