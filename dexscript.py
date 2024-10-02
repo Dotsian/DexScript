@@ -365,9 +365,6 @@ class DexScriptParser():
       case Types.BOOLEAN:
         value.name = value.name.lower() == "true"
 
-      case Types.STRING:
-        value.name = value.name[1:][:-1]
-
     return return_value
 
   @staticmethod
