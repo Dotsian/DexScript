@@ -37,7 +37,7 @@ else:
 
 log = logging.getLogger(f"{dir_type}.core.dexscript")
 
-__version__ = "0.4"
+__version__ = "0.4.1"
 
 
 START_CODE_BLOCK_RE = re.compile(r"^((```sql?)(?=\s)|(```))")
@@ -171,7 +171,6 @@ class Methods():
     await self.ctx.send(f"Deleted `{self.args[2]}`")
 
   async def update(self):
-    # UPDATE > BALL > "British Empire" > "COUNTRY" > "Newfoundland"
     found_yield = self.parser.get_yield(
       self.args[1].name, 
       self.args[2].name
@@ -204,9 +203,6 @@ class Methods():
 
   async def view(self):
     returned_model = await self.parser.get_model(self.args[1], self.args[2].name)
-
-    #if self.args[2] == "-ALL":
-      #pass
 
     attribute = getattr(returned_model, self.args[3].name.lower())
 
@@ -361,8 +357,7 @@ class DexScriptParser():
           return_value = dex_globals[value.name]
         else:
           raise NameError(
-            f"'{value.name}' is an uknown variable.\n"
-            "Perhaps you forgot to enclose it in quotes?"
+            f"'{value.name}' is an unknown variable."
           )
         
       case Types.MODEL:
@@ -413,7 +408,7 @@ class DexScriptParser():
           dex_globals[identity] = value
 
   def create_value(self, line):
-    type = Types.VARIABLE
+    type = Types.STRING
     
     value = Value(line, type)
     lower = line.lower()
@@ -422,14 +417,14 @@ class DexScriptParser():
       type = Types.METHOD
     elif lower in KEYWORDS:
       type = Types.KEYWORD
+    elif lower.startswith("$"):
+      type = Types.VARIABLE
     elif lower in MODELS:
       type = Types.MODEL
     elif self.is_number(lower):
       type = Types.NUMBER
     elif lower in ["true", "false"]:
       type = Types.BOOLEAN
-    elif self.enclosed(lower, ['"', "'"]):
-      type = Types.STRING
 
     value.type = type
   
