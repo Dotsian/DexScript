@@ -426,7 +426,7 @@ class DexScriptParser():
   async def execute(self, code: str):
     try:
       if (seperator := "\n") not in code:
-        seperator = ";"
+        seperator = "^"
   
       split_code = [x for x in code.split(seperator) if x.strip() != ""]
   
