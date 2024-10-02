@@ -446,7 +446,7 @@ class DexScriptParser():
           full_line += char
   
           if full_line == "--":
-            continue
+            break
           
           if char in [">"] or index2 == len(line) - 1:
             line_code.append(self.create_value(
