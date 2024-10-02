@@ -286,10 +286,6 @@ class DexScriptParser():
       return True
     except ValueError:
       return False
-
-  @staticmethod
-  def enclosed(string, borders):
-    return string[:1] in borders and string[-1:] in borders
   
   @staticmethod
   def autocorrect(string, correction_list, error="does not exist."):
