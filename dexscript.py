@@ -3,6 +3,7 @@ from decimal import InvalidOperation
 import os
 import logging
 import re
+from typing import Any
 import requests
 import traceback
 from difflib import get_close_matches
@@ -87,11 +88,11 @@ def in_list(list_attempt, index):
   try:
     list_attempt[index]
     return True
-  except:
+  except Exception:
     return False
 
 class Value():
-  def __init__(self, name: str, type: Types):
+  def __init__(self, name: Any, type: Types):
     self.name = name
     self.type = type
     self.extra_data = []
@@ -217,14 +218,14 @@ class Methods():
   async def list(self):
     model = self.args[1].name
 
-    parameters = f"GLOBAL YIELDS:\n\n"
+    parameters = "GLOBAL YIELDS:\n\n"
 
     model_name = model if isinstance(model, str) else model.__name__
 
     if model_name.lower() != "-yields":
       parameters = f"{model_name.upper()} FIELDS:\n\n"
 
-      for field in vars(model()):
+      for field in vars(model()): # type: ignore
         if field[:1] == "_":
           continue
 
@@ -236,27 +237,27 @@ class Methods():
     await self.ctx.send(f"```\n{parameters}\n```")
 
   async def file(self):
-    match self.args[1].lower():
+    match self.args[1].name.lower():
       case "write":
         new_file = self.ctx.message.attachments[0]
 
-        with open(self.args[2], "w") as opened_file:
+        with open(self.args[2].name, "w") as opened_file:
           contents = await new_file.read()
           opened_file.write(contents.decode("utf-8"))
 
         await self.ctx.send(f"Wrote to `{self.args[2]}`")
 
       case "clear":
-        with open(self.args[2], "w") as opened_file:
+        with open(self.args[2].name, "w") as opened_file:
           pass
 
         await self.ctx.send(f"Cleared `{self.args[2]}`")
 
       case "read":
-        await self.ctx.send(file=discord.File(self.args[2]))
+        await self.ctx.send(file=discord.File(self.args[2].name))
 
       case "delete":
-        os.remove(self.args[1])
+        os.remove(self.args[1].name)
       
         await self.ctx.send(f"Deleted `{self.args[1]}`")
 
@@ -541,7 +542,7 @@ class DexScript(commands.Cog):
       dexscript_instance = DexScriptParser(ctx)
       result, status = await dexscript_instance.execute(body)
 
-      if status == CodeStatus.FAILURE:
+      if status == CodeStatus.FAILURE and result is not None:
         await ctx.send(f"```ERROR: {result[1 if SETTINGS['DEBUG'] else 0]}\n```")
       else:
         await ctx.message.add_reaction("✅")
