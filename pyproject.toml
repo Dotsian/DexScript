@@ -1,0 +1,25 @@
+[tool.poetry]
+name = "dexscript"
+version = "1.0.0"
+description = ""
+authors = ["dotzz <official.dotzz@gmail.com>"]
+license = "MIT"
+
+[tool.poetry.dependencies]
+python = "^3.12"
+
+"discord.py" = "^2.4.0"
+
+ruff = "^0.6.9"
+
+[tool.poetry.group.dev.dependencies]
+pre-commit = "^3.8.0"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.ruff]
+line-length = 99
+lint.ignore = ["E203", "F704", "F706", "F821"]
+lint.extend-select = ["E501", "I001"]

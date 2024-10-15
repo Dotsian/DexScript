@@ -1,0 +1,37 @@
+name: Pre-commit
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  pre-commit:
+    runs-on: ubuntu-latest
+    name: pre-commit
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Setup Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.12
+      - uses: actions/cache@v3
+        with:
+          path: ~/.cache/pre-commit
+          key: pre-commit|${{ env.pythonLocation }}|${{ hashFiles('.pre-commit-config.yaml') }}
+      - uses: actions/cache@v3
+        with:
+          path: ~/.cache/pypoetry
+          key: poetry-${{ hashFiles('poetry.lock') }}
+      - name: Install Poetry
+        run: |
+          curl -sSL https://install.python-poetry.org | python3 -
+          echo "$HOME/.poetry/bin" >> $GITHUB_PATH
+      - name: Lock dependencies
+        run: poetry lock --no-update
+      - name: Install dependencies
+        run: poetry install --with=dev --no-interaction
+      - name: Run ruff
+        run: poetry run ruff check
+      - name: Run pre-commit checks
+        run: poetry run pre-commit run -a
