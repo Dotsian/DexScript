@@ -132,9 +132,7 @@ class Methods:
         plural = "" if len(dex_yields) == 1 else "s"
         number = self.args[1].name if in_list(self.args, 1) else len(dex_yields)
 
-        await self.ctx.send(
-            f"Pushed `{number}` yield{plural}."
-        )
+        await self.ctx.send(f"Pushed `{number}` yield{plural}.")
 
         dex_yields = []
 
