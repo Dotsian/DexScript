@@ -10,6 +10,7 @@ from typing import Any
 
 import discord
 import requests
+from dateutil.parser import parse as parse_date
 from discord.ext import commands
 
 dir_type = "ballsdex" if os.path.isdir("ballsdex") else "carfigures"
@@ -31,7 +32,7 @@ else:
 
 log = logging.getLogger(f"{dir_type}.core.dexscript")
 
-__version__ = "0.4.1"
+__version__ = "0.4.2"
 
 
 START_CODE_BLOCK_RE = re.compile(r"^((```sql?)(?=\s)|(```))")
@@ -68,6 +69,7 @@ class Types(Enum):
     VARIABLE = 4
     KEYWORD = 5
     MODEL = 6
+    DATETIME = 7
 
 
 class YieldType(Enum):
@@ -272,6 +274,14 @@ class DexScriptParser:
             return False
 
     @staticmethod
+    def is_date(string):
+        try:
+            parse_date(string)
+            return True
+        except Exception:
+            return False
+
+    @staticmethod
     def autocorrect(string, correction_list, error="does not exist."):
         autocorrection = get_close_matches(string, correction_list)
 
@@ -308,13 +318,16 @@ class DexScriptParser:
         await model.create(**fields)
 
     async def get_model(self, model, identifier):
-        returned_model = await model.name.filter(
-            **{
-                self.translate(model.extra_data[0].lower()): self.autocorrect(
-                    identifier, [str(x) for x in await model.name.all()]
-                )
-            }
-        )
+        try:
+            returned_model = await model.name.filter(
+                **{
+                    self.translate(model.extra_data[0].lower()): self.autocorrect(
+                        identifier, [str(x) for x in await model.name.all()]
+                    )
+                }
+            )
+        except AttributeError:
+            raise AttributeError(f"{model} is not a valid model.")
 
         return returned_model[0]
 
@@ -347,6 +360,9 @@ class DexScriptParser:
 
             case Types.BOOLEAN:
                 value.name = value.name.lower() == "true"
+
+            case Types.DATETIME:
+                value.name = parse_date(value.name)
 
         return return_value
 
@@ -394,6 +410,8 @@ class DexScriptParser:
             type = Types.VARIABLE
         elif lower in MODELS:
             type = Types.MODEL
+        elif self.is_date(lower):
+            type = Types.DATETIME
         elif self.is_number(lower):
             type = Types.NUMBER
         elif lower in ["true", "false"]:
@@ -444,7 +462,13 @@ class DexScriptParser:
 
                     new_method = Methods(self, self.ctx, line2)
 
-                    await getattr(new_method, value.name.lower())()
+                    try:
+                        await getattr(new_method, value.name.lower())()
+                    except IndexError:
+                        # TODO: Remove `error` duplicates.
+
+                        error = f"Argument is missing when calling {value.name}."
+                        return ((error, error), CodeStatus.FAILURE)
         except Exception as error:
             return ((error, traceback.format_exc()), CodeStatus.FAILURE)
 
@@ -517,7 +541,7 @@ class DexScript(commands.Cog):
         result, status = await dexscript_instance.execute(body)
 
         if status == CodeStatus.FAILURE and result is not None:
-            await ctx.send(f"```ERROR: {result[1 if SETTINGS['DEBUG'] else 0]}\n```")
+            await ctx.send(f"```ERROR: {result[SETTINGS['DEBUG']]}\n```")
         else:
             await ctx.message.add_reaction("✅")
 

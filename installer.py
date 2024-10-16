@@ -15,9 +15,7 @@ else:
 
 updating = os.path.isfile(f"{dir_type}/core/dexscript.py")
 
-keywords = [
-    x[0 if updating else 1] for x in [["Updating", "Installing"], ["Updated", "Installed"]]
-]
+keywords = [["Updated", "Updating"], ["Installed", "Installing"]][not updating]
 
 embed = discord.Embed(
     title=f"{keywords[0]} DexScript",

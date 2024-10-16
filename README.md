@@ -4,11 +4,11 @@
 
 ## What is DexScript?
 
-DexScript is a set of commands made by ``DotZZ``. The commands simplify models like editing, adding, and deleting models you want in your bot. Basically making your life easier.
+DexScript is a set of commands made by ``DotZZ``. The commands simplify editing, adding, and deleting models such as balls, regimes, specials, etc.
 
-## What bots can it be used for?
+## What bots does it support?
 
-DexScript can be used for BallsDex and CarFigures Instances, each of them has its respective guide on how to install.
+DexScript can be used for BallsDex and CarFigures instances, each of them has their own respective guide on how to use DexScript with them.
 
 ## What commands are there?  
 
@@ -33,8 +33,8 @@ Yes, you can test beta things, and if you are wondering how to do that, follow t
 ## Information
 
 > ``Made by dot_zz``
-> ``Version 0.4``
+> ``Version 0.4.2``
 > ``MIT License``
 > ``Made on September 14, 2024``
-> ``Last updated on September 28, 2024``
+> ``Last updated on October 16, 2024``
 > [``DexScript Discord server``](https://discord.gg/pkKvMdP74Z)

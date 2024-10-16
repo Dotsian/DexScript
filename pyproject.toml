@@ -1,15 +1,13 @@
 [tool.poetry]
 name = "dexscript"
-version = "1.0.0"
+version = "0.4.2"
 description = ""
 authors = ["dotzz <official.dotzz@gmail.com>"]
 license = "MIT"
 
 [tool.poetry.dependencies]
 python = "^3.12"
-
 "discord.py" = "^2.4.0"
-
 ruff = "^0.6.9"
 
 [tool.poetry.group.dev.dependencies]
