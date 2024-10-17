@@ -624,7 +624,7 @@ class DexScript(commands.Cog):
                 content = base64.b64decode(request_content.json()["content"])
 
                 with open(f"{dir_type}/packages/{file_path}", "w") as opened_file:
-                    opened_file.write(content)
+                    opened_file.write(content.decode("UTF-8"))
             else:
                 await ctx.send(
                     f"Failed to install the `{file}` file.\n" 
