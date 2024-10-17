@@ -3,7 +3,7 @@ import logging
 import os
 import re
 import traceback
-from decimal import InvalidOperation
+import yaml
 from difflib import get_close_matches
 from enum import Enum
 from typing import Any
@@ -79,6 +79,10 @@ class YieldType(Enum):
 class CodeStatus(Enum):
     SUCCESS = 0
     FAILURE = 1
+
+
+class DexScriptError(Exception):
+    pass
 
 
 def in_list(list_attempt, index):
@@ -244,7 +248,7 @@ class Methods:
                 await self.ctx.send(f"Deleted `{self.args[1]}`")
 
             case _:
-                raise InvalidOperation(
+                raise DexScriptError(
                     f"'{self.args[0]}' is not a valid file operation. "
                     "(READ, WRITE, CLEAR, or DELETE)"
                 )
@@ -288,7 +292,7 @@ class DexScriptParser:
         if not autocorrection or autocorrection[0] != string:
             suggestion = f"\nDid you mean '{autocorrection[0]}'?" if autocorrection else ""
 
-            raise ValueError(f"'{string}' {error}{suggestion}")
+            raise DexScriptError(f"'{string}' {error}{suggestion}")
 
         return autocorrection[0]
 
@@ -327,7 +331,7 @@ class DexScriptParser:
                 }
             )
         except AttributeError:
-            raise AttributeError(f"{model} is not a valid model.")
+            raise DexScriptError(f"{model} is not a valid model.")
 
         return returned_model[0]
 
@@ -350,7 +354,7 @@ class DexScriptParser:
                 elif value.name in dex_globals:
                     return_value = dex_globals[value.name]
                 else:
-                    raise NameError(f"'{value.name}' is an unknown variable.")
+                    raise DexScriptError(f"'{value.name}' is an unknown variable.")
 
             case Types.MODEL:
                 current_model = MODELS[value.name.lower()]
@@ -572,6 +576,60 @@ class DexScript(commands.Cog):
         embed.set_footer(text=f"DexScript {__version__} ({version_check})")
 
         await ctx.send(embed=embed)
+
+    @commands.command()
+    @commands.is_owner()
+    async def install(self, ctx: commands.Context, package: str):
+        """
+        Installs a package to your Discord bot.
+        """
+
+        package_info = package.replace("https://github.com/", "").split("/")
+
+        link = f"https://api.github.com/repos/{package_info[0]}/{package_info[1]}/contents/"
+
+        request = requests.get(link + "package.yml")
+
+        if request.status_code == requests.codes.ok:
+            content = base64.b64decode(request.json()["content"])
+
+            yaml_content = yaml.load(content, yaml.Loader)
+
+            # TODO: Simplify this.
+            package_info = [
+                yaml_content.get("author"), 
+                yaml_content.get("name"), 
+                yaml_content.get("description"),
+                yaml_content.get("version"),
+                yaml_content.get("files")
+            ]
+        else:
+            await ctx.send(
+                f"Failed to install {package_info[1]}.\n" 
+                f"Report this issue to `{package_info[0]}`.\n"
+                f"```ERROR CODE: {request.status_code}```"
+            )
+            return
+
+        os.mkdir(f"{dir_type}/packages/{package_info.name}")
+
+        for file in package_info[4]:
+            file_url = f"{link}{package_info[1]}/{file}"
+            request_content = requests.get(file_url)
+
+            if request_content.status_code == requests.codes.ok:
+                content = base64.b64decode(request_content.json()["content"])
+
+                with open(file_url, "w") as opened_file:
+                    opened_file.write(content)
+            else:
+                await ctx.send(
+                    f"Failed to install the `{file}` file.\n" 
+                    f"Report this issue to `{package_info[0]}`.\n"
+                    f"```ERROR CODE: {request_content.status_code}```"
+                )
+
+        await ctx.send(f"Installed `{package_info[1]}` by `{package_info[0]}`.")
 
     @commands.command(name="update-ds")
     @commands.is_owner()

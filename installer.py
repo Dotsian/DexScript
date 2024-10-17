@@ -100,6 +100,21 @@ async def install():
         with open(f"{dir_type}/core/bot.py", "w") as opened_file_2:
             opened_file_2.write(contents)
 
+    # Adds the new package loading system
+    with open(f"{dir_type}/core/bot.py", "r") as file:
+        code = file.read()
+    
+    for line in code.split("\n"):
+        if not line.startswith("PACKAGES"):
+            continue
+
+        code = code.replace(
+            line, f'PACKAGES = os.listdir("{dir_type}/packages")'.strip()
+        )
+
+    with open(f"{dir_type}/core/bot.py", "w") as file:
+        file.write(code)
+
     try:
         await bot.load_extension(f"{dir_type}.core.dexscript")
     except commands.ExtensionAlreadyLoaded:
