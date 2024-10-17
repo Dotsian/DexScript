@@ -623,7 +623,7 @@ class DexScript(commands.Cog):
             if request_content.status_code == requests.codes.ok:
                 content = base64.b64decode(request_content.json()["content"])
 
-                with open(file_path, "w") as opened_file:
+                with open(f"{dir_type}/packages/{file_path}", "w") as opened_file:
                     opened_file.write(content)
             else:
                 await ctx.send(
