@@ -651,9 +651,9 @@ class DexScript(commands.Cog):
                 )
 
         try:
-            await self.bot.load_extension(f"{dir_type}.core.{package_info[1]}")
+            await self.bot.load_extension(f"{dir_type}.packages.{package_info[1]}")
         except commands.ExtensionAlreadyLoaded:
-            await self.bot.reload_extension(f"{dir_type}.core.{package_info[1]}")
+            await self.bot.reload_extension(f"{dir_type}.packages.{package_info[1]}")
 
         t2 = time.time()
 
