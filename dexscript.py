@@ -587,6 +587,7 @@ class DexScript(commands.Cog):
         await ctx.send(embed=embed)
 
     @commands.command()
+    @commands.is_owner()
     async def uninstall(self, ctx: commands.Context, package: str):
         """
         Uninstalls a package.
