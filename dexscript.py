@@ -650,6 +650,11 @@ class DexScript(commands.Cog):
                     f"```ERROR CODE: {request_content.status_code}```"
                 )
 
+        try:
+            await bot.load_extension(f"{dir_type}.core.{package_info[1]}")
+        except commands.ExtensionAlreadyLoaded:
+            await bot.reload_extension(f"{dir_type}.core.{package_info[1]}")
+
         t2 = time.time()
 
         embed.title = f"{original_name} Installed"
@@ -659,7 +664,7 @@ class DexScript(commands.Cog):
             f"{package_info[2]}"
         )
 
-        embed.set_footer(text=f"{original_name} took {round((t2 - t1) * 1000)}ms to {keyword}")
+        embed.set_footer(text=f"{original_name} took {round((t2 - t1) * 1000)}ms to install")
 
         await original_message.edit(embed=embed)
 
