@@ -121,7 +121,7 @@ async def install():
             tracking = True
             
         code = code.replace(
-            line, f'PACKAGES = listdir("ballsdex/packages")'.strip()
+            line, f'PACKAGES = listdir("{dir_type}/packages")'.strip()
         )
 
     with open(f"{dir_type}/core/bot.py", "w") as file:
