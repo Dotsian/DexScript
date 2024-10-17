@@ -2,6 +2,7 @@ import base64
 import logging
 import os
 import re
+import time
 import traceback
 import yaml
 from difflib import get_close_matches
@@ -10,6 +11,7 @@ from typing import Any
 
 import discord
 import requests
+import datetime
 from dateutil.parser import parse as parse_date
 from discord.ext import commands
 
@@ -584,7 +586,23 @@ class DexScript(commands.Cog):
         Installs a package to your Discord bot.
         """
 
+        t1 = time.time()
+
         package_info = package.replace("https://github.com/", "").split("/")
+
+        original_name = package_info[1]
+
+        embed = discord.Embed(
+            title=f"Installing {package_info[1]}",
+            description=(
+                f"{package_info[1]} is being installed on your bot.\n"
+                "Please do not turn off your bot."
+            ),
+            color=discord.Color.from_str("#03BAFC"),
+            timestamp=datetime.datetime.now(),
+        )
+
+        original_message = await ctx.send(embed=embed)
 
         link = f"https://api.github.com/repos/{package_info[0]}/{package_info[1]}/contents/"
 
@@ -632,7 +650,18 @@ class DexScript(commands.Cog):
                     f"```ERROR CODE: {request_content.status_code}```"
                 )
 
-        await ctx.send(f"Installed `{package_info[1]}` by `{package_info[0]}`.")
+        t2 = time.time()
+
+        embed.title = f"{original_name} Installed"
+
+        embed.description = (
+            f"{original_name} has been installed to your bot\n"
+            f"{package_info[2]}"
+        )
+
+        embed.set_footer(text=f"{original_name} took {round((t2 - t1) * 1000)}ms to {keyword}")
+
+        await original_message.edit(embed=embed)
 
     @commands.command(name="update-ds")
     @commands.is_owner()
