@@ -55,7 +55,7 @@ KEYWORDS = [
 
 SETTINGS = {
     "DEBUG": False,
-    "OUTDATED-WARNING": False,
+    "OUTDATED-WARNING": True,
     "REFERENCE": "main",
 }
 
