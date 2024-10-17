@@ -611,7 +611,7 @@ class DexScript(commands.Cog):
             )
             return
 
-        os.mkdir(f"{dir_type}/packages/{package_info.name}")
+        os.mkdir(f"{dir_type}/packages/{package_info[1]}")
 
         for file in package_info[4]:
             file_url = f"{link}{package_info[1]}/{file}"
