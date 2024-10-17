@@ -611,16 +611,19 @@ class DexScript(commands.Cog):
             )
             return
 
-        os.mkdir(f"{dir_type}/packages/{package_info[1]}")
+        try:
+            os.mkdir(f"{dir_type}/packages/{package_info[1]}")
+        except FileExistsError:
+            pass
 
         for file in package_info[4]:
-            file_url = f"{link}{package_info[1]}/{file}"
-            request_content = requests.get(file_url)
+            file_path = f"{package_info[1]}/{file}"
+            request_content = requests.get(f"{link}{file_path}")
 
             if request_content.status_code == requests.codes.ok:
                 content = base64.b64decode(request_content.json()["content"])
 
-                with open(file_url, "w") as opened_file:
+                with open(file_path, "w") as opened_file:
                     opened_file.write(content)
             else:
                 await ctx.send(
