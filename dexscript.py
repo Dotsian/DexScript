@@ -1,17 +1,18 @@
 import base64
+import datetime
 import logging
 import os
 import re
+import shutil
 import time
 import traceback
-import yaml
 from difflib import get_close_matches
 from enum import Enum
 from typing import Any
 
 import discord
 import requests
-import datetime
+import yaml
 from dateutil.parser import parse as parse_date
 from discord.ext import commands
 
@@ -111,6 +112,12 @@ class Yield:
         self.identifier = identifier
         self.value = value
         self.type = type
+
+
+class Package:
+    def __init__(self, yml):
+        for key, value in yml.items():
+            setattr(self, key, value)
 
 
 class Methods:
@@ -580,10 +587,40 @@ class DexScript(commands.Cog):
         await ctx.send(embed=embed)
 
     @commands.command()
+    async def uninstall(self, ctx: commands.Context, package: str):
+        """
+        Uninstalls a package.
+
+        Parameters
+        ----------
+        package: str
+            The package you want to uninstall.
+        """
+
+        embed = discord.Embed(
+            title=f"Removed {package.title()}",
+            description=f"The {package.title()} package has been removed from your bot.",
+            color=discord.Color.red(),
+            timestamp=datetime.datetime.now(),
+        )
+
+        shutil.rmtree(f"{dir_type}/packages/{package}")
+
+        await self.bot.tree.sync()
+
+        await ctx.send(embed=embed)
+
+    @commands.command()
     @commands.is_owner()
     async def install(self, ctx: commands.Context, package: str):
         """
         Installs a package to your Discord bot.
+
+        Parameters
+        ----------
+        package: str
+            The package you want to install.
+            It must be a GitHub link with a `package.yml` file.
         """
 
         t1 = time.time()
@@ -591,16 +628,6 @@ class DexScript(commands.Cog):
         package_info = package.replace("https://github.com/", "").split("/")
 
         original_name = package_info[1]
-
-        embed = discord.Embed(
-            title=f"Installing {package_info[1]}",
-            description=(
-                f"{package_info[1]} is being installed on your bot.\n"
-                "Please do not turn off your bot."
-            ),
-            color=discord.Color.from_str("#03BAFC"),
-            timestamp=datetime.datetime.now(),
-        )
 
         original_message = await ctx.send(embed=embed)
 
@@ -612,30 +639,37 @@ class DexScript(commands.Cog):
             content = base64.b64decode(request.json()["content"])
 
             yaml_content = yaml.load(content, yaml.Loader)
+            package_info = Package(yaml_content)
 
-            # TODO: Simplify this.
-            package_info = [
-                yaml_content.get("author"), 
-                yaml_content.get("name"), 
-                yaml_content.get("description"),
-                yaml_content.get("version"),
-                yaml_content.get("files")
-            ]
+            color = package_info.color if hasattr(package_info, "color") else "03BAFC"
+
+            embed = discord.Embed(
+                title=f"Installing {original_name}",
+                description=(
+                    f"{original_name} is being installed on your bot.\n"
+                    "Please do not turn off your bot."
+                ),
+                color=discord.Color.from_str(f"#{color}"),
+                timestamp=datetime.datetime.now(),
+            )
+
+            if hasattr(package_info, "logo"):
+                embed.set_thumbnail(url=package_info.logo)
         else:
             await ctx.send(
-                f"Failed to install {package_info[1]}.\n" 
+                f"Failed to install {package_info[1]}.\n"
                 f"Report this issue to `{package_info[0]}`.\n"
                 f"```ERROR CODE: {request.status_code}```"
             )
             return
 
         try:
-            os.mkdir(f"{dir_type}/packages/{package_info[1]}")
+            os.mkdir(f"{dir_type}/packages/{package_info.name}")
         except FileExistsError:
             pass
 
-        for file in package_info[4]:
-            file_path = f"{package_info[1]}/{file}"
+        for file in package_info.files:
+            file_path = f"{package_info.name}/{file}"
             request_content = requests.get(f"{link}{file_path}")
 
             if request_content.status_code == requests.codes.ok:
@@ -645,23 +679,22 @@ class DexScript(commands.Cog):
                     opened_file.write(content.decode("UTF-8"))
             else:
                 await ctx.send(
-                    f"Failed to install the `{file}` file.\n" 
-                    f"Report this issue to `{package_info[0]}`.\n"
+                    f"Failed to install the `{file}` file.\n"
+                    f"Report this issue to `{package_info.author}`.\n"
                     f"```ERROR CODE: {request_content.status_code}```"
                 )
 
         try:
-            await self.bot.load_extension(f"{dir_type}.packages.{package_info[1]}")
+            await self.bot.load_extension(f"{dir_type}.packages.{package_info.name}")
         except commands.ExtensionAlreadyLoaded:
-            await self.bot.reload_extension(f"{dir_type}.packages.{package_info[1]}")
+            await self.bot.reload_extension(f"{dir_type}.packages.{package_info.name}")
 
         t2 = time.time()
 
         embed.title = f"{original_name} Installed"
 
         embed.description = (
-            f"{original_name} has been installed to your bot\n"
-            f"{package_info[2]}"
+            f"{original_name} has been installed to your bot\n{package_info.description}"
         )
 
         embed.set_footer(text=f"{original_name} took {round((t2 - t1) * 1000)}ms to install")

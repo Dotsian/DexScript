@@ -105,24 +105,22 @@ async def install():
         code = file.read()
 
     tracking = False
-    
+
     for line in code.split("\n"):
         if tracking:
             code = code.replace("\n" + line, "")
-            
+
         if line == "]" and tracking:
             tracking = False
             break
-        
+
         if not line.startswith("PACKAGES"):
             continue
-        
+
         if len(line) == 12:
             tracking = True
-            
-        code = code.replace(
-            line, f'PACKAGES = listdir("{dir_type}/packages")'.strip()
-        )
+
+        code = code.replace(line, f'PACKAGES = listdir("{dir_type}/packages")'.strip())
 
     with open(f"{dir_type}/core/bot.py", "w") as file:
         file.write(code)

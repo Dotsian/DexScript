@@ -1,0 +1,22 @@
+# The name of your package.
+name: My Package
+
+# The package version.
+version: 0.1
+
+# The description of the package.
+description: This is a `package.yml` example file!
+
+# The package creator
+author: dot_zz
+
+# The logo URL that represents your package. (OPTIONAL)
+logo: https://i.imgur.com/uKfx0qO.png
+
+# The primary hex color that represents your package. (OPTIONAL)
+color: 03BAFC
+
+# All files that will be created when the package is installed.
+files:
+  - __init__.py
+  - cog.py
