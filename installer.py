@@ -121,7 +121,7 @@ async def install():
             tracking = True
 
         new_line = (
-            f'PACKAGES = [x for x in os.listdir("{dir_type}/packages") if x != "__pycache__"]'
+            f'import os\nPACKAGES = [x for x in os.listdir("{dir_type}/packages") if x != "__pycache__"]'
         )
 
         code = code.replace(line, new_line.strip())
