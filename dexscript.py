@@ -201,7 +201,7 @@ class Methods:
 
             revert.append(["UPDATE", [
                 returned_model,
-                field_name,
+                self.args[3],
                 getattr(returned_model, field_name)
             ]])
 
