@@ -57,28 +57,50 @@ if request.status_code != requests.codes.ok:
 request = request.json()
 content = base64.b64decode(request["content"])
 
-additions = {
-    "        await self.add_cog(Core(self))": (
-        f'        await self.load_extension("{dir_type}.core.dexscript")\n'
-    ),
-}
+migrations = """
+Upgrade:
+    import types || import os -n
+    /-/-await self.add_cog(Core(self)) || /-/-await self.load_extension("$DIR.core.dexscript") -n
+    
+Drop:
+    from ballsdex.core.dexscript import DexScript -n
+"""
 
-deprecated = {
-    f"from {dir_type}.core.dexscript import DexScript\n": (""),
-    "        await self.add_cog(DexScript(self))": (
-        f't\tawait self.load_extension("{dir_type}.core.dexscript")'
-    ),
-}
+migration_dict = {"Upgrade": {}, "Drop": []}
+current_migration = ""
 
+def format_migration(line):
+    return (
+        line.replace("    ", "")
+        .replace("/-", "    ")
+        .replace(" -n", "\n")
+        .replace("$DIR", dir_type)
+    )
 
-def format_line(line):
-    if line in deprecated:
-        return deprecated[line]
-
-    return line
-
+for line in migrations.split("\n"):
+    if line == "":
+        current_migration = ""
+        
+    if current_migration == "Drop":
+        migration_dict[current_migration].append(
+            format_migration(line)
+        )
+        
+    if current_migration != "" and "||" in line:
+        items = format_migration(line).split(" || ")
+        migration_dict[current_migration][items[0]] = items[1]
+        
+    if line[:-1] in ["Upgrade", "Drop"]:
+        current_migration = line[:-1]
+        print(current_migration)
 
 async def install():
+    # Create the data folder for package installation.
+    try:
+        os.mkdir(f"{dir_type}/data")
+    except FileExistsError:
+        pass
+
     # Create the DexScript file.
     with open(f"{dir_type}/core/dexscript.py", "w") as opened_file:
         opened_file.write(content.decode("UTF-8"))
@@ -89,13 +111,16 @@ async def install():
         contents = ""
 
         for index, line in enumerate(lines):
-            contents += line
+            if line in migration_dict["Drop"]:
+                continue
 
-            for key, item in additions.items():
+            contents += line + "\n"
+
+            for key, item in migration_dict["Upgrade"].items():
                 if line.rstrip() != key or lines[index + 1] == item:
                     continue
-
-                contents += format_line(item)
+                
+                contents += item
 
         with open(f"{dir_type}/core/bot.py", "w") as opened_file_2:
             opened_file_2.write(contents)
@@ -120,7 +145,11 @@ async def install():
         if len(line) == 12:
             tracking = True
 
-        code = code.replace(line, f'PACKAGES = listdir("{dir_type}/packages")'.strip())
+        new_line = (
+            f'PACKAGES = [x for x in os.listdir("{dir_type}/packages") if x != "__pycache__"]'
+        )
+
+        code = code.replace(line, new_line.strip())
 
     with open(f"{dir_type}/core/bot.py", "w") as file:
         file.write(code)

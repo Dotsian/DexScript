@@ -6,6 +6,7 @@ import re
 import shutil
 import time
 import traceback
+from pathlib import Path
 from difflib import get_close_matches
 from enum import Enum
 from typing import Any
@@ -488,6 +489,21 @@ class DexScriptParser:
         return (None, CodeStatus.SUCCESS)
 
 
+def fetch_package(self, name):
+    """
+    Returns package information based on the name passed.
+
+    Parameters
+    ----------
+    name: str
+        The name of the package you want to return.
+    """
+
+    return Package(
+        yaml.load(Path(f"{dir_type}/data/{name}.yml").read_text(), yaml.Loader)
+    )
+
+
 class DexScript(commands.Cog):
     """
     DexScript commands
@@ -560,10 +576,34 @@ class DexScript(commands.Cog):
 
     @commands.command()
     @commands.is_owner()
-    async def about(self, ctx: commands.Context):
+    async def about(self, ctx: commands.Context, package: str = "DexScript"):
         """
-        Displays information about DexScript.
+        Displays information about a package.
+
+        Parameters
+        ----------
+        package: str
+            The package you want to view. Default is DexScript.
         """
+
+        if package != "DexScript" and (info := fetch_package(package) is not None):
+            embed = discord.Embed(
+                title=package,
+                description=info.description,
+            )
+
+            color = info.color if hasattr(info, "color") else "03BAFC"
+
+            embed.color = discord.Color.from_str(f"#{color}")
+
+            if hasattr(info, "logo"):
+                embed.set_thumbnail(url=info.logo)
+
+            embed.set_footer(text=f"{package} {info.version}")
+
+            await ctx.send(embed=embed)
+
+            return
 
         embed = discord.Embed(
             title="DexScript - BETA",
@@ -624,6 +664,10 @@ class DexScript(commands.Cog):
             It must be a GitHub link with a `package.yml` file.
         """
 
+        if not package.startswith("https://github.com/"):
+            await ctx.send("The link you have sent must be a valid GitHub link.")
+            return
+
         t1 = time.time()
 
         package_info = package.replace("https://github.com/", "").split("/")
@@ -634,10 +678,13 @@ class DexScript(commands.Cog):
 
         link = f"https://api.github.com/repos/{package_info[0]}/{package_info[1]}/contents/"
 
-        request = requests.get(link + "package.yml")
+        request = requests.get(f"{link}{package_info[1]}.yml")
 
         if request.status_code == requests.codes.ok:
             content = base64.b64decode(request.json()["content"])
+
+            with open(f"{dir_type}/data/{package_info[1]}.yml", "w") as package_file:
+                package_file.write(content.decode("UTF-8"))
 
             yaml_content = yaml.load(content, yaml.Loader)
             package_info = Package(yaml_content)

@@ -20,3 +20,18 @@ color: 03BAFC
 files:
   - __init__.py
   - cog.py
+
+# Migrations that will be ran when the package is installed.
+# Useful for making changes to files without directly replacing them.
+# $DIR is either `ballsdex` or `carfigures` depending on what you use.
+# For inline, use the /- phrase. For a new line, use the -n phrase instead of \n.
+# To seperate code for the upgrade migration, use the || symbols.
+
+# Upgrade will add code underneath of another line of code.
+# Drop will remove a line of code.
+migrations:
+  - $DIR/core/bot.py:
+    - Upgrade:
+        - import types || import os -n
+    - Drop:
+        - /-from $DIR.core.dexscript import DexScript -n
