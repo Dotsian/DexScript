@@ -17,6 +17,9 @@ logo: https://i.imgur.com/uKfx0qO.png
 # The primary hex color that represents your package. (OPTIONAL)
 color: 03BAFC
 
+# Determines if you need to restart the bot for your package to work.
+restart: false
+
 # The forks your package supports.
 supported:
   - ballsdex
