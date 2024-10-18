@@ -132,7 +132,7 @@ class Methods:
         self.send_messages = True
 
     async def _send(self, message):
-        if not self.send_message:
+        if not self.send_messages:
             return
 
         self.ctx.send(message)
