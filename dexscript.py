@@ -105,9 +105,6 @@ class Value:
         self.type = type
         self.extra_data = []
 
-    def __str__(self):
-        return self.name
-
 
 class Yield:
     def __init__(self, model, identifier, value, type: YieldType):
@@ -162,8 +159,10 @@ class Methods:
         dex_yields = []
 
     async def create(self):
+        third_arg = self.args[3].name if in_list(self.args, 3) else False
+
         result = await self.parser.create_model(
-            self.args[1].name, self.args[2], self.args[3] if in_list(self.args, 3) else False
+            self.args[1].name, self.args[2].name, third_arg
         )
 
         suffix = ""
@@ -172,14 +171,14 @@ class Methods:
             suffix = " and yielded it until `push`"
             dex_yields.append(result)
 
-        await self._send(f"Created `{self.args[2]}`{suffix}")
+        await self._send(f"Created `{self.args[2].name}`{suffix}")
 
     async def delete(self):
-        returned_model = await self.parser.get_model(self.args[1], self.args[2].name)
+        returned_model = await self.parser.get_model(self.args[1].name, self.args[2].name)
 
         await returned_model.delete()
 
-        await self._send(f"Deleted `{self.args[2]}`")
+        await self._send(f"Deleted `{self.args[2].name}`")
 
     async def update(self):
         found_yield = self.parser.get_yield(self.args[1].name, self.args[2].name)
@@ -190,18 +189,18 @@ class Methods:
             image_path = await save_file(self.ctx.message.attachments[0])
             new_attribute = Value(f"/{image_path}", Types.STRING)
         else:
-            new_attribute = self.args[4]
+            new_attribute = self.args[4].name
 
-        update_message = f"`{self.args[2]}'s` {self.args[3]} to {new_attribute.name}"
+        update_message = f"`{self.args[2].name}'s` {self.args[3].name} to {new_attribute.name}"
 
         if found_yield is None:
-            returned_model = await self.parser.get_model(self.args[1], self.args[2].name)
+            returned_model = await self.parser.get_model(self.args[1].name, self.args[2].name)
 
             field_name = self.args[3].name.lower()
 
             revert.append(["UPDATE", [
                 returned_model,
-                repr(self.args[3]),
+                self.args[3],
                 getattr(returned_model, field_name)
             ]])
 
@@ -218,7 +217,7 @@ class Methods:
         await self._send(f"Updated yielded {update_message}")
 
     async def view(self):
-        returned_model = await self.parser.get_model(self.args[1], self.args[2].name)
+        returned_model = await self.parser.get_model(self.args[1].name, self.args[2].name)
 
         attribute = getattr(returned_model, self.args[3].name.lower())
 
@@ -258,13 +257,13 @@ class Methods:
                     contents = await new_file.read()
                     opened_file.write(contents.decode("utf-8"))
 
-                await self._send(f"Wrote to `{self.args[2]}`")
+                await self._send(f"Wrote to `{self.args[2].name}`")
 
             case "clear":
                 with open(self.args[2].name, "w") as opened_file:
                     pass
 
-                await self._send(f"Cleared `{self.args[2]}`")
+                await self._send(f"Cleared `{self.args[2].name}`")
 
             case "read":
                 await self._send(file=discord.File(self.args[2].name))
@@ -272,11 +271,11 @@ class Methods:
             case "delete":
                 os.remove(self.args[1].name)
 
-                await self._send(f"Deleted `{self.args[1]}`")
+                await self._send(f"Deleted `{self.args[1].name}`")
 
             case _:
                 raise DexScriptError(
-                    f"'{self.args[0]}' is not a valid file operation. "
+                    f"'{self.args[0].name}' is not a valid file operation. "
                     "(READ, WRITE, CLEAR, or DELETE)"
                 )
 
@@ -301,7 +300,7 @@ class Methods:
         await self._send(f"Reverted `{table[0]}`")
 
     async def show(self):
-        await self._send(f"```\n{self.args[1]}\n```")
+        await self._send(f"```\n{self.args[1].name}\n```")
 
 
 class DexScriptParser:
