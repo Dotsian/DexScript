@@ -416,7 +416,7 @@ class DexScriptParser:
             type = Types.VARIABLE
         elif lower in MODELS:
             type = Types.MODEL
-        elif self.is_date(lower) and lower.count():
+        elif self.is_date(lower) and lower.count("-") >= 2:
             type = Types.DATETIME
         elif self.is_number(lower):
             type = Types.NUMBER
