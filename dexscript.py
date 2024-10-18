@@ -135,7 +135,7 @@ class Methods:
         if not self.send_messages:
             return
 
-        self.ctx.send(message)
+        await self.ctx.send(message)
 
     async def push(self):
         global dex_yields
