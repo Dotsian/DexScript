@@ -61,10 +61,11 @@ additions = {
     "        await self.add_cog(Core(self))": (
         f'        await self.load_extension("{dir_type}.core.dexscript")\n'
     ),
+    "import types": "import os\n"
 }
 
 deprecated = {
-    f"from {dir_type}.core.dexscript import DexScript\n": (""),
+    f"from {dir_type}.core.dexscript import DexScript\n": "",
     "        await self.add_cog(DexScript(self))": (
         f't\tawait self.load_extension("{dir_type}.core.dexscript")'
     ),
@@ -121,7 +122,7 @@ async def install():
             tracking = True
 
         new_line = (
-            f'import os\nPACKAGES = [x for x in os.listdir("{dir_type}/packages") if x != "__pycache__"]'
+            f'PACKAGES = [x for x in os.listdir("{dir_type}/packages") if x != "__pycache__"]'
         )
 
         code = code.replace(line, new_line.strip())
