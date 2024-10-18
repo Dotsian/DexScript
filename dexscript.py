@@ -369,10 +369,10 @@ class DexScriptParser:
 
     async def get_model(self, model, identifier):
         try:
-            returned_model = await model.name.filter(
+            returned_model = await model.filter(
                 **{
                     self.translate(model.extra_data[0].lower()): self.autocorrect(
-                        identifier, [str(x) for x in await model.name.all()]
+                        identifier, [str(x) for x in await model.all()]
                     )
                 }
             )
