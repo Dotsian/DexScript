@@ -294,7 +294,7 @@ class Methods:
         self.args = table[1]
         self.send_messages = False
 
-        await func(self)
+        await func()
 
         self.send_messages = True
 
