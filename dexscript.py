@@ -199,11 +199,11 @@ class Methods:
 
             field_name = self.args[3].name.lower()
 
-            revert.append("UPDATE", [
+            revert.append(["UPDATE", [
                 returned_model,
                 field_name,
                 getattr(returned_model, field_name)
-            ])
+            ]])
 
             setattr(returned_model, field_name, new_attribute.name)
 
