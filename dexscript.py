@@ -36,7 +36,7 @@ else:
 
 log = logging.getLogger(f"{dir_type}.core.dexscript")
 
-__version__ = "0.4.2"
+__version__ = "0.4.4"
 
 
 START_CODE_BLOCK_RE = re.compile(r"^((```sql?)(?=\s)|(```))")
@@ -685,8 +685,6 @@ class DexScript(commands.Cog):
 
         original_name = package_info[1]
 
-        original_message = await ctx.send(embed=embed)
-
         link = f"https://api.github.com/repos/{package_info[0]}/{package_info[1]}/contents/"
 
         request = requests.get(f"{link}{package_info[1]}.yml")
@@ -714,6 +712,8 @@ class DexScript(commands.Cog):
 
             if hasattr(package_info, "logo"):
                 embed.set_thumbnail(url=package_info.logo)
+
+            original_message = await ctx.send(embed=embed)
         else:
             await ctx.send(
                 f"Failed to install {package_info[1]}.\n"
