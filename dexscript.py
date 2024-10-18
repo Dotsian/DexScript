@@ -499,6 +499,11 @@ def fetch_package(self, name):
         The name of the package you want to return.
     """
 
+    path = f"{dir_type}/data/{name}.yml"
+
+    if not os.path.isfile(path):
+        return None
+
     return Package(
         yaml.load(Path(f"{dir_type}/data/{name}.yml").read_text(), yaml.Loader)
     )
@@ -586,7 +591,13 @@ class DexScript(commands.Cog):
             The package you want to view. Default is DexScript.
         """
 
-        if package != "DexScript" and (info := fetch_package(package) is not None):
+        if package != "DexScript":
+            info = fetch_package(package)
+
+            if info is None:
+                await ctx.send("The package you entered does not exist.")
+                return
+
             embed = discord.Embed(
                 title=package,
                 description=info.description,
