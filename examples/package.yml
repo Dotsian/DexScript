@@ -5,7 +5,8 @@ name: My Package
 version: 0.1
 
 # The description of the package.
-description: This is a `package.yml` example file!
+description: >
+  This is a `package.yml` example file!
 
 # The package creator
 author: dot_zz
@@ -15,6 +16,11 @@ logo: https://i.imgur.com/uKfx0qO.png
 
 # The primary hex color that represents your package. (OPTIONAL)
 color: 03BAFC
+
+# The forks your package supports.
+supported:
+  - ballsdex
+  - carfigures
 
 # All files that will be created when the package is installed.
 files:

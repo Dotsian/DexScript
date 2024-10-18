@@ -698,6 +698,10 @@ class DexScript(commands.Cog):
             yaml_content = yaml.load(content, yaml.Loader)
             package_info = Package(yaml_content)
 
+            if dir_type not in package_info.supported:
+                await ctx.send(f"This package does not support {dir_type}.")
+                return
+
             color = package_info.color if hasattr(package_info, "color") else "03BAFC"
 
             embed = discord.Embed(
