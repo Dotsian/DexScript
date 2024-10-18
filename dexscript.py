@@ -676,7 +676,7 @@ class DexScript(commands.Cog):
         """
 
         if not package.startswith("https://github.com/"):
-            await ctx.send("The link you have sent must be a valid GitHub link.")
+            await ctx.send("The link you sent is not a valid GitHub link.")
             return
 
         t1 = time.time()
@@ -687,7 +687,7 @@ class DexScript(commands.Cog):
 
         link = f"https://api.github.com/repos/{package_info[0]}/{package_info[1]}/contents/"
 
-        request = requests.get(f"{link}{package_info[1]}.yml")
+        request = requests.get(f"{link}package.yml")
 
         if request.status_code == requests.codes.ok:
             content = base64.b64decode(request.json()["content"])
