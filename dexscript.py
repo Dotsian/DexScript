@@ -489,7 +489,7 @@ class DexScriptParser:
         return (None, CodeStatus.SUCCESS)
 
 
-def fetch_package(self, name):
+def fetch_package(name):
     """
     Returns package information based on the name passed.
 
