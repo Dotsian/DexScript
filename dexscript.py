@@ -55,16 +55,10 @@ KEYWORDS = [
     "global",
 ]
 
-SETTINGS = {
-    "DEBUG": False,
-    "OUTDATED-WARNING": True,
-    "REFERENCE": "main",
-}
-
 dex_globals = {}
 dex_yields = []
 
-revert = []
+verified = False
 
 
 class Types(Enum):
@@ -120,19 +114,38 @@ class Package:
             setattr(self, key, value)
 
 
+class Settings:
+    def __init__(self):
+        self.debug = False
+        self.outdated_warnings = True
+        self.safe_mode = True
+        self.branch = "main"
+
+    def values(self):
+        return vars(self)
+
+    def load(self):
+        with open("script-config.yml") as file:
+            content = yaml.load(file.read(), yaml.Loader)
+
+            for key, value in content.items():
+                setattr(self, key, value)
+
+    def save(self):
+        with open("script-config.yml", "w") as file:
+            file.write(yaml.dump(self.values()))
+
+
+script_settings = Settings()
+script_settings.load()
+
+
 class Methods:
     def __init__(self, parser, ctx, args: list[Value]):
         self.ctx = ctx
         self.args = args
 
         self.parser = parser
-        self.send_messages = True
-
-    async def _send(self, message):
-        if not self.send_messages:
-            return
-
-        await self.ctx.send(message)
 
     async def push(self):
         global dex_yields
@@ -140,7 +153,7 @@ class Methods:
         if in_list(self.args, 1) and self.args[1].name.lower() == "-clear":
             dex_yields = []
 
-            await self._send("Cleared yield cache.")
+            await self.ctx.send("Cleared yield cache.")
             return
 
         for index, yield_object in enumerate(dex_yields, start=1):
@@ -154,15 +167,14 @@ class Methods:
         plural = "" if len(dex_yields) == 1 else "s"
         number = self.args[1].name if in_list(self.args, 1) else len(dex_yields)
 
-        await self._send(f"Pushed `{number}` yield{plural}.")
+        await self.ctx.send(f"Pushed `{number}` yield{plural}.")
 
         dex_yields = []
 
     async def create(self):
         third_arg = self.args[3].name if in_list(self.args, 3) else False
-
         result = await self.parser.create_model(
-            self.args[1].name, self.args[2].name, third_arg
+            self.args[1].name, self.args[2].name, self.args[3] if in_list(self.args, 3) else False
         )
 
         suffix = ""
@@ -171,14 +183,14 @@ class Methods:
             suffix = " and yielded it until `push`"
             dex_yields.append(result)
 
-        await self._send(f"Created `{self.args[2].name}`{suffix}")
+        await self.ctx.send(f"Created `{self.args[2]}`{suffix}")
 
     async def delete(self):
-        returned_model = await self.parser.get_model(self.args[1].name, self.args[2].name)
+        returned_model = await self.parser.get_model(self.args[1], self.args[2].name)
 
         await returned_model.delete()
 
-        await self._send(f"Deleted `{self.args[2].name}`")
+        await self.ctx.send(f"Deleted `{self.args[2]}`")
 
     async def update(self):
         found_yield = self.parser.get_yield(self.args[1].name, self.args[2].name)
@@ -191,41 +203,35 @@ class Methods:
         else:
             new_attribute = self.args[4]
 
-        update_message = f"`{self.args[2].name}'s` {self.args[3].name} to {new_attribute.name}"
+        update_message = f"`{self.args[2]}'s` {self.args[3]} to {new_attribute.name}"
 
         if found_yield is None:
-            returned_model = await self.parser.get_model(self.args[1].name, self.args[2].name)
+            returned_model = await self.parser.get_model(self.args[1], self.args[2].name)
 
             field_name = self.args[3].name.lower()
-
-            revert.append(["UPDATE", [
-                returned_model,
-                self.args[3],
-                getattr(returned_model, field_name)
-            ]])
 
             setattr(returned_model, field_name, new_attribute.name)
 
             await returned_model.save()
 
-            await self._send(f"Updated {update_message}")
+            await self.ctx.send(f"Updated {update_message}")
 
             return
 
         found_yield.value[field_name] = new_attribute.name
 
-        await self._send(f"Updated yielded {update_message}")
+        await self.ctx.send(f"Updated yielded {update_message}")
 
     async def view(self):
-        returned_model = await self.parser.get_model(self.args[1].name, self.args[2].name)
+        returned_model = await self.parser.get_model(self.args[1], self.args[2].name)
 
         attribute = getattr(returned_model, self.args[3].name.lower())
 
         if isinstance(attribute, str) and os.path.isfile(attribute[1:]):
-            await self._send(f"```{attribute}```", file=discord.File(attribute[1:]))
+            await self.ctx.send(f"```{attribute}```", file=discord.File(attribute[1:]))
             return
 
-        await self._send(f"```{attribute}```")
+        await self.ctx.send(f"```{attribute}```")
 
     async def list(self):
         model = self.args[1].name
@@ -246,7 +252,7 @@ class Methods:
             for index, dex_yield in enumerate(dex_yields, start=1):
                 parameters += f"{index}. {dex_yield.identifier.name.upper()}\n"
 
-        await self._send(f"```\n{parameters}\n```")
+        await self.ctx.send(f"```\n{parameters}\n```")
 
     async def file(self):
         match self.args[1].name.lower():
@@ -257,50 +263,30 @@ class Methods:
                     contents = await new_file.read()
                     opened_file.write(contents.decode("utf-8"))
 
-                await self._send(f"Wrote to `{self.args[2].name}`")
+                await self.ctx.send(f"Wrote to `{self.args[2]}`")
 
             case "clear":
                 with open(self.args[2].name, "w") as opened_file:
                     pass
 
-                await self._send(f"Cleared `{self.args[2].name}`")
+                await self.ctx.send(f"Cleared `{self.args[2]}`")
 
             case "read":
-                await self._send(file=discord.File(self.args[2].name))
+                await self.ctx.send(file=discord.File(self.args[2].name))
 
             case "delete":
                 os.remove(self.args[1].name)
 
-                await self._send(f"Deleted `{self.args[1].name}`")
+                await self.ctx.send(f"Deleted `{self.args[1]}`")
 
             case _:
                 raise DexScriptError(
-                    f"'{self.args[0].name}' is not a valid file operation. "
+                    f"'{self.args[0]}' is not a valid file operation. "
                     "(READ, WRITE, CLEAR, or DELETE)"
                 )
 
-    async def revert(self):
-        if revert == []:
-            await self.ctx.send("There is nothing to revert.")
-            return
-
-        table = revert[-1]
-
-        revert.pop(-1)
-
-        func = getattr(self, table[0].lower())
-
-        self.args = table[1]
-        self.send_messages = False
-
-        await func()
-
-        self.send_messages = True
-
-        await self._send(f"Reverted `{table[0]}`")
-
     async def show(self):
-        await self._send(f"```\n{self.args[1].name}\n```")
+        await self.ctx.send(f"```\n{self.args[1]}\n```")
 
 
 class DexScriptParser:
@@ -369,10 +355,10 @@ class DexScriptParser:
 
     async def get_model(self, model, identifier):
         try:
-            returned_model = await model.filter(
+            returned_model = await model.name.filter(
                 **{
                     self.translate(model.extra_data[0].lower()): self.autocorrect(
-                        identifier, [str(x) for x in await model.all()]
+                        identifier, [str(x) for x in await model.name.all()]
                     )
                 }
             )
@@ -566,12 +552,12 @@ class DexScript(commands.Cog):
 
     @staticmethod
     def check_version():
-        if not SETTINGS["OUTDATED-WARNING"]:
+        if not script_settings.outdated_warnings:
             return None
 
         r = requests.get(
             "https://api.github.com/repos/Dotsian/DexScript/contents/version.txt",
-            {"ref": SETTINGS["REFERENCE"]},
+            {"ref": script_settings.branch},
         )
 
         if r.status_code != requests.codes.ok:
@@ -611,7 +597,7 @@ class DexScript(commands.Cog):
         result, status = await dexscript_instance.execute(body)
 
         if status == CodeStatus.FAILURE and result is not None:
-            await ctx.send(f"```ERROR: {result[SETTINGS['DEBUG']]}\n```")
+            await ctx.send(f"```ERROR: {result[script_settings.debug]}\n```")
         else:
             await ctx.message.add_reaction("✅")
 
@@ -700,6 +686,17 @@ class DexScript(commands.Cog):
 
     @commands.command()
     @commands.is_owner()
+    async def verify(self, ctx: commands.Context):
+        """
+        Verifies you want to install a package.
+        """
+
+        verified = True
+
+        await ctx.send("You will need to verify again in five minutes.")
+
+    @commands.command()
+    @commands.is_owner()
     async def install(self, ctx: commands.Context, package: str):
         """
         Installs a package to your Discord bot.
@@ -713,6 +710,17 @@ class DexScript(commands.Cog):
 
         if not package.startswith("https://github.com/"):
             await ctx.send("The link you sent is not a valid GitHub link.")
+            return
+
+        if settings.safe_mode:
+            await ctx.send(
+                "**CAUTION:** are you sure you want to install this package?\n"
+                "All packages you install can modify your Discord bot.\n"
+                f"Run the `{settings.prefix}verify` comamnd to verify you want to install this package.\n"
+                "-# To disable this warning, turn off the `safe_mode` setting."
+            )
+            verified = True
+
             return
 
         t1 = time.time()
@@ -809,7 +817,7 @@ class DexScript(commands.Cog):
 
         r = requests.get(
             "https://api.github.com/repos/Dotsian/DexScript/contents/installer.py",
-            {"ref": SETTINGS["REFERENCE"]},
+            {"ref": script_settings.branch},
         )
 
         if r.status_code == requests.codes.ok:
@@ -833,7 +841,7 @@ class DexScript(commands.Cog):
 
     @commands.command()
     @commands.is_owner()
-    async def setting(self, ctx: commands.Context, setting: str, value: str):
+    async def setting(self, ctx: commands.Context, setting: str, value: str | None):
         """
         Changes a setting based on the value provided.
 
@@ -845,19 +853,24 @@ class DexScript(commands.Cog):
           The value you want to set the setting to.
         """
 
-        response = f"`{setting}` is not a valid setting."
+        if not setting in script_settings.values():
+            await ctx.send(f"`{setting}` is not a valid setting.")
+            return
+        
+        selected_setting = script_settings.values().get(setting)
 
-        if setting in SETTINGS:
-            selected_setting = SETTINGS[setting]
+        if value is None and not isinstance(selected_setting, bool):
+            await ctx.send("You must specify a value for this setting.")
+            return
 
-            if isinstance(selected_setting, bool):
-                SETTINGS[setting] = bool(value)
-            elif isinstance(selected_setting, str):
-                SETTINGS[setting] = value
+        if isinstance(selected_setting, bool):
+            setattr(script_settings, setting, not selected_setting if value is None else bool(value))
+        else:
+            setattr(script_settings, setting, value)
 
-            response = f"`{setting}` has been set to `{value}`"
+        script_settings.save()
 
-        await ctx.send(response)
+        await ctx.send(f"`{setting}` has been set to `{value}`")
 
 
 async def setup(bot):

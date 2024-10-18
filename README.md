@@ -37,7 +37,7 @@ Yes, you can test beta things, and if you are wondering how to do that, follow t
 ## Information
 
 > ``Made by dot_zz``
-> ``Version 0.4.3``
+> ``Version 0.4.4``
 > ``MIT License``
 > ``Made on September 14, 2024``
 > ``Last updated on October 17, 2024``

@@ -2,6 +2,7 @@ import base64
 import datetime
 import os
 import time
+import yaml
 
 import requests
 
@@ -57,6 +58,13 @@ if request.status_code != requests.codes.ok:
 request = request.json()
 content = base64.b64decode(request["content"])
 
+default_settings = {
+    "debug": False,
+    "safe-mode": True,
+    "outdated-warnings": True,
+    "branch": "main"
+}
+
 migrations = """
 Upgrade:
     import types || import os -n
@@ -100,6 +108,11 @@ async def install():
         os.mkdir(f"{dir_type}/data")
     except FileExistsError:
         pass
+
+    # Create the setting file if it doesn't exist.
+    if not os.path.isfile("script-config.yml"):
+        with open("script-config.yml", "w") as opened_file:
+            opened_file.write(yaml.dump(default_settings))
 
     # Create the DexScript file.
     with open(f"{dir_type}/core/dexscript.py", "w") as opened_file:
@@ -147,7 +160,7 @@ async def install():
 
         new_line = (
             f'PACKAGES = [x for x in os.listdir("{dir_type}/packages") if x != "__pycache__"]'
-        )
+        ) 
 
         code = code.replace(line, new_line.strip())
 

@@ -19,6 +19,9 @@ original_message = await ctx.send(embed=embed)
 
 
 async def uninstall():
+    if os.path.isfile("script-config.yml"):
+        os.remove("script-config.yml")
+    
     if os.path.isfile(f"{dir_type}/core/dexscript.py"):
         os.remove(f"{dir_type}/core/dexscript.py")
 
