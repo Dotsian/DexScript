@@ -105,7 +105,7 @@ class Value:
         self.type = type
         self.extra_data = []
 
-    def __repr__(self):
+    def __str__(self):
         return self.name
 
 
@@ -201,7 +201,7 @@ class Methods:
 
             revert.append(["UPDATE", [
                 returned_model,
-                self.args[3],
+                repr(self.args[3]),
                 getattr(returned_model, field_name)
             ]])
 
