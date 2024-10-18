@@ -143,7 +143,7 @@ class Methods:
         if in_list(self.args, 1) and self.args[1].name.lower() == "-clear":
             dex_yields = []
 
-            await _send("Cleared yield cache.")
+            await self._send("Cleared yield cache.")
             return
 
         for index, yield_object in enumerate(dex_yields, start=1):
@@ -157,7 +157,7 @@ class Methods:
         plural = "" if len(dex_yields) == 1 else "s"
         number = self.args[1].name if in_list(self.args, 1) else len(dex_yields)
 
-        await _send(f"Pushed `{number}` yield{plural}.")
+        await self._send(f"Pushed `{number}` yield{plural}.")
 
         dex_yields = []
 
@@ -172,14 +172,14 @@ class Methods:
             suffix = " and yielded it until `push`"
             dex_yields.append(result)
 
-        await _send(f"Created `{self.args[2]}`{suffix}")
+        await self._send(f"Created `{self.args[2]}`{suffix}")
 
     async def delete(self):
         returned_model = await self.parser.get_model(self.args[1], self.args[2].name)
 
         await returned_model.delete()
 
-        await _send(f"Deleted `{self.args[2]}`")
+        await self._send(f"Deleted `{self.args[2]}`")
 
     async def update(self):
         found_yield = self.parser.get_yield(self.args[1].name, self.args[2].name)
@@ -209,13 +209,13 @@ class Methods:
 
             await returned_model.save()
 
-            await _send(f"Updated {update_message}")
+            await self._send(f"Updated {update_message}")
 
             return
 
         found_yield.value[field_name] = new_attribute.name
 
-        await _send(f"Updated yielded {update_message}")
+        await self._send(f"Updated yielded {update_message}")
 
     async def view(self):
         returned_model = await self.parser.get_model(self.args[1], self.args[2].name)
@@ -223,10 +223,10 @@ class Methods:
         attribute = getattr(returned_model, self.args[3].name.lower())
 
         if isinstance(attribute, str) and os.path.isfile(attribute[1:]):
-            await _send(f"```{attribute}```", file=discord.File(attribute[1:]))
+            await self._send(f"```{attribute}```", file=discord.File(attribute[1:]))
             return
 
-        await _send(f"```{attribute}```")
+        await self._send(f"```{attribute}```")
 
     async def list(self):
         model = self.args[1].name
@@ -247,7 +247,7 @@ class Methods:
             for index, dex_yield in enumerate(dex_yields, start=1):
                 parameters += f"{index}. {dex_yield.identifier.name.upper()}\n"
 
-        await _send(f"```\n{parameters}\n```")
+        await self._send(f"```\n{parameters}\n```")
 
     async def file(self):
         match self.args[1].name.lower():
@@ -258,21 +258,21 @@ class Methods:
                     contents = await new_file.read()
                     opened_file.write(contents.decode("utf-8"))
 
-                await _send(f"Wrote to `{self.args[2]}`")
+                await self._send(f"Wrote to `{self.args[2]}`")
 
             case "clear":
                 with open(self.args[2].name, "w") as opened_file:
                     pass
 
-                await _send(f"Cleared `{self.args[2]}`")
+                await self._send(f"Cleared `{self.args[2]}`")
 
             case "read":
-                await _send(file=discord.File(self.args[2].name))
+                await self._send(file=discord.File(self.args[2].name))
 
             case "delete":
                 os.remove(self.args[1].name)
 
-                await _send(f"Deleted `{self.args[1]}`")
+                await self._send(f"Deleted `{self.args[1]}`")
 
             case _:
                 raise DexScriptError(
@@ -298,10 +298,10 @@ class Methods:
 
         self.send_messages = True
 
-        await _send(f"Reverted `{table[0]}`")
+        await self._send(f"Reverted `{table[0]}`")
 
     async def show(self):
-        await _send(f"```\n{self.args[1]}\n```")
+        await self._send(f"```\n{self.args[1]}\n```")
 
 
 class DexScriptParser:
