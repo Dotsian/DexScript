@@ -189,7 +189,7 @@ class Methods:
             image_path = await save_file(self.ctx.message.attachments[0])
             new_attribute = Value(f"/{image_path}", Types.STRING)
         else:
-            new_attribute = self.args[4].name
+            new_attribute = self.args[4]
 
         update_message = f"`{self.args[2].name}'s` {self.args[3].name} to {new_attribute.name}"
 
