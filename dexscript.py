@@ -714,7 +714,7 @@ class DexScript(commands.Cog):
             await ctx.send("The link you sent is not a valid GitHub link.")
             return
 
-        if settings.safe_mode:
+        if script_settings.safe_mode:
             await ctx.send(
                 "**CAUTION:** are you sure you want to install this package?\n"
                 "All packages you install can modify your Discord bot.\n"
