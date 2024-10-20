@@ -265,13 +265,13 @@ class Methods:
                     contents = await new_file.read()
                     opened_file.write(contents.decode("utf-8"))
 
-                await self.ctx.send(f"Wrote to `{self.args[2]}`")
+                await self.ctx.send(f"Wrote to `{self.args[2].name}`")
 
             case "clear":
                 with open(self.args[2].name, "w") as opened_file:
                     pass
 
-                await self.ctx.send(f"Cleared `{self.args[2]}`")
+                await self.ctx.send(f"Cleared `{self.args[2].name}`")
 
             case "read":
                 await self.ctx.send(file=discord.File(self.args[2].name))
@@ -711,6 +711,8 @@ class DexScript(commands.Cog):
             The package you want to install.
             It must be a GitHub link with a `package.yml` file.
         """
+
+        global verified
 
         if not package.startswith("https://github.com/"):
             await ctx.send("The link you sent is not a valid GitHub link.")
