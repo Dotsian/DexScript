@@ -693,9 +693,11 @@ class DexScript(commands.Cog):
         Verifies you want to install a package.
         """
 
+        global verified
+
         verified = True
 
-        await ctx.send("You will need to verify again in five minutes.")
+        await ctx.send("You are permitted to install the next package.")
 
     @commands.command()
     @commands.is_owner()
@@ -714,16 +716,18 @@ class DexScript(commands.Cog):
             await ctx.send("The link you sent is not a valid GitHub link.")
             return
 
-        if script_settings.safe_mode:
+        if script_settings.safe_mode and not verified:
             await ctx.send(
                 "**CAUTION:** are you sure you want to install this package?\n"
                 "All packages you install can modify your Discord bot.\n"
                 f"Run the `{settings.prefix}verify` comamnd to verify you want to install this package.\n"
                 "-# To disable this warning, turn off the `safe_mode` setting."
             )
-            verified = True
 
             return
+        
+        if verified:
+            verified = False
 
         t1 = time.time()
 
@@ -864,11 +868,11 @@ class DexScript(commands.Cog):
         if value is None and not isinstance(selected_setting, bool):
             await ctx.send("You must specify a value for this setting.")
             return
-
-        if isinstance(selected_setting, bool):
-            setattr(script_settings, setting, not selected_setting if value is None else bool(value))
-        else:
-            setattr(script_settings, setting, value)
+        
+        if value is None and isinstance(selected_setting, bool):
+            value = not selected_setting
+        
+        setattr(script_settings, setting, value)
 
         script_settings.save()
 
