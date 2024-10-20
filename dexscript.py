@@ -6,15 +6,16 @@ import re
 import shutil
 import time
 import traceback
-from pathlib import Path
+from dataclasses import dataclass, field
 from difflib import get_close_matches
 from enum import Enum
+from pathlib import Path
 from typing import Any
+from dateutil.parser import parse as parse_date
 
 import discord
 import requests
 import yaml
-from dateutil.parser import parse as parse_date
 from discord.ext import commands
 
 dir_type = "ballsdex" if os.path.isdir("ballsdex") else "carfigures"
@@ -93,19 +94,19 @@ def in_list(list_attempt, index):
         return False
 
 
+@dataclass
 class Value:
-    def __init__(self, name: Any, type: Types):
-        self.name = name
-        self.type = type
-        self.extra_data = []
+    name: Any
+    type: Types
+    extra_data: list = field(default_factory=list)
 
 
+@dataclass
 class Yield:
-    def __init__(self, model, identifier, value, type: YieldType):
-        self.model = model
-        self.identifier = identifier
-        self.value = value
-        self.type = type
+    model: Any
+    identifier: Any
+    value: Value
+    type: YieldType
 
 
 class Package:
@@ -114,13 +115,14 @@ class Package:
             setattr(self, key, value)
 
 
+@dataclass
 class Settings:
-    def __init__(self):
-        self.debug = False
-        self.outdated_warnings = True
-        self.safe_mode = True
-        self.branch = "main"
+    debug: bool = False
+    outdated_warnings: bool = True
+    safe_mode: bool = True
+    branch: str = "main"
 
+    @property
     def values(self):
         return vars(self)
 
@@ -853,11 +855,11 @@ class DexScript(commands.Cog):
           The value you want to set the setting to.
         """
 
-        if not setting in script_settings.values():
+        if not setting in script_settings.values:
             await ctx.send(f"`{setting}` is not a valid setting.")
             return
         
-        selected_setting = script_settings.values().get(setting)
+        selected_setting = script_settings.values.get(setting)
 
         if value is None and not isinstance(selected_setting, bool):
             await ctx.send("You must specify a value for this setting.")
