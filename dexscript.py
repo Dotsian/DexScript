@@ -277,13 +277,13 @@ class Methods:
                 await self.ctx.send(file=discord.File(self.args[2].name))
 
             case "delete":
-                os.remove(self.args[1].name)
+                os.remove(self.args[2].name)
 
-                await self.ctx.send(f"Deleted `{self.args[1]}`")
+                await self.ctx.send(f"Deleted `{self.args[2].name}`")
 
             case _:
                 raise DexScriptError(
-                    f"'{self.args[0]}' is not a valid file operation. "
+                    f"'{self.args[1].name}' is not a valid file operation. "
                     "(READ, WRITE, CLEAR, or DELETE)"
                 )
 
