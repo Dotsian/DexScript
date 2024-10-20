@@ -135,7 +135,7 @@ class Settings:
 
     def save(self):
         with open("script-config.yml", "w") as file:
-            file.write(yaml.dump(self.values()))
+            file.write(yaml.dump(self.values))
 
 
 script_settings = Settings()
