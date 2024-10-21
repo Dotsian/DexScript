@@ -199,7 +199,7 @@ class Methods:
 
         new_attribute = None
 
-        if self.ctx.message.attachments != []:
+        if not in_list(self.args, 4) and self.ctx.message.attachments != []:
             image_path = await save_file(self.ctx.message.attachments[0])
             new_attribute = Value(f"/{image_path}", Types.STRING)
         else:
@@ -227,7 +227,7 @@ class Methods:
     async def view(self):
         returned_model = await self.parser.get_model(self.args[1], self.args[2].name)
 
-        if self.args[3].name.lower == "-all":
+        if not in_list(self.args, 3):
             fields = {"content": "```"}
 
             for key, value in vars(return_model).items():
