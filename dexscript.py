@@ -230,7 +230,7 @@ class Methods:
         if not in_list(self.args, 3):
             fields = {"content": "```"}
 
-            for key, value in vars(return_model).items():
+            for key, value in vars(returned_model).items():
                 if key.startswith("_"):
                     continue
 
