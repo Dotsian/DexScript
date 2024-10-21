@@ -227,6 +227,26 @@ class Methods:
     async def view(self):
         returned_model = await self.parser.get_model(self.args[1], self.args[2].name)
 
+        if self.args[3].name.lower == "-all":
+            fields = {"content": "```"}
+
+            for key, value in vars(return_model).items():
+                if key.startswith("_"):
+                    continue
+
+                fields["content"] += f"{key}: {value}\n"
+
+                if isinstance(value, str) and value.startswith("/static"):
+                    if fields.get("files") is None:
+                        fields["files"] = []
+
+                    fields["files"].append(discord.File(value[1:]))
+
+            fields["content"] += "```"
+
+            await ctx.send(**fields)
+            return
+
         attribute = getattr(returned_model, self.args[3].name.lower())
 
         if isinstance(attribute, str) and os.path.isfile(attribute[1:]):
