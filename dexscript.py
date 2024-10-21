@@ -1,24 +1,27 @@
-import base64
-import datetime
-import logging
-import os
-import re
-import shutil
-import time
-import traceback
+from base64 import b64decode
 from dataclasses import dataclass, field
+from datetime import datetime
 from difflib import get_close_matches
 from enum import Enum
+from logging import getLogger
+from os import path, remove as os_remove, mkdir
 from pathlib import Path
-from typing import Any
+from re import compile as recompile
+from requests import get as request_get
+from requests import codes as request_codes
+from shutil import rmtree
+from time import time
+from traceback import format_exc
+
 from dateutil.parser import parse as parse_date
-
-import discord
-import requests
-import yaml
+from discord import File as DiscordFile, Embed, Color
 from discord.ext import commands
+from tortoise.models import Model as TortoiseModel
+from yaml import dump as yaml_dump, safe_load as yaml_load
 
-dir_type = "ballsdex" if os.path.isdir("ballsdex") else "carfigures"
+dir_type = "ballsdex" if path.isdir("ballsdex") else "carfigures"
+
+models
 
 if dir_type == "ballsdex":
     from ballsdex.core.models import Ball, Economy, GuildConfig, Regime, Special, User
@@ -30,17 +33,18 @@ else:
     from carfigures.core.models import CarType as Regime
     from carfigures.core.models import Country as Economy
     from carfigures.core.models import Event as Special
+    from carfigures.core.models import Exclusive
     from carfigures.core.models import GuildConfig
     from carfigures.packages.superuser.cog import save_file
     from carfigures.settings import settings
 
 
-log = logging.getLogger(f"{dir_type}.core.dexscript")
+log = getLogger(f"{dir_type}.core.dexscript")
 
 __version__ = "0.4.4"
 
 
-START_CODE_BLOCK_RE = re.compile(r"^((```sql?)(?=\s)|(```))")
+START_CODE_BLOCK_RE = recompile(r"^((```sql?)(?=\s)|(```))")
 
 MODELS = {
     "user": [User, "USERNAME"],
@@ -55,6 +59,8 @@ KEYWORDS = [
     "local",
     "global",
 ]
+
+dexclasses = []
 
 dex_globals = {}
 dex_yields = []
@@ -100,6 +106,8 @@ class Value:
     type: Types
     extra_data: list = field(default_factory=list)
 
+    __str__ = lambda self: str(self.name)
+
 
 @dataclass
 class Yield:
@@ -108,11 +116,16 @@ class Yield:
     value: Value
     type: YieldType
 
+    @staticmethod
+    def get(model, identifier):
+        return next(
+            (x for x in dex_yields if (x.model, x.identifier.name) == (model, identifier)
+        ), None)
+
 
 class Package:
     def __init__(self, yml):
-        for key, value in yml.items():
-            setattr(self, key, value)
+        self.__dict__.update(yml)
 
 
 @dataclass
@@ -123,192 +136,289 @@ class Settings:
     branch: str = "main"
 
     @property
-    def values(self):
-        return vars(self)
+    values = lambda self: vars(self)
 
     def load(self):
         with open("script-config.yml") as file:
-            content = yaml.load(file.read(), yaml.Loader)
+            content = yaml_load(file.read())
 
             for key, value in content.items():
                 setattr(self, key, value)
 
     def save(self):
         with open("script-config.yml", "w") as file:
-            file.write(yaml.dump(self.values))
+            file.write(yaml_dump(self.values))
 
 
 script_settings = Settings()
 script_settings.load()
 
 
-class Methods:
-    def __init__(self, parser, ctx, args: list[Value]):
+def script_class(new_class):
+    global dexclasses
+    dexclasses.append(new_class)
+
+    def new_init(self, ctx):
         self.ctx = ctx
-        self.args = args
+    
+    new_class.__init__ = new_init
+    
+    return new_class
 
-        self.parser = parser
 
-    async def push(self):
-        global dex_yields
+class Models:
+    """
+    Functions used for creating and fetching models.
+    """
 
-        if in_list(self.args, 1) and self.args[1].name.lower() == "-clear":
-            dex_yields = []
+    def translate(self, string: str, item=None):
+        """
+        Translates model and field names into a format for both Ballsdex and CarFigures.
 
-            await self.ctx.send("Cleared yield cache.")
-            return
+        Parameters
+        ----------
+        string: str
+          The string you want to translate.
+        """
 
-        for index, yield_object in enumerate(dex_yields, start=1):
-            if in_list(self.args, 1) and int(self.args[1].name) >= index:
-                break
+        if dir_type == "ballsdex":
+            return getattr(item, string) if item else string
 
-            match yield_object.type:
-                case YieldType.CREATE_MODEL:
-                    await yield_object.model.create(**yield_object.value)
+        translation = {"BALL": "ENTITY", "COUNTRY": "full_name"}
 
-        plural = "" if len(dex_yields) == 1 else "s"
-        number = self.args[1].name if in_list(self.args, 1) else len(dex_yields)
+        translated_string = translation.get(string.upper(), string)
 
-        await self.ctx.send(f"Pushed `{number}` yield{plural}.")
+        return getattr(item, translated_string) if item else translated_string
 
-        dex_yields = []
+    def autocorrect(self, string, correction_list, error="does not exist."):
+        autocorrection = get_close_matches(string, correction_list)
 
-    async def create(self):
-        third_arg = self.args[3].name if in_list(self.args, 3) else False
-        result = await self.parser.create_model(
-            self.args[1].name, self.args[2].name, self.args[3] if in_list(self.args, 3) else False
-        )
+        if not autocorrection or autocorrection[0] != string:
+            suggestion = f"\nDid you mean '{autocorrection[0]}'?" if autocorrection else ""
 
-        suffix = ""
+            raise DexScriptError(f"'{string}' {error}{suggestion}")
 
-        if result is not None:
-            suffix = " and yielded it until `push`"
-            dex_yields.append(result)
+        return autocorrection[0]
 
-        await self.ctx.send(f"Created `{self.args[2]}`{suffix}")
+    async def create(self, model, identifier, yield_creation):
+        fields = {}
 
-    async def delete(self):
-        returned_model = await self.parser.get_model(self.args[1], self.args[2].name)
+        for key, field in vars(model()).items():
+            if field is not None:
+                continue
+
+            if key in ["id", "short_name"]:
+                continue
+
+            fields[key] = 1
+
+            if key in ["country", "full_name", "catch_names", "name", "username"]:
+                fields[key] = identifier
+            elif key == "emoji_id":
+                fields[key] = 100 ** 8
+            elif key == "regime_id":
+                first_regime = await Regime.first()
+                fields[key] = first_regime.pk
+
+        if yield_creation:
+            return Yield(model, identifier, fields, YieldType.CREATE_MODEL)
+
+        await model.create(**fields)
+
+    async def get(self, model, identifier):
+        try:
+            returned_model = await model.name.filter(
+                **{
+                    self.translate(model.extra_data[0].lower()): self.autocorrect(
+                        identifier, [str(x) for x in await model.name.all()]
+                    )
+                }
+            )
+        except AttributeError:
+            raise DexScriptError(f"{model} is not a valid model.")
+
+        return returned_model[0]
+
+    async def delete(self, model, identifier):
+        returned_model = await self.get(model, identifier)
 
         await returned_model.delete()
 
-        await self.ctx.send(f"Deleted `{self.args[2]}`")
 
-    async def update(self):
-        found_yield = self.parser.get_yield(self.args[1].name, self.args[2].name)
+class DexClasses:
+    """
+    Classes used for DexScript's parser.
+    """
 
-        new_attribute = None
+    class Model:
+        async def push(self, action: str = ""):
+            global dex_yields
 
-        if not in_list(self.args, 4) and self.ctx.message.attachments != []:
-            image_path = await save_file(self.ctx.message.attachments[0])
-            new_attribute = Value(f"/{image_path}", Types.STRING)
-        else:
-            new_attribute = self.args[4]
+            if action == "-clear":
+                dex_yields = []
 
-        update_message = f"`{self.args[2]}'s` {self.args[3]} to {new_attribute.name}"
+                await self.ctx.send("Cleared yield cache.")
+                return
 
-        if found_yield is None:
-            returned_model = await self.parser.get_model(self.args[1], self.args[2].name)
+            for index, yield_object in enumerate(dex_yields, start=1):
+                if action != "" and int(action) >= index:
+                    break
 
-            field_name = self.args[3].name.lower()
+                match yield_object.type:
+                    case YieldType.CREATE_MODEL:
+                        await yield_object.model.create(**yield_object.value)
 
-            setattr(returned_model, field_name, new_attribute.name)
+            plural = "" if len(dex_yields) == 1 else "s"
+            number = action if action != "" else len(dex_yields)
 
-            await returned_model.save()
+            await self.ctx.send(f"Pushed `{number}` yield{plural}.")
 
-            await self.ctx.send(f"Updated {update_message}")
+            dex_yields = []
 
-            return
+        async def create(
+            self,
+            model: TortoiseModel,
+            identifier: str,
+            create_yield: bool = False
+        ):
+            model = await Models.create(model, identifier, create_yield or False)
+            suffix = ""
 
-        found_yield.value[field_name] = new_attribute.name
+            if model is not None:
+                suffix = "and yielded it until `push`"
+                dex_yields.append(result)
 
-        await self.ctx.send(f"Updated yielded {update_message}")
+            await self.ctx.send(f"Created `{self.args[2]}` {suffix}")
 
-    async def view(self):
-        returned_model = await self.parser.get_model(self.args[1], self.args[2].name)
+        async def update(
+            self,
+            model: TortoiseModel,
+            identifier: str,
+            field: str,
+            value: Any = None
+        ):
+            found_yield = Yield.get(model, identifier)
 
-        if not in_list(self.args, 3):
-            fields = {"content": "```"}
+            if value is None and self.ctx.message.attachments != []:
+                image_path = await save_file(self.ctx.message.attachments[0])
+                value = Value(f"/{image_path}", Types.STRING)
 
-            for key, value in vars(returned_model).items():
-                if key.startswith("_"):
-                    continue
+            update_message = f"`{identifier}'s` {field} to `{value.name}`"
 
-                fields["content"] += f"{key}: {value}\n"
+            if found_yield is None:
+                model = await Models.get(model, identifier)
+                field = field.lower()
 
-                if isinstance(value, str) and value.startswith("/static"):
-                    if fields.get("files") is None:
-                        fields["files"] = []
+                if not hasattr(model, field):
+                    raise DexScriptError(f"{str(model).upper()} has no field '{field}'")
 
-                    fields["files"].append(discord.File(value[1:]))
+                setattr(model, field, value.name)
 
-            fields["content"] += "```"
+                await model.save()
 
-            await self.ctx.send(**fields)
-            return
+                await self.ctx.send(f"Updated {update_message}")
+                return
 
-        attribute = getattr(returned_model, self.args[3].name.lower())
+            found_yield.value[field] = value.name
 
-        if isinstance(attribute, str) and os.path.isfile(attribute[1:]):
-            await self.ctx.send(f"```{attribute}```", file=discord.File(attribute[1:]))
-            return
+            await self.ctx.send(f"Updated yielded {update_message}")
 
-        await self.ctx.send(f"```{attribute}```")
+        async def view(
+            self, 
+            model: TortoiseModel, 
+            identifier: str, 
+            field: str = ""
+        ):
+            model = await Models.get(model, identifier)
 
-    async def list(self):
-        model = self.args[1].name
+            if field == "":
+                fields = {"content": "```"}
 
-        parameters = "GLOBAL YIELDS:\n\n"
+                for key, value in vars(returned_model).items():
+                    if key.startswith("_"):
+                        continue
 
-        model_name = model if isinstance(model, str) else model.__name__
+                    fields["content"] += f"{key}: {value}\n"
 
-        if model_name.lower() != "-yields":
-            parameters = f"{model_name.upper()} FIELDS:\n\n"
+                    if isinstance(value, str) and value.startswith("/static"):
+                        if fields.get("files") is None:
+                            fields["files"] = []
 
-            for field in vars(model()):  # type: ignore
-                if field[:1] == "_":
-                    continue
+                        fields["files"].append(DiscordFile(value[1:]))
 
-                parameters += f"- {field.replace(' ', '_').upper()}\n"
-        else:
-            for index, dex_yield in enumerate(dex_yields, start=1):
-                parameters += f"{index}. {dex_yield.identifier.name.upper()}\n"
+                fields["content"] += "```"
 
-        await self.ctx.send(f"```\n{parameters}\n```")
+                await self.ctx.send(**fields)
+                return
 
-    async def file(self):
-        match self.args[1].name.lower():
-            case "write":
-                new_file = self.ctx.message.attachments[0]
+            attribute = getattr(model, field)
 
-                with open(self.args[2].name, "w") as opened_file:
-                    contents = await new_file.read()
-                    opened_file.write(contents.decode("utf-8"))
+            if isinstance(attribute, str) and path.isfile(attribute[1:]):
+                await self.ctx.send(f"```{attribute}```", file=DiscordFile(attribute[1:]))
+                return
 
-                await self.ctx.send(f"Wrote to `{self.args[2].name}`")
+            await self.ctx.send(f"```{attribute}```")
 
-            case "clear":
-                with open(self.args[2].name, "w") as opened_file:
+        async def list(self, model: Any):
+            parameters = "GLOBAL YIELDS:\n\n"
+
+            model_name = model if isinstance(model, str) else model.__name__
+
+            if model_name.lower() != "-yields":
+                parameters = f"{model_name.upper()} FIELDS:\n\n"
+
+                for field in vars(model()):  # type: ignore
+                    if field[:1] == "_":
+                        continue
+
+                    parameters += f"- {field.replace(' ', '_').upper()}\n"
+            else:
+                for index, dex_yield in enumerate(dex_yields, start=1):
+                    parameters += f"{index}. {dex_yield.identifier.name.upper()}\n"
+
+            await self.ctx.send(f"```\n{parameters}\n```")
+
+        async def delete(self, model: TortoiseModel, identifier: str):
+            await Models.delete(model, identifier)
+            await self.ctx.send(f"Deleted `{identifier}`")
+
+    @script_class
+    class Ball(Model):
+        async def spawn(self, ball: str = "random", amount: int = 1):
+            # TODO: Figure out a way to add CF support and BD support.
+            for _ in range(amount):
+                if ball == "random":
                     pass
 
-                await self.ctx.send(f"Cleared `{self.args[2].name}`")
+            await self.ctx.send("Work in progress...")
 
-            case "read":
-                await self.ctx.send(file=discord.File(self.args[2].name))
+    @script_class
+    class File:
+        async def write(self, file: str):
+            new_file = self.ctx.message.attachments[0]
 
-            case "delete":
-                os.remove(self.args[2].name)
+            with open(file, "w") as write_file:
+                content = await new_file.read()
+                write_file.write(contents.decode("utf-8"))
 
-                await self.ctx.send(f"Deleted `{self.args[2].name}`")
+            await self.ctx.send(f"Wrote to `{file}`")
 
-            case _:
-                raise DexScriptError(
-                    f"'{self.args[1].name}' is not a valid file operation. "
-                    "(READ, WRITE, CLEAR, or DELETE)"
-                )
+        async def read(self, file: str):
+            await self.ctx.send(
+                contents=f"Sent `{file}`",
+                file=DiscordFile(file)
+            )
 
-    async def show(self):
-        await self.ctx.send(f"```\n{self.args[1]}\n```")
+        async def clear(self, file: str):
+            with open(file, "w") as _:
+                pass
+
+            await self.ctx.send(f"Cleared `{file}`")
+
+        async def delete(self, file: str):
+            os_remove(file)
+
+            await self.ctx.send(f"Deleted `{file}`")
 
 
 class DexScriptParser:
@@ -318,9 +428,7 @@ class DexScriptParser:
 
     def __init__(self, ctx):
         self.ctx = ctx
-
         self.dex_locals = {}
-
         self.values = []
 
     @staticmethod
@@ -338,63 +446,6 @@ class DexScriptParser:
             return True
         except Exception:
             return False
-
-    @staticmethod
-    def autocorrect(string, correction_list, error="does not exist."):
-        autocorrection = get_close_matches(string, correction_list)
-
-        if not autocorrection or autocorrection[0] != string:
-            suggestion = f"\nDid you mean '{autocorrection[0]}'?" if autocorrection else ""
-
-            raise DexScriptError(f"'{string}' {error}{suggestion}")
-
-        return autocorrection[0]
-
-    async def create_model(self, model, identifier, yield_creation):
-        fields = {}
-
-        for key, field in vars(model()).items():
-            if field is not None:
-                continue
-
-            if key in ["id", "short_name"]:
-                continue
-
-            fields[key] = 1
-
-            if key in ["country", "full_name", "catch_names", "name", "username"]:
-                fields[key] = identifier
-            elif key == "emoji_id":
-                fields[key] = 100**8
-            elif key == "regime_id":
-                first_regime = await Regime.first()
-                fields[key] = first_regime.pk
-
-        if yield_creation:
-            return Yield(model, identifier, fields, YieldType.CREATE_MODEL)
-
-        await model.create(**fields)
-
-    async def get_model(self, model, identifier):
-        try:
-            returned_model = await model.name.filter(
-                **{
-                    self.translate(model.extra_data[0].lower()): self.autocorrect(
-                        identifier, [str(x) for x in await model.name.all()]
-                    )
-                }
-            )
-        except AttributeError:
-            raise DexScriptError(f"{model} is not a valid model.")
-
-        return returned_model[0]
-
-    def get_yield(self, model, identifier):
-        for item in dex_yields:
-            if item.model != model or item.identifier.name != identifier:
-                continue
-
-            return item
 
     def var(self, value):
         return_value = value
@@ -423,26 +474,6 @@ class DexScriptParser:
                 value.name = parse_date(value.name)
 
         return return_value
-
-    @staticmethod
-    def translate(string: str, item=None):
-        """
-        Translates model and field names into a format for both Ballsdex and CarFigures.
-
-        Parameters
-        ----------
-        string: str
-          The string you want to translate.
-        """
-
-        if dir_type == "ballsdex":
-            return getattr(item, string) if item else string
-
-        translation = {"BALL": "ENTITY", "COUNTRY": "full_name"}
-
-        translated_string = translation.get(string.upper(), string)
-
-        return getattr(item, translated_string) if item else translated_string
 
     def keyword(self, line):
         identity = line[1].name
@@ -518,17 +549,20 @@ class DexScriptParser:
                     if value.type != Types.METHOD:
                         continue
 
-                    new_method = Methods(self, self.ctx, line2)
+                    new_class = next(
+                        x for x in dexclasses if x.__name__.lower() == value.name.lower(), 
+                        None
+                    )(self.ctx)
+
+                    new_method = getattr(new_class, line2[1])
 
                     try:
-                        await getattr(new_method, value.name.lower())()
+                        await new_method(*line2.pop(1))
                     except IndexError:
-                        # TODO: Remove `error` duplicates.
-
                         error = f"Argument is missing when calling {value.name}."
-                        return ((error, error), CodeStatus.FAILURE)
+                        return (error, CodeStatus.FAILURE)
         except Exception as error:
-            return ((error, traceback.format_exc()), CodeStatus.FAILURE)
+            return ((error, format_exc()), CodeStatus.FAILURE)
 
         return (None, CodeStatus.SUCCESS)
 
@@ -545,11 +579,11 @@ def fetch_package(name):
 
     path = f"{dir_type}/data/{name}.yml"
 
-    if not os.path.isfile(path):
+    if not path.isfile(path):
         return None
 
     return Package(
-        yaml.load(Path(f"{dir_type}/data/{name}.yml").read_text(), yaml.Loader)
+        yaml_load(Path(f"{dir_type}/data/{name}.yml").read_text())
     )
 
 
@@ -577,15 +611,15 @@ class DexScript(commands.Cog):
         if not script_settings.outdated_warnings:
             return None
 
-        r = requests.get(
+        r = request_get(
             "https://api.github.com/repos/Dotsian/DexScript/contents/version.txt",
             {"ref": script_settings.branch},
         )
 
-        if r.status_code != requests.codes.ok:
+        if r.status_code != request_codes.ok:
             return
 
-        new_version = base64.b64decode(r.json()["content"]).decode("UTF-8").rstrip()
+        new_version = b64decode(r.json()["content"]).decode("UTF-8").rstrip()
 
         if new_version != __version__:
             return (
@@ -619,7 +653,12 @@ class DexScript(commands.Cog):
         result, status = await dexscript_instance.execute(body)
 
         if status == CodeStatus.FAILURE and result is not None:
-            await ctx.send(f"```ERROR: {result[script_settings.debug]}\n```")
+            error = result
+
+            if isinstance(error, tuple):
+                error = result[script_settings.debug]
+
+            await ctx.send(f"```ERROR: {error}\n```")
         else:
             await ctx.message.add_reaction("✅")
 
@@ -642,14 +681,14 @@ class DexScript(commands.Cog):
                 await ctx.send("The package you entered does not exist.")
                 return
 
-            embed = discord.Embed(
+            embed = Embed(
                 title=package,
                 description=info.description,
             )
 
             color = info.color if hasattr(info, "color") else "03BAFC"
 
-            embed.color = discord.Color.from_str(f"#{color}")
+            embed.color = Color.from_str(f"#{color}")
 
             if hasattr(info, "logo"):
                 embed.set_thumbnail(url=info.logo)
@@ -660,7 +699,7 @@ class DexScript(commands.Cog):
 
             return
 
-        embed = discord.Embed(
+        embed = Embed(
             title="DexScript - BETA",
             description=(
                 "DexScript is a set of commands created by DotZZ "
@@ -671,7 +710,7 @@ class DexScript(commands.Cog):
                 "If you want to follow DexScript, "
                 "join the official [DexScript Discord](<https://discord.gg/EhCxuNQfzt>) server."
             ),
-            color=discord.Color.from_str("#03BAFC"),
+            color=Color.from_str("#03BAFC"),
         )
 
         version_check = "OUTDATED" if self.check_version() is not None else "LATEST"
@@ -693,14 +732,16 @@ class DexScript(commands.Cog):
             The package you want to uninstall.
         """
 
-        embed = discord.Embed(
+        embed = Embed(
             title=f"Removed {package.title()}",
             description=f"The {package.title()} package has been removed from your bot.",
-            color=discord.Color.red(),
-            timestamp=datetime.datetime.now(),
+            color=Color.red(),
+            timestamp=datetime.now(),
         )
 
-        shutil.rmtree(f"{dir_type}/packages/{package}")
+        rmtree(f"{dir_type}/packages/{package}")
+
+        await bot.unload_extension(f"{dir_type}/packages/{package}")
 
         await self.bot.tree.sync()
 
@@ -717,7 +758,7 @@ class DexScript(commands.Cog):
 
         verified = True
 
-        await ctx.send("You are permitted to install the next package.")
+        await ctx.message.add_reaction("✅")
 
     @commands.command()
     @commands.is_owner()
@@ -751,7 +792,7 @@ class DexScript(commands.Cog):
         if verified:
             verified = False
 
-        t1 = time.time()
+        t1 = time()
 
         package_info = package.replace("https://github.com/", "").split("/")
 
@@ -759,15 +800,15 @@ class DexScript(commands.Cog):
 
         link = f"https://api.github.com/repos/{package_info[0]}/{package_info[1]}/contents/"
 
-        request = requests.get(f"{link}package.yml")
+        request = request_get(f"{link}package.yml")
 
-        if request.status_code == requests.codes.ok:
-            content = base64.b64decode(request.json()["content"])
+        if request.status_code == request_codes.ok:
+            content = b64decode(request.json()["content"])
 
             with open(f"{dir_type}/data/{package_info[1]}.yml", "w") as package_file:
                 package_file.write(content.decode("UTF-8"))
 
-            yaml_content = yaml.load(content, yaml.Loader)
+            yaml_content = yaml_load(content)
             package_info = Package(yaml_content)
 
             if dir_type not in package_info.supported:
@@ -776,14 +817,14 @@ class DexScript(commands.Cog):
 
             color = package_info.color if hasattr(package_info, "color") else "03BAFC"
 
-            embed = discord.Embed(
+            embed = Embed(
                 title=f"Installing {original_name}",
                 description=(
                     f"{original_name} is being installed on your bot.\n"
                     "Please do not turn off your bot."
                 ),
-                color=discord.Color.from_str(f"#{color}"),
-                timestamp=datetime.datetime.now(),
+                color=Color.from_str(f"#{color}"),
+                timestamp=datetime.now(),
             )
 
             if hasattr(package_info, "logo"):
@@ -799,16 +840,16 @@ class DexScript(commands.Cog):
             return
 
         try:
-            os.mkdir(f"{dir_type}/packages/{package_info.name}")
+            mkdir(f"{dir_type}/packages/{package_info.name}")
         except FileExistsError:
             pass
 
         for file in package_info.files:
             file_path = f"{package_info.name}/{file}"
-            request_content = requests.get(f"{link}{file_path}")
+            request_content = request_get(f"{link}{file_path}")
 
-            if request_content.status_code == requests.codes.ok:
-                content = base64.b64decode(request_content.json()["content"])
+            if request_content.status_code == request_codes.ok:
+                content = b64decode(request_content.json()["content"])
 
                 with open(f"{dir_type}/packages/{file_path}", "w") as opened_file:
                     opened_file.write(content.decode("UTF-8"))
@@ -824,7 +865,7 @@ class DexScript(commands.Cog):
         except commands.ExtensionAlreadyLoaded:
             await self.bot.reload_extension(f"{dir_type}.packages.{package_info.name}")
 
-        t2 = time.time()
+        t2 = time()
 
         embed.title = f"{original_name} Installed"
 
@@ -843,13 +884,13 @@ class DexScript(commands.Cog):
         Updates DexScript to the latest version.
         """
 
-        r = requests.get(
+        r = request_get(
             "https://api.github.com/repos/Dotsian/DexScript/contents/installer.py",
             {"ref": script_settings.branch},
         )
 
-        if r.status_code == requests.codes.ok:
-            content = base64.b64decode(r.json()["content"])
+        if r.status_code == request_codes.ok:
+            content = b64decode(r.json()["content"])
             await ctx.invoke(self.bot.get_command("eval"), body=content.decode("UTF-8"))
         else:
             await ctx.send(

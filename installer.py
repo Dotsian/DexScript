@@ -1,12 +1,12 @@
-import base64
-import datetime
-import os
-import time
-import yaml
+from datetime import datetime
+from os import path, mkdir
+from time import time
 
-import requests
+from base64 import b64decode
+from requests import get, codes
+from yaml import dump
 
-dir_type = "ballsdex" if os.path.isdir("ballsdex") else "carfigures"
+dir_type = "ballsdex" if path.isdir("ballsdex") else "carfigures"
 
 if dir_type == "ballsdex":
     from ballsdex.settings import settings
@@ -14,7 +14,7 @@ else:
     from carfigures.settings import settings
 
 
-updating = os.path.isfile(f"{dir_type}/core/dexscript.py")
+updating = path.isfile(f"{dir_type}/core/dexscript.py")
 
 keywords = [["Updated", "Updating"], ["Installed", "Installing"]][not updating]
 
@@ -25,18 +25,18 @@ embed = discord.Embed(
         "Please do not turn off your bot."
     ),
     color=discord.Color.from_str("#03BAFC"),
-    timestamp=datetime.datetime.now(),
+    timestamp=datetime.now(),
 )
 
 embed.set_thumbnail(url="https://i.imgur.com/uKfx0qO.png")
 
 original_message = await ctx.send(embed=embed)
 
-t1 = time.time()
+t1 = time()
 
 GITHUB = ["https://api.github.com/repos/Dotsian/DexScript/contents/", {"ref": "beta"}]
 BUGLINK = "<https://github.com/Dotsian/DexScript/issues/new/choose>"
-request = requests.get(f"{GITHUB[0]}/dexscript.py", GITHUB[1])
+request = get(f"{GITHUB[0]}/dexscript.py", GITHUB[1])
 
 
 async def display_error(error, log=None):
@@ -51,12 +51,12 @@ async def display_error(error, log=None):
     await original_message.edit(embed=embed)
 
 
-if request.status_code != requests.codes.ok:
+if request.status_code != codes.ok:
     await display_error("Failed to fetch the `dexscript.py` file.")
     return
 
 request = request.json()
-content = base64.b64decode(request["content"])
+content = b64decode(request["content"])
 
 default_settings = {
     "debug": False,
@@ -105,12 +105,12 @@ for line in migrations.split("\n"):
 async def install():
     # Create the data folder for package installation.
     try:
-        os.mkdir(f"{dir_type}/data")
+        mkdir(f"{dir_type}/data")
     except FileExistsError:
         pass
 
     # Create the setting file if it doesn't exist.
-    if not os.path.isfile("script-config.yml"):
+    if not path.isfile("script-config.yml"):
         with open("script-config.yml", "w") as opened_file:
             opened_file.write(yaml.dump(default_settings))
 
@@ -179,20 +179,20 @@ try:
     await install()
 except Exception as e:
     embed.set_footer(
-        text=f"Error occurred {round((time.time() - t1) * 1000)}ms into {keywords[0].lower()}"
+        text=f"Error occurred {round((time() - t1) * 1000)}ms into {keywords[0].lower()}"
     )
 
     await display_error(f"Failed to {keyword} DexScript.", e)
     return
 
-t2 = time.time()
+t2 = time()
 
 embed.title = f"DexScript {keywords[1]}"
 
 if updating:
-    r = requests.get(f"{GITHUB[0]}/version.txt", GITHUB[1])
+    r = get(f"{GITHUB[0]}/version.txt", GITHUB[1])
 
-    new_version = base64.b64decode(r.json()["content"]).decode("UTF-8").rstrip()
+    new_version = b64decode(r.json()["content"]).decode("UTF-8").rstrip()
 
     embed.description = (
         f"DexScript has been updated to v{new_version}.\n"
