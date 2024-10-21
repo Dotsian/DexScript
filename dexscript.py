@@ -244,7 +244,7 @@ class Methods:
 
             fields["content"] += "```"
 
-            await ctx.send(**fields)
+            await self.ctx.send(**fields)
             return
 
         attribute = getattr(returned_model, self.args[3].name.lower())
