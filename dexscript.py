@@ -664,6 +664,11 @@ class DexScript(commands.Cog):
 
     @commands.command()
     @commands.is_owner()
+    async def migrate(self, ctx: commands.Context):
+        pass
+
+    @commands.command()
+    @commands.is_owner()
     async def about(self, ctx: commands.Context, package: str = "DexScript"):
         """
         Displays information about a package.
