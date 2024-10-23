@@ -14,6 +14,7 @@ from time import time
 from traceback import format_exc
 from typing import Any
 
+from fastapi_admin.app import app
 from dateutil.parser import parse as parse_date
 from discord import File as DiscordFile, Embed, Color
 from discord.ext import commands
@@ -22,20 +23,10 @@ from yaml import dump as yaml_dump, safe_load as yaml_load
 
 dir_type = "ballsdex" if path.isdir("ballsdex") else "carfigures"
 
-models
-
 if dir_type == "ballsdex":
-    from ballsdex.core.models import Ball, Economy, GuildConfig, Regime, Special, User
     from ballsdex.packages.admin.cog import save_file
     from ballsdex.settings import settings
 else:
-    from carfigures.core.models import Admin as User
-    from carfigures.core.models import Car as Ball
-    from carfigures.core.models import CarType as Regime
-    from carfigures.core.models import Country as Economy
-    from carfigures.core.models import Event as Special
-    from carfigures.core.models import Exclusive
-    from carfigures.core.models import GuildConfig
     from carfigures.packages.superuser.cog import save_file
     from carfigures.settings import settings
 
@@ -47,14 +38,7 @@ __version__ = "0.4.4"
 
 START_CODE_BLOCK_RE = recompile(r"^((```sql?)(?=\s)|(```))")
 
-MODELS = {
-    "user": [User, "USERNAME"],
-    "guildconfig": [GuildConfig, "ID"],
-    "ball": [Ball, "COUNTRY"],
-    "regime": [Regime, "NAME"],
-    "economy": [Economy, "NAME"],
-    "special": [Special, "NAME"],
-}
+MODELS = Models.all()
 
 KEYWORDS = [
     "local",
@@ -109,6 +93,13 @@ class Value:
 
     def __str__(self):
         return str(self.name)
+
+
+@dataclass
+class ModelValue:
+    model: TortoiseModel
+    identifier: str
+    fields: dict
 
 
 @dataclass
@@ -206,29 +197,66 @@ class Models:
         return autocorrection[0]
 
     @staticmethod
+    async def all() -> dict:
+        models = {}
+
+        for resource in app.resources:
+            MODEL = vars(resource).get("model")
+
+            if MODEL is None:
+                continue
+
+            fields = {}
+
+            for key, instance in MODEL._meta.fields_map.items():
+                field_type = instance.__class__.__name__
+
+                fields[key] = field_type
+
+                if field_type in ("CharField", "BigIntField") and identifier == "":
+                    identifier = key
+
+            if identifier == "":
+                identifier = MODEL._meta.pk_attr
+
+            models[MODEL.__name__.lower()] = ModelValue(
+                MODEL, identifier, fields
+            )
+
+        return models
+
+    @staticmethod
     async def create(model, identifier, yield_creation=False) -> TortoiseModel | Yield:
         fields = {}
+        model_data = MODELS[model.__name__.lower()]
 
-        for key, field in vars(model()).items():
-            if field is not None:
+        for field, field_type in model_data.fields.items():
+            field_data = vars(model())[field]
+
+            if field_data is not None or field in ["id", "short_name"]:
                 continue
 
-            if key in ["id", "short_name"]:
+            if field == model_data.identifier:
+                fields[field] = identifier
                 continue
 
-            fields[key] = 1
+            match field_type:
+                case "ForeignKeyFieldInstance":
+                    first_model = await MODELS[field].model.first()
 
-            if key in ["country", "full_name", "catch_names", "name", "username"]:
-                fields[key] = identifier
-            elif key == "emoji_id":
-                fields[key] = 100 ** 8
-            elif key == "regime_id":
-                first_regime = await Regime.first()
+                    if first_model is None:
+                        raise DexScriptError(f"Could not find {field}")
 
-                if first_regime is None:
-                    raise DexScriptError("Could not find Regime.")
+                    fields[field] = first_model.pk
+                
+                case "BigIntField":
+                    fields[field] = 100 ** 8
 
-                fields[key] = first_regime.pk
+                case "BackwardFKRelation" | "JSONField":
+                    continue
+
+                case _:
+                    fields[field] = 1
 
         if yield_creation:
             return Yield(model, identifier, fields, YieldType.CREATE_MODEL)
@@ -240,7 +268,7 @@ class Models:
         try:
             returned_model = await model.name.filter(
                 **{
-                    Models.translate(model.extra_data[0].lower()): self.autocorrect(
+                    Models.translate(model.extra_data[0].lower()): Models.autocorrect(
                         identifier, [str(x) for x in await model.name.all()]
                     )
                 }
@@ -476,8 +504,8 @@ class DexScriptParser:
             case Types.MODEL:
                 current_model = MODELS[value.name.lower()]
 
-                value.name = current_model[0]
-                value.extra_data.append(current_model[1])
+                value.name = current_model.model
+                value.extra_data.append(current_model.identifier)
 
             case Types.BOOLEAN:
                 value.name = value.name.lower() == "true"
