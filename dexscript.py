@@ -592,7 +592,10 @@ class DexScriptParser:
                     new_class = next(
                         x for x in dexclasses if x.__name__.lower() == value.name.lower(), 
                         None
-                    )(self.ctx)
+                    )
+
+                    if new_class is not None:
+                        new_class = new_class(self.ctx)
 
                     new_method = getattr(new_class, line2[1])
 
@@ -955,15 +958,20 @@ class DexScript(commands.Cog):
 
     @commands.command()
     @commands.is_owner()
-    async def setting(self, ctx: commands.Context, setting: str, value: str | None):
+    async def setting(
+        self,
+        ctx: commands.Context,
+        setting: str,
+        value: str | None = None
+    ):
         """
         Changes a setting based on the value provided.
 
         Parameters
         ----------
-        setting: str
-          The setting you want to toggle.
-        value: str
+        setting: str | None
+          The setting you want to edit.
+        value: str | None
           The value you want to set the setting to.
         """
 
@@ -979,12 +987,14 @@ class DexScript(commands.Cog):
         
         if value is None and isinstance(selected_setting, bool):
             value = not selected_setting
+
+        old_value = getattr(script_settings, setting)
         
         setattr(script_settings, setting, value)
 
         script_settings.save()
 
-        await ctx.send(f"`{setting}` has been set to `{value}`")
+        await ctx.send(f"`{setting}` has been set from `{old_value}` to `{value}`")
 
 
 async def setup(bot):
