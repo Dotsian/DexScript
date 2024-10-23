@@ -54,7 +54,7 @@ verified = False
 
 
 class Types(Enum):
-    METHOD = 0
+    CLASS = 0
     NUMBER = 1
     STRING = 2
     BOOLEAN = 3
@@ -534,14 +534,16 @@ class DexScriptParser:
         value = Value(line, type)
         lower = line.lower()
 
-        if lower in vars(Methods):
-            type = Types.METHOD
+        class_names = [x.__name__.lower() for x in dexclasses]
+
+        if lower in class_names:
+            type = Types.CLASS
         elif lower in KEYWORDS:
             type = Types.KEYWORD
         elif lower.startswith("$"):
             type = Types.VARIABLE
         elif lower in MODELS:
-            type = Types.MODEL
+            type = Types.MODELS
         elif self.is_date(lower) and lower.count("-") >= 2:
             type = Types.DATETIME
         elif self.is_number(lower):
@@ -589,7 +591,7 @@ class DexScriptParser:
                         self.keyword(parsed_code)
                         continue
 
-                    if value.type != Types.METHOD:
+                    if value.type != Types.CLASS:
                         continue
 
                     new_class = [

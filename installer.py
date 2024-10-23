@@ -19,7 +19,7 @@ updating = path.isfile(f"{dir_type}/core/dexscript.py")
 keywords = [["Updated", "Updating"], ["Installed", "Installing"]][not updating]
 
 embed = discord.Embed(
-    title=f"{keywords[0]} DexScript",
+    title=f"{keywords[1]} DexScript",
     description=(
         f"DexScript is being {keywords[1].lower()} on your bot.\n"
         "Please do not turn off your bot."
@@ -60,8 +60,8 @@ content = b64decode(request["content"])
 
 default_settings = {
     "debug": False,
-    "safe-mode": True,
-    "outdated-warnings": True,
+    "safe_mode": True,
+    "outdated_warnings": True,
     "branch": "main"
 }
 
@@ -187,7 +187,7 @@ except Exception as e:
 
 t2 = time()
 
-embed.title = f"DexScript {keywords[1]}"
+embed.title = f"{keywords[0]} DexScript"
 
 if updating:
     r = get(f"{GITHUB[0]}/version.txt", GITHUB[1])
