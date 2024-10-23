@@ -12,6 +12,7 @@ from requests import codes as request_codes
 from shutil import rmtree
 from time import time
 from traceback import format_exc
+from typing import Any
 
 from dateutil.parser import parse as parse_date
 from discord import File as DiscordFile, Embed, Color
@@ -106,14 +107,15 @@ class Value:
     type: Types
     extra_data: list = field(default_factory=list)
 
-    __str__ = lambda self: str(self.name)
+    def __str__(self):
+        return str(self.name)
 
 
 @dataclass
 class Yield:
     model: Any
     identifier: Any
-    value: Value
+    value: dict
     type: YieldType
 
     @staticmethod
@@ -136,7 +138,8 @@ class Settings:
     branch: str = "main"
 
     @property
-    values = lambda self: vars(self)
+    def values(self):
+        return vars(self)
 
     def load(self):
         with open("script-config.yml") as file:
@@ -171,7 +174,8 @@ class Models:
     Functions used for creating and fetching models.
     """
 
-    def translate(self, string: str, item=None):
+    @staticmethod
+    def translate(string: str, item=None):
         """
         Translates model and field names into a format for both Ballsdex and CarFigures.
 
@@ -190,7 +194,8 @@ class Models:
 
         return getattr(item, translated_string) if item else translated_string
 
-    def autocorrect(self, string, correction_list, error="does not exist."):
+    @staticmethod
+    def autocorrect(string, correction_list, error="does not exist."):
         autocorrection = get_close_matches(string, correction_list)
 
         if not autocorrection or autocorrection[0] != string:
@@ -200,7 +205,8 @@ class Models:
 
         return autocorrection[0]
 
-    async def create(self, model, identifier, yield_creation):
+    @staticmethod
+    async def create(model, identifier, yield_creation=False) -> TortoiseModel | Yield:
         fields = {}
 
         for key, field in vars(model()).items():
@@ -218,18 +224,23 @@ class Models:
                 fields[key] = 100 ** 8
             elif key == "regime_id":
                 first_regime = await Regime.first()
+
+                if first_regime is None:
+                    raise DexScriptError("Could not find Regime.")
+
                 fields[key] = first_regime.pk
 
         if yield_creation:
             return Yield(model, identifier, fields, YieldType.CREATE_MODEL)
 
-        await model.create(**fields)
+        return await model.create(**fields)
 
-    async def get(self, model, identifier):
+    @staticmethod
+    async def get(model, identifier):
         try:
             returned_model = await model.name.filter(
                 **{
-                    self.translate(model.extra_data[0].lower()): self.autocorrect(
+                    Models.translate(model.extra_data[0].lower()): self.autocorrect(
                         identifier, [str(x) for x in await model.name.all()]
                     )
                 }
@@ -239,8 +250,9 @@ class Models:
 
         return returned_model[0]
 
-    async def delete(self, model, identifier):
-        returned_model = await self.get(model, identifier)
+    @staticmethod
+    async def delete(model, identifier):
+        returned_model = await Models.get(model, identifier)
 
         await returned_model.delete()
 
@@ -281,14 +293,14 @@ class DexClasses:
             identifier: str,
             create_yield: bool = False
         ):
-            model = await Models.create(model, identifier, create_yield or False)
+            new_model = await Models.create(model, identifier, create_yield or False)
             suffix = ""
 
-            if model is not None:
+            if isinstance(new_model, Yield):
                 suffix = "and yielded it until `push`"
-                dex_yields.append(result)
+                dex_yields.append(new_model)
 
-            await self.ctx.send(f"Created `{self.args[2]}` {suffix}")
+            await self.ctx.send(f"Created `{identifier}` {suffix}")
 
         async def update(
             self,
