@@ -1,6 +1,7 @@
 from datetime import datetime
 from os import path, mkdir
 from time import time
+from traceback import format_exc
 
 from base64 import b64decode
 from requests import get, codes
@@ -182,7 +183,7 @@ except Exception as e:
         text=f"Error occurred {round((time() - t1) * 1000)}ms into {keywords[0].lower()}"
     )
 
-    await display_error(f"Failed to {keyword} DexScript.", e)
+    await display_error(f"Failed to {keyword} DexScript.", format_exc())
     return
 
 t2 = time()
