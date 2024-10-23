@@ -21,7 +21,7 @@ original_message = await ctx.send(embed=embed)
 async def uninstall():
     if path.isfile("script-config.yml"):
         remove("script-config.yml")
-    
+
     if path.isfile(f"{dir_type}/core/dexscript.py"):
         remove(f"{dir_type}/core/dexscript.py")
 
