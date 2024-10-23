@@ -38,7 +38,7 @@ __version__ = "0.4.4"
 
 START_CODE_BLOCK_RE = recompile(r"^((```sql?)(?=\s)|(```))")
 
-MODELS = Models.all()
+MODELS = {}
 
 KEYWORDS = [
     "local",
@@ -283,6 +283,9 @@ class Models:
         returned_model = await Models.get(model, identifier)
 
         await returned_model.delete()
+
+
+MODELS = Models.all()
 
 
 class DexClasses:
