@@ -1,16 +1,16 @@
-from datetime import datetime
-from os import path, remove
-from time import time
+import datetime
+import os
+import time
 
-dir_type = "ballsdex" if path.isdir("ballsdex") else "carfigures"
+dir_type = "ballsdex" if os.path.isdir("ballsdex") else "carfigures"
 
-t1 = time()
+t1 = time.time()
 
 embed = discord.Embed(
     title="Removing DexScript",
     description="DexScript is being removed from your bot.\nPlease do not turn off your bot.",
     color=discord.Color.red(),
-    timestamp=datetime.now(),
+    timestamp=datetime.datetime.now(),
 )
 
 embed.set_thumbnail(url="https://i.imgur.com/uKfx0qO.png")
@@ -19,11 +19,8 @@ original_message = await ctx.send(embed=embed)
 
 
 async def uninstall():
-    if path.isfile("script-config.yml"):
-        remove("script-config.yml")
-
-    if path.isfile(f"{dir_type}/core/dexscript.py"):
-        remove(f"{dir_type}/core/dexscript.py")
+    if os.path.isfile(f"{dir_type}/core/dexscript.py"):
+        os.remove(f"{dir_type}/core/dexscript.py")
 
     exclude = [
         f"from {dir_type}.core.dexscript import DexScript",
@@ -61,13 +58,13 @@ except Exception as e:
     )
 
     embed.set_footer(
-        text=f"Error occurred {round((time() - t1) * 1000)}ms into uninstallation"
+        text=f"Error occurred {round((time.time() - t1) * 1000)}ms into uninstallation"
     )
 
     await original_message.edit(embed=embed)
     return
 
-t2 = time()
+t2 = time.time()
 
 embed.title = "DexScript Removed"
 embed.description = (
