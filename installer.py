@@ -1,10 +1,11 @@
+from base64 import b64decode
+from contextlib import suppress
 from datetime import datetime
-from os import path, mkdir
+from os import mkdir, path
 from time import time
 from traceback import format_exc
 
-from base64 import b64decode
-from requests import get, codes
+from requests import codes, get
 from yaml import dump
 
 dir_type = "ballsdex" if path.isdir("ballsdex") else "carfigures"
@@ -59,24 +60,20 @@ if request.status_code != codes.ok:
 request = request.json()
 content = b64decode(request["content"])
 
-default_settings = {
-    "debug": False,
-    "safe_mode": True,
-    "outdated_warnings": True,
-    "branch": "main"
-}
+default_settings = {"debug": False, "safe_mode": True, "outdated_warnings": True, "branch": "main"}
 
 migrations = """
 Upgrade:
     import types || import os -n
     /-/-await self.add_cog(Core(self)) || /-/-await self.load_extension("$DIR.core.dexscript") -n
-    
+
 Drop:
     from ballsdex.core.dexscript import DexScript -n
 """
 
 migration_dict = {"Upgrade": {}, "Drop": []}
 current_migration = ""
+
 
 def format_migration(line):
     return (
@@ -86,34 +83,32 @@ def format_migration(line):
         .replace("$DIR", dir_type)
     )
 
+
 for line in migrations.split("\n"):
     if line == "":
         current_migration = ""
-        
+
     if current_migration == "Drop":
-        migration_dict[current_migration].append(
-            format_migration(line)
-        )
-        
+        migration_dict[current_migration].append(format_migration(line))
+
     if current_migration != "" and "||" in line:
         items = format_migration(line).split(" || ")
         migration_dict[current_migration][items[0]] = items[1]
-        
+
     if line[:-1] in ["Upgrade", "Drop"]:
         current_migration = line[:-1]
         print(current_migration)
 
+
 async def install():
     # Create the data folder for package installation.
-    try:
+    with suppress(FileExistsError):
         mkdir(f"{dir_type}/data")
-    except FileExistsError:
-        pass
 
     # Create the setting file if it doesn't exist.
     if not path.isfile("script-config.yml"):
         with open("script-config.yml", "w") as opened_file:
-            opened_file.write(yaml.dump(default_settings))
+            opened_file.write(dump(default_settings))
 
     # Create the DexScript file.
     with open(f"{dir_type}/core/dexscript.py", "w") as opened_file:
@@ -133,7 +128,7 @@ async def install():
             for key, item in migration_dict["Upgrade"].items():
                 if line.rstrip() != key or lines[index + 1] == item:
                     continue
-                
+
                 contents += item
 
         with open(f"{dir_type}/core/bot.py", "w") as opened_file_2:
@@ -161,7 +156,7 @@ async def install():
 
         new_line = (
             f'PACKAGES = [x for x in os.listdir("{dir_type}/packages") if x != "__pycache__"]'
-        ) 
+        )
 
         code = code.replace(line, new_line.strip())
 
@@ -178,7 +173,7 @@ keyword = "update" if updating else "install"
 
 try:
     await install()
-except Exception as e:
+except Exception:
     embed.set_footer(
         text=f"Error occurred {round((time() - t1) * 1000)}ms into {keywords[0].lower()}"
     )
@@ -203,7 +198,7 @@ else:
     embed.description = (
         "DexScript has been installed to your bot\n"
         f"Use `{settings.prefix}about` to view details about DexScript."
-    )  
+    )
 
 embed.set_footer(text=f"DexScript took {round((t2 - t1) * 1000)}ms to {keyword}")
 
