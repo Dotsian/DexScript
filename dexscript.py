@@ -589,13 +589,9 @@ class DexScriptParser:
                     if value.type != Types.METHOD:
                         continue
 
-                    new_class = next(
-                        x for x in dexclasses if x.__name__.lower() == value.name.lower(), 
-                        None
-                    )
-
-                    if new_class is not None:
-                        new_class = new_class(self.ctx)
+                    new_class = [
+                        x for x in dexclasses if x.__name__.lower() == value.name.lower()
+                    ][0](self.ctx)
 
                     new_method = getattr(new_class, line2[1])
 
