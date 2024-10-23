@@ -816,7 +816,8 @@ class DexScript(commands.Cog):
             await ctx.send(
                 "**CAUTION:** are you sure you want to install this package?\n"
                 "All packages you install can modify your Discord bot.\n"
-                f"Run the `{settings.prefix}verify` comamnd to verify you want to install this package.\n"
+                f"Run the `{settings.prefix}verify` comamnd to verify "
+                "you want to install this package.\n"
                 "-# To disable this warning, turn off the `safe_mode` setting."
             )
 
