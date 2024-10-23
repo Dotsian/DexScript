@@ -1,25 +1,30 @@
 from base64 import b64decode
-from dataclasses import dataclass, field
+from contextlib import suppress
+from dataclasses import dataclass
+from dataclasses import field as datafield
 from datetime import datetime
 from difflib import get_close_matches
 from enum import Enum
 from logging import getLogger
-from os import path, remove as os_remove, mkdir
+from os import mkdir, path
+from os import remove as os_remove
 from pathlib import Path
 from re import compile as recompile
-from requests import get as request_get
-from requests import codes as request_codes
 from shutil import rmtree
 from time import time
 from traceback import format_exc
 from typing import Any
 
-from fastapi_admin.app import app
 from dateutil.parser import parse as parse_date
-from discord import File as DiscordFile, Embed, Color
+from discord import Color, Embed
+from discord import File as DiscordFile
 from discord.ext import commands
+from fastapi_admin.app import app
+from requests import codes as request_codes
+from requests import get as request_get
 from tortoise.models import Model as TortoiseModel
-from yaml import dump as yaml_dump, safe_load as yaml_load
+from yaml import dump as yaml_dump
+from yaml import safe_load as yaml_load
 
 dir_type = "ballsdex" if path.isdir("ballsdex") else "carfigures"
 
@@ -89,7 +94,7 @@ def in_list(list_attempt, index):
 class Value:
     name: Any
     type: Types
-    extra_data: list = field(default_factory=list)
+    extra_data: list = datafield(default_factory=list)
 
     def __str__(self):
         return str(self.name)
@@ -112,8 +117,8 @@ class Yield:
     @staticmethod
     def get(model, identifier):
         return next(
-            (x for x in dex_yields if (x.model, x.identifier.name) == (model, identifier)
-        ), None)
+            (x for x in dex_yields if (x.model, x.identifier.name) == (model, identifier)), None
+        )
 
 
 class Package:
@@ -154,9 +159,9 @@ def script_class(new_class):
 
     def new_init(self, ctx):
         self.ctx = ctx
-    
+
     new_class.__init__ = new_init
-    
+
     return new_class
 
 
@@ -207,6 +212,7 @@ class Models:
                 continue
 
             fields = {}
+            identifier = ""
 
             for key, instance in MODEL._meta.fields_map.items():
                 field_type = instance.__class__.__name__
@@ -219,9 +225,7 @@ class Models:
             if identifier == "":
                 identifier = MODEL._meta.pk_attr
 
-            models[MODEL.__name__.lower()] = ModelValue(
-                MODEL, identifier, fields
-            )
+            models[MODEL.__name__.lower()] = ModelValue(MODEL, identifier, fields)
 
         return models
 
@@ -248,9 +252,9 @@ class Models:
                         raise DexScriptError(f"Could not find {field}")
 
                     fields[field] = first_model.pk
-                
+
                 case "BigIntField":
-                    fields[field] = 100 ** 8
+                    fields[field] = 100**8
 
                 case "BackwardFKRelation" | "JSONField":
                     continue
@@ -318,12 +322,7 @@ class DexClasses:
 
             dex_yields = []
 
-        async def create(
-            self,
-            model: TortoiseModel,
-            identifier: str,
-            create_yield: bool = False
-        ):
+        async def create(self, model: TortoiseModel, identifier: str, create_yield: bool = False):
             new_model = await Models.create(model, identifier, create_yield or False)
             suffix = ""
 
@@ -334,11 +333,7 @@ class DexClasses:
             await self.ctx.send(f"Created `{identifier}` {suffix}")
 
         async def update(
-            self,
-            model: TortoiseModel,
-            identifier: str,
-            field: str,
-            value: Any = None
+            self, model: TortoiseModel, identifier: str, field: str, value: Any = None
         ):
             found_yield = Yield.get(model, identifier)
 
@@ -366,18 +361,13 @@ class DexClasses:
 
             await self.ctx.send(f"Updated yielded {update_message}")
 
-        async def view(
-            self, 
-            model: TortoiseModel, 
-            identifier: str, 
-            field: str = ""
-        ):
+        async def view(self, model: TortoiseModel, identifier: str, field: str = ""):
             model = await Models.get(model, identifier)
 
             if field == "":
-                fields = {"content": "```"}
+                fields: dict = {"content": "```"}
 
-                for key, value in vars(returned_model).items():
+                for key, value in vars(model).items():
                     if key.startswith("_"):
                         continue
 
@@ -386,7 +376,6 @@ class DexClasses:
                     if isinstance(value, str) and value.startswith("/static"):
                         if fields.get("files") is None:
                             fields["files"] = []
-
                         fields["files"].append(DiscordFile(value[1:]))
 
                 fields["content"] += "```"
@@ -441,16 +430,13 @@ class DexClasses:
             new_file = self.ctx.message.attachments[0]
 
             with open(file, "w") as write_file:
-                content = await new_file.read()
+                contents = await new_file.read()
                 write_file.write(contents.decode("utf-8"))
 
             await self.ctx.send(f"Wrote to `{file}`")
 
         async def read(self, file: str):
-            await self.ctx.send(
-                contents=f"Sent `{file}`",
-                file=DiscordFile(file)
-            )
+            await self.ctx.send(contents=f"Sent `{file}`", file=DiscordFile(file))
 
         async def clear(self, file: str):
             with open(file, "w") as _:
@@ -543,7 +529,7 @@ class DexScriptParser:
         elif lower.startswith("$"):
             type = Types.VARIABLE
         elif lower in MODELS:
-            type = Types.MODELS
+            type = Types.MODEL
         elif self.is_date(lower) and lower.count("-") >= 2:
             type = Types.DATETIME
         elif self.is_number(lower):
@@ -621,14 +607,12 @@ def fetch_package(name):
         The name of the package you want to return.
     """
 
-    path = f"{dir_type}/data/{name}.yml"
+    package_path = f"{dir_type}/data/{name}.yml"
 
-    if not path.isfile(path):
+    if not path.isfile(package_path):
         return None
 
-    return Package(
-        yaml_load(Path(f"{dir_type}/data/{name}.yml").read_text())
-    )
+    return Package(yaml_load(Path(f"{dir_type}/data/{name}.yml").read_text()))
 
 
 class DexScript(commands.Cog):
@@ -837,7 +821,7 @@ class DexScript(commands.Cog):
             )
 
             return
-        
+
         if verified:
             verified = False
 
@@ -888,10 +872,8 @@ class DexScript(commands.Cog):
             )
             return
 
-        try:
+        with suppress(FileExistsError):
             mkdir(f"{dir_type}/packages/{package_info.name}")
-        except FileExistsError:
-            pass
 
         for file in package_info.files:
             file_path = f"{package_info.name}/{file}"
@@ -959,12 +941,7 @@ class DexScript(commands.Cog):
 
     @commands.command()
     @commands.is_owner()
-    async def setting(
-        self,
-        ctx: commands.Context,
-        setting: str,
-        value: str | None = None
-    ):
+    async def setting(self, ctx: commands.Context, setting: str, value: str | None = None):
         """
         Changes a setting based on the value provided.
 
@@ -976,23 +953,23 @@ class DexScript(commands.Cog):
           The value you want to set the setting to.
         """
 
-        if not setting in script_settings.values:
+        if setting not in script_settings.values:
             await ctx.send(f"`{setting}` is not a valid setting.")
             return
-        
+
         selected_setting = script_settings.values.get(setting)
 
         if value is None and not isinstance(selected_setting, bool):
             await ctx.send("You must specify a value for this setting.")
             return
-        
+
         if value is None and isinstance(selected_setting, bool):
             value = not selected_setting
         elif instance(selected_setting, bool):
             value = bool(value)
 
         old_value = getattr(script_settings, setting)
-        
+
         setattr(script_settings, setting, value)
 
         script_settings.save()
