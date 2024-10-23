@@ -21,7 +21,7 @@ keywords = [["Updated", "Updating"], ["Installed", "Installing"]][not updating]
 embed = discord.Embed(
     title=f"{keywords[1]} DexScript",
     description=(
-        f"DexScript is being {keywords[1].lower()} on your bot.\n"
+        f"DexScript is being {keywords[0].lower()} on your bot.\n"
         "Please do not turn off your bot."
     ),
     color=discord.Color.from_str("#03BAFC"),
@@ -202,7 +202,7 @@ else:
     embed.description = (
         "DexScript has been installed to your bot\n"
         f"Use `{settings.prefix}about` to view details about DexScript."
-    )
+    )  
 
 embed.set_footer(text=f"DexScript took {round((t2 - t1) * 1000)}ms to {keyword}")
 

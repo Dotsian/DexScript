@@ -700,7 +700,7 @@ class DexScript(commands.Cog):
             error = result
 
             if isinstance(error, tuple):
-                error = result[script_settings.debug]
+                error = result[int(script_settings.debug)]
 
             await ctx.send(f"```ERROR: {error}\n```")
         else:
@@ -988,6 +988,8 @@ class DexScript(commands.Cog):
         
         if value is None and isinstance(selected_setting, bool):
             value = not selected_setting
+        elif instance(selected_setting, bool):
+            value = bool(value)
 
         old_value = getattr(script_settings, setting)
         
