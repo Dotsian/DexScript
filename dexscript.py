@@ -553,8 +553,10 @@ class DexScriptParser:
                         break
                     
                     if value.type == Types.CLASS:
+                        value_lower = value.name.lower()
+                        
                         dex_class = next(
-                            (cls for cls in dexclasses if cls.__name__.lower() == value.name.lower()
+                            (c for c in dexclasses if c.__name__.lower() == value_lower
                         ), None)
 
                         if dex_class:
@@ -563,7 +565,10 @@ class DexScriptParser:
                             try:
                                 await getattr(dex_class(self.ctx), method_name)(*args)
                             except IndexError:
-                                return (f"Argument is missing when calling {value.name}.", CodeStatus.FAILURE)
+                                return (
+                                    f"Argument is missing when calling {value.name}.",
+                                    CodeStatus.FAILURE
+                                )
                             
                             break
 
