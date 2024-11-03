@@ -8,10 +8,7 @@ license = "MIT"
 [tool.poetry.dependencies]
 python = "^3.12"
 "discord.py" = "^2.4.0"
-ruff = "^0.6.9"
-
-[tool.poetry.group.dev.dependencies]
-pre-commit = "^3.8.0"
+ruff = "^0.7.2"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

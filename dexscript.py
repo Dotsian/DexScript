@@ -1,3 +1,4 @@
+import re
 from base64 import b64decode
 from contextlib import suppress
 from dataclasses import dataclass
@@ -9,7 +10,6 @@ from logging import getLogger
 from os import mkdir, path
 from os import remove as os_remove
 from pathlib import Path
-from re import compile as recompile
 from shutil import rmtree
 from time import time
 from traceback import format_exc
@@ -41,7 +41,7 @@ log = getLogger(f"{dir_type}.core.dexscript")
 __version__ = "0.4.4"
 
 
-START_CODE_BLOCK_RE = recompile(r"^((```sql?)(?=\s)|(```))")
+START_CODE_BLOCK_RE = re.compile(r"^((```sql?)(?=\s)|(```))")
 
 MODELS = {}
 
@@ -515,14 +515,10 @@ class DexScriptParser:
                 dex_globals[identity] = value
 
     def create_value(self, line):
+        lower = line.lower()
         type = Types.STRING
 
-        value = Value(line, type)
-        lower = line.lower()
-
-        class_names = [x.__name__.lower() for x in dexclasses]
-
-        if lower in class_names:
+        if lower in (x.__name__.lower() for x in dexclasses):
             type = Types.CLASS
         elif lower in KEYWORDS:
             type = Types.KEYWORD
@@ -534,68 +530,47 @@ class DexScriptParser:
             type = Types.DATETIME
         elif self.is_number(lower):
             type = Types.NUMBER
-        elif lower in ["true", "false"]:
+        elif lower in {"true", "false"}:
             type = Types.BOOLEAN
 
-        value.type = type
-
+        value = Value(line, type)
         return self.var(value)
 
     async def execute(self, code: str):
         try:
-            if (seperator := "\n") not in code:
-                seperator = "^"
+            separator = "\n" if "\n" in code else r"\^"
+            lines = re.split(separator, code)
 
-            split_code = [x for x in code.split(seperator) if x.strip() != ""]
+            parsed_code = [
+                [self.create_value(s.strip()) for s in re.findall(r"[^>]+", line)]
+                for line in lines if not line.strip().startswith("--")
+            ]
 
-            parsed_code: list[list[Value]] = []
-
-            for line in split_code:
-                line_code: list[Value] = []
-                full_line = ""
-
-                for index2, char in enumerate(line):
-                    if char == "":
-                        continue
-
-                    full_line += char
-
-                    if full_line == "--":
-                        break
-
-                    if char in [">"] or index2 == len(line) - 1:
-                        line_code.append(self.create_value(full_line.replace(">", "").strip()))
-
-                        full_line = ""
-
-                        if len(line_code) == len(line.split(">")):
-                            parsed_code.append(line_code)
-
-            for line2 in parsed_code:
-                for value in line2:
+            for line_segments in parsed_code:
+                for value in line_segments:
                     if value.type == Types.KEYWORD:
                         self.keyword(parsed_code)
-                        continue
+                        break
+                    
+                    if value.type == Types.CLASS:
+                        dex_class = next(
+                            (cls for cls in dexclasses if cls.__name__.lower() == value.name.lower()
+                        ), None)
 
-                    if value.type != Types.CLASS:
-                        continue
+                        if dex_class:
+                            method_name, *args = line_segments[1].name, line_segments[2:]
 
-                    new_class = [
-                        x for x in dexclasses if x.__name__.lower() == value.name.lower()
-                    ][0](self.ctx)
+                            try:
+                                await getattr(dex_class(self.ctx), method_name)(*args)
+                            except IndexError:
+                                return (f"Argument is missing when calling {value.name}.", CodeStatus.FAILURE)
+                            
+                            break
 
-                    new_method = getattr(new_class, line2[1])
-
-                    try:
-                        await new_method(*line2.pop(1))
-                    except IndexError:
-                        error = f"Argument is missing when calling {value.name}."
-                        return (error, CodeStatus.FAILURE)
         except Exception as error:
             return ((error, format_exc()), CodeStatus.FAILURE)
 
         return (None, CodeStatus.SUCCESS)
-
 
 def fetch_package(name):
     """
@@ -774,8 +749,7 @@ class DexScript(commands.Cog):
 
         rmtree(f"{dir_type}/packages/{package}")
 
-        await bot.unload_extension(f"{dir_type}/packages/{package}")
-
+        await self.bot.unload_extension(f"{dir_type}/packages/{package}")
         await self.bot.tree.sync()
 
         await ctx.send(embed=embed)
@@ -966,7 +940,7 @@ class DexScript(commands.Cog):
 
         if value is None and isinstance(selected_setting, bool):
             value = not selected_setting
-        elif instance(selected_setting, bool):
+        elif isinstance(selected_setting, bool):
             value = bool(value)
 
         old_value = getattr(script_settings, setting)
