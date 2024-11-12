@@ -283,7 +283,7 @@ class Methods:
                 await Tortoise.get_connection("default").execute_query(contents)
                 await ctx.send(f"Ran `{self.args[2].name}` migration.")
             
-            def "create":
+            case "create":
                 current = datetime.now().strftime("%Y%m%d%H%M%S")
                 
                 version = len(
