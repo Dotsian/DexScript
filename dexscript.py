@@ -14,6 +14,7 @@ import requests
 import datetime
 from dateutil.parser import parse as parse_date
 from discord.ext import commands
+from tortoise import Tortoise
 
 dir_type = "ballsdex" if os.path.isdir("ballsdex") else "carfigures"
 
@@ -34,7 +35,7 @@ else:
 
 log = logging.getLogger(f"{dir_type}.core.dexscript")
 
-__version__ = "0.4.3.1"
+__version__ = "0.4.4"
 
 
 START_CODE_BLOCK_RE = re.compile(r"^((```sql?)(?=\s)|(```))")
@@ -253,6 +254,53 @@ class Methods:
                 raise DexScriptError(
                     f"'{self.args[0]}' is not a valid file operation. "
                     "(READ, WRITE, CLEAR, or DELETE)"
+                )
+
+    async def migration(self):
+        match self.args[1].name.lower():
+            case "run":
+                file = f"migrations/models/{self.args[2].name}"
+
+                if not os.path.isfile(file):
+                    raise DexScriptError(
+                        f"`{self.args[2].name}` doesn't exist in `migrations/models`."
+                    )
+
+                migration_type = (
+                    self.args[3].name if in_list(self.args, 3) else "upgrade"
+                )
+
+                if migration_type.lower() not in ["downgrade", "upgrade"]:
+                    raise DexScriptError(
+                        f"`{migration_type}` is not a valid migration type."
+                    )
+
+                with open(file) as opened:
+                    contents = opened.read().split("-- downgrade --")[
+                        migration_type == "downgrade"
+                    ]
+
+                await Tortoise.get_connection("default").execute_query(contents)
+                await ctx.send(f"Ran `{self.args[2].name}` migration.")
+            
+            def "create":
+                current = datetime.now().strftime("%Y%m%d%H%M%S")
+                
+                version = len(
+                    [x for x in os.listdir("migrations/models") if x.endswith(".sql")]
+                ) + 1
+
+                file = f"{version}_{current}_update.sql"
+
+                with open(f"migrations/models/{file}", "w"):
+                    pass
+
+                await ctx.send(f"Created migration: `{file}`")
+            
+            case _:
+                raise DexScriptError(
+                    f"'{self.args[0]}' is not a valid migration operation. "
+                    "(RUN or CREATE)"
                 )
 
     async def show(self):
