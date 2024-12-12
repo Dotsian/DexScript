@@ -60,7 +60,7 @@ if request.status_code != codes.ok:
 request = request.json()
 content = b64decode(request["content"])
 
-default_settings = {"debug": False, "safe_mode": True, "outdated_warnings": True, "branch": "main"}
+default_settings = {"debug": False, "outdated_warnings": True, "branch": "main"}
 
 migrations = """
 Upgrade:
