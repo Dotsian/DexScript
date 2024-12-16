@@ -40,11 +40,6 @@ START_CODE_BLOCK_RE = re.compile(r"^((```sql?)(?=\s)|(```))")
 
 MODELS = {}
 
-KEYWORDS = [
-    "local",
-    "global",
-]
-
 dexclasses = []
 
 dex_globals = {}
@@ -56,23 +51,32 @@ class Types(Enum):
     NUMBER = 1
     STRING = 2
     BOOLEAN = 3
-    VARIABLE = 4
-    KEYWORD = 5
-    MODEL = 6
-    DATETIME = 7
+    MODEL = 4
+    DATETIME = 5
 
 
 class YieldType(Enum):
     CREATE_MODEL = 0
 
 
-class CodeStatus(Enum):
-    SUCCESS = 0
-    FAILURE = 1
-
-
 class DexScriptError(Exception):
     pass
+
+
+def is_number(string):
+    try:
+        float(string)
+        return True
+    except ValueError:
+        return False
+
+
+def is_date(string):
+    try:
+        parse_date(string)
+        return True
+    except Exception:
+        return False
 
 
 def in_list(list_attempt, index):
@@ -166,8 +170,8 @@ class Models:
         ----------
         string: str
           The string you want to translate.
+        
         """
-
         if dir_type == "ballsdex":
             return getattr(item, string) if item else string
 
@@ -178,7 +182,21 @@ class Models:
         return getattr(item, translated_string) if item else translated_string
 
     @staticmethod
-    def autocorrect(string, correction_list, error="does not exist."):
+    def autocorrect(string: str, correction_list: list, error="does not exist."):
+        """
+        Autocorrects an inputted string using the list provided, and 
+        raises an error if the difference ratio is insignificant.
+
+        Parameters
+        ----------
+        string: str
+            The string that will be autocorrected.
+        correction_list: list
+            The reference that will be used when autocorrecting the provided string.
+        error: str
+            The message that will be raised when the difference ratio is deemed insignificant.
+        
+        """
         autocorrection = get_close_matches(string, correction_list)
 
         if not autocorrection or autocorrection[0] != string:
@@ -217,7 +235,23 @@ class Models:
         return models
 
     @staticmethod
-    async def create(model, identifier, yield_creation=False) -> TortoiseModel | Yield:
+    async def create(
+        model: TortoiseModel, identifier: Any, yield_creation=False
+    ) -> TortoiseModel | Yield:
+        """
+        Creates a model or yield similiar to `TortoiseModel.create()`, only using an identifier, 
+        while filling out required values with placeholders.
+
+        Parameters
+        ----------
+        model: TortoiseModel
+            The base model you want to create.
+        identifier: Any
+            The identifier the model will hold.
+        yield_creation: Bool
+            Whether you want to create a yield rather than a TortoiseModel.
+        
+        """
         fields = {}
         model_data = MODELS[model.__name__.lower()]
 
@@ -256,13 +290,22 @@ class Models:
 
     @staticmethod
     async def get(model, identifier):
+        """
+        Returns a model if it is found. If it isn't found, it will return an autocorrection.
+
+        Parameters
+        ----------
+        model: TortoiseModel
+            The model you want to use as a base.
+        identfier: str
+            The name of the model you are trying to fetch.
+        
+        """
         try:
             returned_model = await model.name.filter(
-                **{
-                    Models.translate(model.extra_data[0].lower()): Models.autocorrect(
-                        identifier, [str(x) for x in await model.name.all()]
-                    )
-                }
+                **{Models.translate(model.extra_data[0].lower()): Models.autocorrect(
+                    identifier, [str(x) for x in await model.name.all()]
+                )}
             )
         except AttributeError:
             raise DexScriptError(f"{model} is not a valid model.")
@@ -335,7 +378,7 @@ class DexClasses:
                 field = field.lower()
 
                 if not hasattr(model, field):
-                    raise DexScriptError(f"{str(model).upper()} has no field '{field}'")
+                    raise DexScriptError(f"{str(model).upper()} has no field `{field}`")
 
                 setattr(model, field, value.name)
 
@@ -447,36 +490,10 @@ class DexScriptParser:
         self.dex_locals = {}
         self.values = []
 
-    @staticmethod
-    def is_number(string):
-        try:
-            float(string)
-            return True
-        except ValueError:
-            return False
-
-    @staticmethod
-    def is_date(string):
-        try:
-            parse_date(string)
-            return True
-        except Exception:
-            return False
-
     def var(self, value):
         return_value = value
 
         match value.type:
-            case Types.VARIABLE:
-                return_value = value
-
-                if value.name in self.dex_locals:
-                    return_value = self.dex_locals[value.name]
-                elif value.name in dex_globals:
-                    return_value = dex_globals[value.name]
-                else:
-                    raise DexScriptError(f"'{value.name}' is an unknown variable.")
-
             case Types.MODEL:
                 current_model = MODELS[value.name.lower()]
 
@@ -491,31 +508,17 @@ class DexScriptParser:
 
         return return_value
 
-    def keyword(self, line):
-        identity = line[1].name
-        value = line[2].name
-
-        match line[0].name.lower():
-            case "local":
-                self.dex_locals[identity] = value
-            case "global":
-                dex_globals[identity] = value
-
     def create_value(self, line):
         lower = line.lower()
         type = Types.STRING
 
         if lower in (x.__name__.lower() for x in dexclasses):
             type = Types.CLASS
-        elif lower in KEYWORDS:
-            type = Types.KEYWORD
-        elif lower.startswith("$"):
-            type = Types.VARIABLE
         elif lower in MODELS:
             type = Types.MODEL
-        elif self.is_date(lower) and lower.count("-") >= 2:
+        elif is_date(lower) and lower.count("-") >= 2:
             type = Types.DATETIME
-        elif self.is_number(lower):
+        elif is_number(lower):
             type = Types.NUMBER
         elif lower in {"true", "false"}:
             type = Types.BOOLEAN
@@ -535,34 +538,34 @@ class DexScriptParser:
 
             for line_segments in parsed_code:
                 for value in line_segments:
-                    if value.type == Types.KEYWORD:
-                        self.keyword(parsed_code)
-                        break
+                    if value.type != Types.CLASS:
+                        continue
                     
-                    if value.type == Types.CLASS:
-                        value_lower = value.name.lower()
-                        
-                        dex_class = next(
-                            (c for c in dexclasses if c.__name__.lower() == value_lower
-                        ), None)
+                    value_lower = value.name.lower()
+                    
+                    dex_class = next(
+                        (c for c in dexclasses if c.__name__.lower() == value_lower
+                    ), None)
 
-                        if dex_class:
-                            method_name, *args = line_segments[1].name, line_segments[2:]
+                    if not dex_class:
+                        continue
+                    
+                    method_name, *args = line_segments[1].name, line_segments[2:]
 
-                            try:
-                                await getattr(dex_class(self.ctx), method_name)(*args)
-                            except IndexError:
-                                return (
-                                    f"Argument is missing when calling {value.name}.",
-                                    CodeStatus.FAILURE
-                                )
-                            
-                            break
+                    try:
+                        await getattr(dex_class(self.ctx), method_name)(*args)
+                    except IndexError:
+                        return (
+                            f"Argument missing when calling {value.name}.",
+                            False
+                        )
+                    
+                    break
 
         except Exception as error:
-            return ((error, format_exc()), CodeStatus.FAILURE)
+            return ((error, format_exc()), False)
 
-        return (None, CodeStatus.SUCCESS)
+        return (None, True)
 
 
 class DexScript(commands.Cog):
@@ -617,7 +620,7 @@ class DexScript(commands.Cog):
         Parameters
         ----------
         code: str
-          The code you'd like to execute.
+          The code you would like to execute.
         """
 
         body = self.cleanup_code(code)
@@ -628,22 +631,18 @@ class DexScript(commands.Cog):
             await ctx.send(f"-# {version_check}")
 
         dexscript_instance = DexScriptParser(ctx)
-        result, status = await dexscript_instance.execute(body)
+        result, success = await dexscript_instance.execute(body)
 
-        if status == CodeStatus.FAILURE and result is not None:
+        if not success and result is not None:
             error = result
 
             if isinstance(error, tuple):
                 error = result[int(script_settings.debug)]
 
             await ctx.send(f"```ERROR: {error}\n```")
-        else:
-            await ctx.message.add_reaction("✅")
-
-    @commands.command()
-    @commands.is_owner()
-    async def migrate(self, ctx: commands.Context):
-        pass
+            return
+        
+        await ctx.message.add_reaction("✅")
 
     @commands.command()
     @commands.is_owner()
@@ -658,7 +657,8 @@ class DexScript(commands.Cog):
                 "that allows you to easily "
                 "modify, delete, and display data for models.\n\n"
                 "For a guide on how to use DexScript, "
-                "refer to the official [DexScript guide](<https://github.com/Dotsian/DexScript/wiki/Commands>).\n\n"
+                "refer to the official [DexScript guide]"
+                "(<https://github.com/Dotsian/DexScript/wiki/Commands>).\n\n"
                 "If you want to follow DexScript, "
                 "join the official [DexScript Discord](<https://discord.gg/EhCxuNQfzt>) server."
             ),
@@ -687,11 +687,12 @@ class DexScript(commands.Cog):
         if r.status_code == request_codes.ok:
             content = b64decode(r.json()["content"])
             await ctx.invoke(self.bot.get_command("eval"), body=content.decode("UTF-8"))
-        else:
-            await ctx.send(
-                "Failed to update DexScript.\n" "Report this issue to `dot_zz` on Discord."
-            )
-            print(f"ERROR CODE: {r.status_code}")
+            return
+        
+        await ctx.send(
+            "Failed to update DexScript. Report this issue to `dot_zz` on Discord.\n" 
+            f"```ERROR CODE: {r.status_code}```"
+        )
 
     @commands.command(name="reload-ds")
     @commands.is_owner()
