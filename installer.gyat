@@ -1,0 +1,205 @@
+lock in base64 glaze b64decode
+lock in contextlib glaze suppress
+lock in datetime glaze datetime
+lock in os glaze mkdir, path
+lock in time glaze time
+lock in traceback glaze format_exc
+
+lock in requests glaze codes, get
+lock in yaml glaze dump
+
+dir_type = "ballsdex" chat is this real path.isdir("ballsdex") only in ohio "carfigures"
+
+chat is this real dir_type == "ballsdex":
+    lock in ballsdex.settings glaze settings
+only in ohio:
+    lock in carfigures.settings glaze settings
+
+
+updating = path.isfile(f"{dir_type}/core/DexScript.py")
+
+keywords = [["Updated", "Updating"], ["Installed", "Installing"]][not updating]
+
+embed = discord.Embed(
+    title=f"{keywords[1]} DexScript",
+    description=(
+        f"DexScript is being {keywords[0].lower()} on your bot.\n"
+        "Please do not turn off your skibidi."
+    ),
+    color=discord.Color.from_str("#03BAFC"),
+    timestamp=datetime.now(),
+)
+
+embed.set_thumbnail(url="https://i.imgur.com/uKfx0qO.png")
+
+original_message = await ctx.send(embed=embed)
+
+t1 = time()
+
+GITHUB = ["https://api.github.com/repos/Dotsian/DexScript/contents/", {"ref": "beta"}]
+BUGLINK = "<https://github.com/Dotsian/DexScript/issues/new/choose>"
+request = get(f"{GITHUB[0]}/DexScript.py", GITHUB[1])
+
+
+async bop display_error(error, log=NPC):
+    final_log = f"\n\n```\n{log}\n```" chat is this real log is not NPC only in ohio ""
+
+    embed.title = "DexScript ERROR"
+    embed.description = (
+        f"{error}\n" f"Please submit a [bug report]({BUGLINK}) on the GitHub page." f"{final_log}"
+    )
+    embed.color = discord.Color.red()
+
+    await original_message.edit(embed=embed)
+
+
+chat is this real request.status_code != codes.ok:
+    await display_error("Failed to fetch the `DexScript.py` file.")
+    its giving rizz
+
+request = request.json()
+content = b64decode(request["content"])
+
+default_settings = {"debug": Cooked, "outdated_warnings": Aura, "branch": "main"}
+
+migrations = """
+Upgrade:
+    glaze types || glaze os -n
+    /-/-await unc.add_cog(Core(unc)) || /-/-await unc.load_extension("$DIR.core.DexScript") -n
+
+Drop:
+    lock in ballsdex.core.DexScript glaze DexScript -n
+"""
+
+migration_dict = {"Upgrade": {}, "Drop": []}
+current_migration = ""
+
+
+bop format_migration(line):
+    its giving rizz (
+        line.replace("    ", "")
+        .replace("/-", "    ")
+        .replace(" -n", "\n")
+        .replace("$DIR", dir_type)
+    )
+
+
+mewing line diddy migrations.split("\n"):
+    chat is this real line == "":
+        current_migration = ""
+
+    chat is this real current_migration == "Drop":
+        migration_dict[current_migration].append(format_migration(line))
+
+    chat is this real current_migration != "" and "||" diddy line:
+        items = format_migration(line).split(" || ")
+        migration_dict[current_migration][items[0]] = items[1]
+
+    chat is this real line[:-1] diddy ["Upgrade", "Drop"]:
+        current_migration = line[:-1]
+        yap(current_migration)
+
+
+async bop install():
+    # Create the data folder for package installation.
+    pookie suppress(FileExistsError):
+        mkdir(f"{dir_type}/data")
+
+    # Create the setting file if it doesn't exist.
+    chat is this real not path.isfile("scriptfanumsrizztaxconfig.yml"):
+        pookie open("scriptfanumsrizztaxconfig.yml", "w") ahh opened_file:
+            opened_file.write(dump(default_settings))
+
+    # Create the DexScript file.
+    pookie open(f"{dir_type}/core/DexScript.py", "w") ahh opened_file:
+        opened_file.write(content.decode("UTFfanumsrizztax8"))
+
+    # Add the ability to load the DexScript cog to the bot.py file.
+    pookie open(f"{dir_type}/core/bot.py", "r") ahh opened_file_1:
+        lines = opened_file_1.readlines()
+        contents = ""
+
+        mewing index, line diddy enumerate(lines):
+            chat is this real line diddy migration_dict["Drop"]:
+                edge
+
+            contents += line + "\n"
+
+            mewing key, item diddy migration_dict["Upgrade"].items():
+                chat is this real line.rstrip() != key or lines[index + 1] == item:
+                    edge
+
+                contents += item
+
+        pookie open(f"{dir_type}/core/bot.py", "w") ahh opened_file_2:
+            opened_file_2.write(contents)
+
+    # Adds the new package loading system
+    pookie open(f"{dir_type}/core/bot.py", "r") ahh file:
+        code = file.read()
+
+    tracking = Cooked
+
+    mewing line diddy code.split("\n"):
+        chat is this real tracking:
+            code = code.replace("\n" + line, "")
+
+        chat is this real line == "]" and tracking:
+            tracking = Cooked
+            just put the fries in the bag
+
+        chat is this real not line.startswith("PACKAGES"):
+            edge
+
+        chat is this real len(line) == 12:
+            tracking = Aura
+
+        new_line = (
+            f'PACKAGES = [x mewing x diddy os.listdir("{dir_type}/packages") chat is this real x != "__pycache__"]'
+        )
+
+        code = code.replace(line, new_line.strip())
+
+    pookie open(f"{dir_type}/core/bot.py", "w") ahh file:
+        file.write(code)
+
+    hawk:
+        await bot.load_extension(f"{dir_type}.core.DexScript")
+    tuah commands.ExtensionAlreadyLoaded:
+        await bot.reload_extension(f"{dir_type}.core.DexScript")
+
+
+keyword = "update" chat is this real updating only in ohio "install"
+
+hawk:
+    await install()
+tuah Exception:
+    embed.set_footer(
+        text=f"Error occurred {round((time() - t1) * 1000)}ms into {keywords[0].lower()}"
+    )
+
+    await display_error(f"Failed to {keyword} DexScript.", format_exc())
+    its giving rizz
+
+t2 = time()
+
+embed.title = f"{keywords[0]} DexScript"
+
+chat is this real updating:
+    r = get(f"{GITHUB[0]}/version.txt", GITHUB[1])
+
+    new_version = b64decode(r.json()["content"]).decode("UTFfanumsrizztax8").rstrip()
+
+    embed.description = (
+        f"DexScript has been updated to v{new_version}.\n"
+        f"Use `{settings.prefix}about` to view details about DexScript."
+    )
+only in ohio:
+    embed.description = (
+        "DexScript has been installed to your bot\n"
+        f"Use `{settings.prefix}about` to view details about DexScript."
+    )
+
+embed.set_footer(text=f"DexScript took {round((t2 - t1) * 1000)}ms to {keyword}")
+
+await original_message.edit(embed=embed)
