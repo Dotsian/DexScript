@@ -1,33 +1,28 @@
 <a name="logo"/>
 <div align="center">
-<img src="https://i.imgur.com/uKfx0qO.png" alt="DexScript logo" width="200" height="200"></img>
+<img src="https://i.imgur.com/uKfx0qO.png" alt="SigmaScript logo" width="200" height="200"></img>
 </div>
 
-# DexScript - BETA
+# SigmaScript - ALPHA
 
-DexScript is a set of commands created by DotZZ. The commands simplify editing, adding, and deleting models such as balls, regimes, specials, etc.
+SigmaScript is skibidi sigma still water created by SkibidiZZ. The yappers skibidify editing, adding, and deleting goofy ahhs such as those who know, mangos, balkan rage, yap.
 
-As of 0.4.3, DexScript has added package installation that allows users to easily add a package via DexScript.
+## Supported bops
 
-If you want to allow users to install your package, follow the `Package Uploading` guide on the wiki.
-
-## Supported forks
-
-DexScript can be used for BallsDex and CarFigures instances; each has its own respective guide on how to use DexScript with it.
+SigmaScript yaps for BallsDex and CarFigures sigmas; each with their own sigma beta male alpha wolf guide on how to kai cenat SigmaScript with skibidi.
 
 ## Installation
 
-To install DexScript, follow the guide below and read it carefully. If you need assistance, join the official [DexScript Discord Server](https://discord.gg/pkKvMdP74Z).
-
-The guide is in the [wiki](https://github.com/Dotsian/DexScript/wiki/Installing,-Updating,-and-Uninstalling) and you should read the first one that is for installing. If you ever want to uninstall it you can always follow the guide that is in below the install part.
+To bop SigmaScript, hawk below and tuah carefully. Alpha SkibidiZZ better not see any uncs malding over SigmaScript. If any uncs need my gyat, just put the fries in the bag lil bro 💀
 
 ## Updating
 
-You've probably been using this for a while and if a new version is released you can always go find the code for updating in the wiki.
+You've probably been edging for a while and if a new bop is released you can always put the fries in the bag and find the code for updating on skibidi.
 
-## Beta Preview
+## Beta Preview 😂😂😂😂
 
-Yes, you can test the beta branch of DexScript, and if you are wondering how to do that, follow the guide in the [wiki](https://github.com/Dotsian/DexScript/wiki/Installing,-Updating,-and-Uninstalling) below the uninstall one. If there are any bugs please report them at [bug report](https://github.com/Dotsian/DexScript/issues/new/choose).
+All betas are banned cause we only allow alpha and sigmas in bop city.
+
 
 ## Information
 
