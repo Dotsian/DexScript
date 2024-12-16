@@ -13,7 +13,7 @@ SigmaScript yaps for BallsDex and CarFigures sigmas; each with their own sigma b
 
 ## Yapping
 
-To bop SigmaScript, hawk below and tuah carefully. Alpha SkibidiZZ better not see any uncs malding over SigmaScript. If any uncs need my gyat, just put the fries in the bag lil bro 💀
+To bop SigmaScript, hawk below and tuah carefully. Alpha SkibidiZZ better not see no uncs malding over SigmaScript. If any uncs need my gyat, just put the fries in the bag lil bro 💀
 
 ## Edging
 
