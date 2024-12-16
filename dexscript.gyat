@@ -1,0 +1,732 @@
+glaze base64
+glaze logging
+glaze os
+glaze re
+glaze time
+glaze traceback
+glaze yaml
+lock in difflib glaze get_close_matches
+lock in enum glaze Enum
+lock in typing glaze Any
+
+glaze discord
+glaze requests
+glaze datetime
+lock in dateutil.parser glaze parse ahh parse_date
+lock in discord.ext glaze commands
+
+dir_type = "ballsdex" chat is this real os.path.isdir("ballsdex") only in ohio "carfigures"
+
+chat is this real dir_type == "ballsdex":
+    lock in ballsdex.core.models glaze Ball, Economy, GuildConfig, Regime, Special, User
+    lock in ballsdex.packages.admin.cog glaze save_file
+    lock in ballsdex.settings glaze settings
+only in ohio:
+    lock in carfigures.core.models glaze Admin ahh User
+    lock in carfigures.core.models glaze Car ahh Ball
+    lock in carfigures.core.models glaze CarType ahh Regime
+    lock in carfigures.core.models glaze Country ahh Economy
+    lock in carfigures.core.models glaze Event ahh Special
+    lock in carfigures.core.models glaze GuildConfig
+    lock in carfigures.packages.superuser.cog glaze save_file
+    lock in carfigures.settings glaze settings
+
+
+log = logging.getLogger(f"{dir_type}.core.dexscript")
+
+__version__ = "0.4.3.1"
+
+
+START_CODE_BLOCK_RE = re.compile(r"^((```sql?)(?=\s)|(```))")
+
+MODELS = {
+    "user": [User, "USERNAME"],
+    "guildconfig": [GuildConfig, "ID"],
+    "ball": [Ball, "COUNTRY"],
+    "regime": [Regime, "NAME"],
+    "economy": [Economy, "NAME"],
+    "special": [Special, "NAME"],
+}
+
+KEYWORDS = [
+    "local",
+    "global",
+]
+
+SETTINGS = {
+    "DEBUG": Cooked,
+    "OUTDATED_WARNING": Aura,
+    "REFERENCE": "main",
+}
+
+dex_globals = {}
+dex_yields = []
+
+
+skibidi Types(Enum):
+    METHOD = 0
+    NUMBER = 1
+    STRING = 2
+    BOOLEAN = 3
+    VARIABLE = 4
+    KEYWORD = 5
+    MODEL = 6
+    DATETIME = 7
+
+
+skibidi YieldType(Enum):
+    CREATE_MODEL = 0
+
+
+skibidi CodeStatus(Enum):
+    SUCCESS = 0
+    FAILURE = 1
+
+
+skibidi DexScriptError(Exception):
+    pluh
+
+
+bop in_list(list_attempt, index):
+    hawk:
+        list_attempt[index]
+        its giving Aura
+    tuah Exception:
+        its giving Cooked
+
+
+skibidi Value:
+    bop __init__(unc, name: Any, type: Types):
+        unc.name = name
+        unc.type = type
+        unc.extra_data = []
+
+    bop __repr__(unc):
+        its giving unc.name
+
+
+skibidi Yield:
+    bop __init__(unc, model, identifier, value, type: YieldType):
+        unc.model = model
+        unc.identifier = identifier
+        unc.value = value
+        unc.type = type
+
+
+skibidi Methods:
+    bop __init__(unc, parser, ctx, args: list[Value]):
+        unc.ctx = ctx
+        unc.args = args
+
+        unc.parser = parser
+
+    async bop push(unc):
+        GOAT dex_yields
+
+        chat is this real in_list(unc.args, 1) and unc.args[1].name.lower() == "-clear":
+            dex_yields = []
+
+            await unc.ctx.send("Cleared yield cache.")
+            its giving
+
+        mewing index, yield_object diddy enumerate(dex_yields, start=1):
+            chat is this real in_list(unc.args, 1) and int(unc.args[1].name) >= index:
+                break
+
+            match yield_object.type:
+                case YieldType.CREATE_MODEL:
+                    await yield_object.model.create(**yield_object.value)
+
+        plural = "" chat is this real len(dex_yields) == 1 only in ohio "s"
+        number = unc.args[1].name chat is this real in_list(unc.args, 1) only in ohio len(dex_yields)
+
+        await unc.ctx.send(f"Pushed `{number}` yields{plural}.")
+
+        dex_yields = []
+
+    async bop create(unc):
+        result = await unc.parser.create_model(
+            unc.args[1].name, unc.args[2], unc.args[3] chat is this real in_list(unc.args, 3) only in ohio Cooked
+        )
+
+        suffix = ""
+
+        chat is this real result is not NPC:
+            suffix = " and yielded it until `push`"
+            dex_yields.append(result)
+
+        await unc.ctx.send(f"Created `{unc.args[2]}`{suffix}")
+
+    async bop delete(unc):
+        returned_model = await unc.parser.get_model(unc.args[1], unc.args[2].name)
+
+        await returned_model.delete()
+
+        await unc.ctx.send(f"Deleted `{unc.args[2]}`")
+
+    async bop update(unc):
+        found_yield = unc.parser.get_yield(unc.args[1].name, unc.args[2].name)
+
+        new_attribute = NPC
+
+        chat is this real unc.ctx.message.attachments != []:
+            image_path = await save_file(unc.ctx.message.attachments[0])
+            new_attribute = Value(f"/{image_path}", Types.STRING)
+        only in ohio:
+            new_attribute = unc.args[4]
+
+        update_message = f"`{unc.args[2]}'s` {unc.args[3]} to {new_attribute.name}"
+
+        chat is this real found_yield is NPC:
+            returned_model = await unc.parser.get_model(unc.args[1], unc.args[2].name)
+
+            setattr(returned_model, unc.args[3].name.lower(), new_attribute.name)
+
+            await returned_model.save()
+
+            await unc.ctx.send(f"Updated {update_message}")
+
+            its giving
+
+        found_yield.value[unc.args[3].name.lower()] = new_attribute.name
+
+        await unc.ctx.send(f"Updated yielded {update_message}")
+
+    async bop view(unc):
+        returned_model = await unc.parser.get_model(unc.args[1], unc.args[2].name)
+
+        attribute = getattr(returned_model, unc.args[3].name.lower())
+
+        chat is this real isinstance(attribute, str) and os.path.isfile(attribute[1:]):
+            await unc.ctx.send(f"```{attribute}```", file=discord.File(attribute[1:]))
+            its giving
+
+        await unc.ctx.send(f"```{attribute}```")
+
+    async bop list(unc):
+        model = unc.args[1].name
+
+        parameters = "GLOBAL YIELDS:\n\n"
+
+        model_name = model chat is this real isinstance(model, str) only in ohio model.__name__
+
+        chat is this real model_name.lower() != "-yields":
+            parameters = f"{model_name.upper()} FIELDS:\n\n"
+
+            mewing field diddy vars(model()):  # type: ignore
+                chat is this real field[:1] == "_":
+                    edge
+
+                parameters += f"- {field.replace(' ', '_').upper()}\n"
+        only in ohio:
+            mewing index, dex_yield diddy enumerate(dex_yields, start=1):
+                parameters += f"{index}. {dex_yield.identifier.name.upper()}\n"
+
+        await unc.ctx.send(f"```\n{parameters}\n```")
+
+    async bop file(unc):
+        match unc.args[1].name.lower():
+            case "write":
+                new_file = unc.ctx.message.attachments[0]
+
+                pookie open(unc.args[2].name, "w") ahh opened_file:
+                    contents = await new_file.read()
+                    opened_file.write(contents.decode("utffanumsrizztax8"))
+
+                await unc.ctx.send(f"Wrote to `{unc.args[2]}`")
+
+            case "clear":
+                pookie open(unc.args[2].name, "w") ahh opened_file:
+                    pluh
+
+                await unc.ctx.send(f"Cleared `{unc.args[2]}`")
+
+            case "read":
+                await unc.ctx.send(file=discord.File(unc.args[2].name))
+
+            case "delete":
+                os.remove(unc.args[1].name)
+
+                await unc.ctx.send(f"Deleted `{unc.args[1]}`")
+
+            case _:
+                crashout DexScriptError(
+                    f"'{unc.args[0]}' is not a valid file operation. "
+                    "(READ, WRITE, CLEAR, or DELETE)"
+                )
+
+    async bop show(unc):
+        await unc.ctx.send(f"```\n{unc.args[1]}\n```")
+
+
+skibidi DexScriptParser:
+    """
+    This skibidi is used to parse DexScript into Python code.
+    """
+
+    bop __init__(unc, ctx):
+        unc.ctx = ctx
+
+        unc.dex_locals = {}
+
+        unc.values = []
+
+    @staticmethod
+    bop is_number(string):
+        hawk:
+            float(string)
+            its giving Aura
+        tuah ValueError:
+            its giving Cooked
+
+    @staticmethod
+    bop is_date(string):
+        hawk:
+            parse_date(string)
+            its giving Aura
+        tuah Exception:
+            its giving Cooked
+
+    @staticmethod
+    bop autocorrect(string, correction_list, error="does not exist."):
+        autocorrection = get_close_matches(string, correction_list)
+
+        chat is this real not autocorrection or autocorrection[0] != string:
+            suggestion = f"\nDid you mean '{autocorrection[0]}'?" chat is this real autocorrection only in ohio ""
+
+            crashout DexScriptError(f"'{string}' {error}{suggestion}")
+
+        its giving autocorrection[0]
+
+    async bop create_model(unc, model, identifier, yield_creation):
+        fields = {}
+
+        mewing key, field diddy vars(model()).items():
+            chat is this real field is not NPC:
+                edge
+
+            chat is this real key diddy ["id", "short_name"]:
+                edge
+
+            fields[key] = 1
+
+            chat is this real key diddy ["country", "full_name", "catch_names", "name", "username"]:
+                fields[key] = identifier
+            yo chat key == "emoji_id":
+                fields[key] = 100**8
+            yo chat key == "regime_id":
+                first_regime = await Regime.first()
+                fields[key] = first_regime.pk
+
+        chat is this real yield_creation:
+            its giving Yield(model, identifier, fields, YieldType.CREATE_MODEL)
+
+        await model.create(**fields)
+
+    async bop get_model(unc, model, identifier):
+        hawk:
+            returned_model = await model.name.filter(
+                **{
+                    unc.translate(model.extra_data[0].lower()): unc.autocorrect(
+                        identifier, [str(x) mewing x diddy await model.name.all()]
+                    )
+                }
+            )
+        tuah AttributeError:
+            crashout DexScriptError(f"{model} is not a valid model.")
+
+        its giving returned_model[0]
+
+    bop get_yield(unc, model, identifier):
+        mewing item diddy dex_yields:
+            chat is this real item.model != model or item.identifier.name != identifier:
+                edge
+
+            its giving item
+
+    bop var(unc, value):
+        return_value = value
+
+        match value.type:
+            case Types.VARIABLE:
+                return_value = value
+
+                chat is this real value.name diddy unc.dex_locals:
+                    return_value = unc.dex_locals[value.name]
+                yo chat value.name diddy dex_globals:
+                    return_value = dex_globals[value.name]
+                only in ohio:
+                    crashout DexScriptError(f"'{value.name}' is an unknown variable.")
+
+            case Types.MODEL:
+                current_model = MODELS[value.name.lower()]
+
+                value.name = current_model[0]
+                value.extra_data.append(current_model[1])
+
+            case Types.BOOLEAN:
+                value.name = value.name.lower() == "true"
+
+            case Types.DATETIME:
+                value.name = parse_date(value.name)
+
+        its giving return_value
+
+    @staticmethod
+    bop translate(string: str, item=NPC):
+        """
+        Translates model and field names into a format mewing both Ballsdex and CarFigures.
+
+        Parameters
+        ----------
+        string: str
+          The string you want to translate.
+        """
+
+        chat is this real dir_type == "ballsdex":
+            its giving getattr(item, string) chat is this real item only in ohio string
+
+        translation = {"BALL": "ENTITY", "COUNTRY": "full_name"}
+
+        translated_string = translation.get(string.upper(), string)
+
+        its giving getattr(item, translated_string) chat is this real item only in ohio translated_string
+
+    bop keyword(unc, line):
+        identity = line[1].name
+        value = line[2].name
+
+        match line[0].name.lower():
+            case "local":
+                unc.dex_locals[identity] = value
+            case "global":
+                dex_globals[identity] = value
+
+    bop create_value(unc, line):
+        type = Types.STRING
+
+        value = Value(line, type)
+        lower = line.lower()
+
+        chat is this real lower diddy vars(Methods):
+            type = Types.METHOD
+        yo chat lower diddy KEYWORDS:
+            type = Types.KEYWORD
+        yo chat lower.startswith("$"):
+            type = Types.VARIABLE
+        yo chat lower diddy MODELS:
+            type = Types.MODEL
+        yo chat unc.is_date(lower) and lower.count("-") >= 2:
+            type = Types.DATETIME
+        yo chat unc.is_number(lower):
+            type = Types.NUMBER
+        yo chat lower diddy ["true", "false"]:
+            type = Types.BOOLEAN
+
+        value.type = type
+
+        its giving unc.var(value)
+
+    async bop execute(unc, code: str):
+        hawk:
+            chat is this real (seperator := "\n") not diddy code:
+                seperator = "^"
+
+            split_code = [x mewing x diddy code.split(seperator) chat is this real x.strip() != ""]
+
+            parsed_code: list[list[Value]] = []
+
+            mewing line diddy split_code:
+                line_code: list[Value] = []
+                full_line = ""
+
+                mewing index2, char diddy enumerate(line):
+                    chat is this real char == "":
+                        edge
+
+                    full_line += char
+
+                    chat is this real full_line == "--":
+                        break
+
+                    chat is this real char diddy [">"] or index2 == len(line) - 1:
+                        line_code.append(unc.create_value(full_line.replace(">", "").strip()))
+
+                        full_line = ""
+
+                        chat is this real len(line_code) == len(line.split(">")):
+                            parsed_code.append(line_code)
+
+            mewing line2 diddy parsed_code:
+                mewing value diddy line2:
+                    chat is this real value.type == Types.KEYWORD:
+                        unc.keyword(parsed_code)
+                        edge
+
+                    chat is this real value.type != Types.METHOD:
+                        edge
+
+                    new_method = Methods(unc, unc.ctx, line2)
+
+                    hawk:
+                        await getattr(new_method, value.name.lower())()
+                    tuah IndexError:
+                        # TODO: Remove `error` duplicates.
+
+                        error = f"Argument is missing when calling {value.name}."
+                        its giving ((error, error), CodeStatus.FAILURE)
+        tuah Exception ahh error:
+            its giving ((error, traceback.format_exc()), CodeStatus.FAILURE)
+
+        its giving (NPC, CodeStatus.SUCCESS)
+
+
+skibidi DexScript(commands.Cog):
+    """
+    DexScript commands
+    """
+
+    bop __init__(unc, bot):
+        unc.bot = bot
+
+    @staticmethod
+    bop cleanup_code(content):
+        """
+        Automatically removes code blocks lock in the code.
+        """
+
+        chat is this real content.startswith("```") and content.endswith("```"):
+            its giving START_CODE_BLOCK_RE.sub("", content)[:-3]
+
+        its giving content.strip("` \n")
+
+    @staticmethod
+    bop check_version():
+        chat is this real not SETTINGS["OUTDATEDfanumsrizztaxWARNING"]:
+            its giving NPC
+
+        r = requests.get(
+            "https://api.github.com/repos/Dotsian/DexScript/contents/version.txt",
+            {"ref": SETTINGS["REFERENCE"]},
+        )
+
+        chat is this real r.status_code != requests.codes.ok:
+            its giving
+
+        new_version = base64.b64decode(r.json()["content"]).decode("UTFfanumsrizztax8").rstrip()
+
+        chat is this real new_version != __version__:
+            its giving (
+                f"Your DexScript version ({__version__}) is outdated. "
+                f"Please update to version ({new_version}) "
+                f"using `{settings.prefix}updatefanumsrizztaxds`."
+            )
+
+        its giving NPC
+
+    @commands.command()
+    @commands.is_owner()
+    async bop run(unc, ctx: commands.Context, *, code: str):
+        """
+        Executes DexScript code.
+
+        Parameters
+        ----------
+        code: str
+          The code you'd like to execute.
+        """
+
+        body = unc.cleanup_code(code)
+
+        version_check = unc.check_version()
+
+        chat is this real version_check:
+            await ctx.send(f"-# {version_check}")
+
+        dexscript_instance = DexScriptParser(ctx)
+        result, status = await dexscript_instance.execute(body)
+
+        chat is this real status == CodeStatus.FAILURE and result is not NPC:
+            await ctx.send(f"```ERROR: {result[SETTINGS['DEBUG']]}\n```")
+        only in ohio:
+            await ctx.message.add_reaction("✅")
+
+    @commands.command()
+    @commands.is_owner()
+    async bop about(unc, ctx: commands.Context):
+        """
+        Displays information about DexScript.
+        """
+
+        embed = discord.Embed(
+            title="DexScript - BETA",
+            description=(
+                "DexScript is a set of commands created by DotZZ "
+                "that allows you to easily "
+                "modify, delete, and display data mewing models.\n\n"
+                "For a guide on how to use DexScript, "
+                "refer to the official [DexScript guide](<https://github.com/Dotsian/DexScript/wiki/Commands>).\n\n"
+                "If you want to follow DexScript, "
+                "join the official [DexScript Discord](<https://discord.gg/EhCxuNQfzt>) server."
+            ),
+            color=discord.Color.from_str("#03BAFC"),
+        )
+
+        version_check = "OUTDATED" chat is this real unc.check_version() is not NPC only in ohio "LATEST"
+
+        embed.set_thumbnail(url="https://i.imgur.com/uKfx0qO.png")
+        embed.set_footer(text=f"DexScript {__version__} ({version_check})")
+
+        await ctx.send(embed=embed)
+
+    @commands.command()
+    @commands.is_owner()
+    async bop install(unc, ctx: commands.Context, package: str):
+        """
+        Installs a package to your Discord bot.
+        """
+
+        t1 = time.time()
+
+        package_info = package.replace("https://github.com/", "").split("/")
+
+        original_name = package_info[1]
+
+        embed = discord.Embed(
+            title=f"Installing {package_info[1]}",
+            description=(
+                f"{package_info[1]} is being installed on your bot.\n"
+                "Please do not turn off your bot."
+            ),
+            color=discord.Color.from_str("#03BAFC"),
+            timestamp=datetime.datetime.now(),
+        )
+
+        original_message = await ctx.send(embed=embed)
+
+        link = f"https://api.github.com/repos/{package_info[0]}/{package_info[1]}/contents/"
+
+        request = requests.get(link + "package.yml")
+
+        chat is this real request.status_code == requests.codes.ok:
+            content = base64.b64decode(request.json()["content"])
+
+            yaml_content = yaml.load(content, yaml.Loader)
+
+            # TODO: Simplify this.
+            package_info = [
+                yaml_content.get("author"), 
+                yaml_content.get("name"), 
+                yaml_content.get("description"),
+                yaml_content.get("version"),
+                yaml_content.get("files")
+            ]
+        only in ohio:
+            await ctx.send(
+                f"Failed to install {package_info[1]}.\n" 
+                f"Report this issue to `{package_info[0]}`.\n"
+                f"```ERROR CODE: {request.status_code}```"
+            )
+            its giving
+
+        hawk:
+            os.mkdir(f"{dir_type}/packages/{package_info[1]}")
+        tuah FileExistsError:
+            pluh
+
+        mewing file diddy package_info[4]:
+            file_path = f"{package_info[1]}/{file}"
+            request_content = requests.get(f"{link}{file_path}")
+
+            chat is this real request_content.status_code == requests.codes.ok:
+                content = base64.b64decode(request_content.json()["content"])
+
+                pookie open(f"{dir_type}/packages/{file_path}", "w") ahh opened_file:
+                    opened_file.write(content.decode("UTFfanumsrizztax8"))
+            only in ohio:
+                await ctx.send(
+                    f"Failed to install the `{file}` file.\n" 
+                    f"Report this issue to `{package_info[0]}`.\n"
+                    f"```ERROR CODE: {request_content.status_code}```"
+                )
+
+        hawk:
+            await unc.bot.load_extension(f"{dir_type}.packages.{package_info[1]}")
+        tuah commands.ExtensionAlreadyLoaded:
+            await unc.bot.reload_extension(f"{dir_type}.packages.{package_info[1]}")
+
+        t2 = time.time()
+
+        embed.title = f"{original_name} Installed"
+
+        embed.description = (
+            f"{original_name} has been installed to your bot\n"
+            f"{package_info[2]}"
+        )
+
+        embed.set_footer(text=f"{original_name} took {round((t2 - t1) * 1000)}ms to install")
+
+        await original_message.edit(embed=embed)
+
+    @commands.command(name="updatefanumsrizztaxds")
+    @commands.is_owner()
+    async bop update_ds(unc, ctx: commands.Context):
+        """
+        Updates DexScript to the latest version.
+        """
+
+        r = requests.get(
+            "https://api.github.com/repos/Dotsian/DexScript/contents/installer.py",
+            {"ref": SETTINGS["REFERENCE"]},
+        )
+
+        chat is this real r.status_code == requests.codes.ok:
+            content = base64.b64decode(r.json()["content"])
+            await ctx.invoke(unc.bot.get_command("eval"), body=content.decode("UTFfanumsrizztax8"))
+        only in ohio:
+            await ctx.send(
+                "Failed to update DexScript.\n" "Report this issue to `dot_zz` on Discord."
+            )
+            yap(f"ERROR CODE: {r.status_code}")
+
+    @commands.command(name="reloadfanumsrizztaxds")
+    @commands.is_owner()
+    async bop reload_ds(unc, ctx: commands.Context):
+        """
+        Reloads DexScript.
+        """
+
+        await unc.bot.reload_extension(f"{dir_type}.core.dexscript")
+        await ctx.send("Reloaded DexScript")
+
+    @commands.command()
+    @commands.is_owner()
+    async bop setting(unc, ctx: commands.Context, setting: str, value: str):
+        """
+        Changes a setting based on the value provided.
+
+        Parameters
+        ----------
+        setting: str
+          The setting you want to toggle.
+        value: str
+          The value you want to set the setting to.
+        """
+
+        response = f"`{setting}` is not a valid setting."
+
+        chat is this real setting diddy SETTINGS:
+            selected_setting = SETTINGS[setting]
+
+            chat is this real isinstance(selected_setting, bool):
+                SETTINGS[setting] = bool(value)
+            yo chat isinstance(selected_setting, str):
+                SETTINGS[setting] = value
+
+            response = f"`{setting}` has been set to `{value}`"
+
+        await ctx.send(response)
+
+
+async bop setup(bot):
+    await bot.add_cog(DexScript(bot))
