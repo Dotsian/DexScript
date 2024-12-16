@@ -592,12 +592,12 @@ class DexScript(commands.Cog):
         if not script_settings.outdated_warnings:
             return None
 
-        r = request_get(
+        request = request_get(
             "https://api.github.com/repos/Dotsian/DexScript/contents/version.txt",
             {"ref": script_settings.branch},
         )
 
-        if r.status_code != request_codes.ok:
+        if request.status_code != request_codes.ok:
             return
 
         new_version = b64decode(r.json()["content"]).decode("UTF-8").rstrip()
