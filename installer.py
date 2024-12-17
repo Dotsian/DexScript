@@ -6,8 +6,8 @@
 
 
 from base64 import b64decode
-from datetime import datetime
 from dataclasses import dataclass
+from datetime import datetime
 from os import path
 from time import time
 from traceback import format_exc
@@ -33,7 +33,7 @@ Drop:
     from ballsdex.core.dexscript import DexScript -n
 """
 
-@dataclasses
+@dataclass
 class Settings:
     debug = False
     outdated_warnings = True
