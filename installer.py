@@ -187,7 +187,7 @@ except Exception:
         text=f"Error occurred {round((time() - t1) * 1000)}ms "
         f"into {installer.keywords[1].lower()}"
     )
-x
+    
     await installer.error(
         f"Failed to {installer.keywords[2].lower()} DexScript.", format_exc()
     )
