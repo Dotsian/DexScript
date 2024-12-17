@@ -6,9 +6,8 @@
 
 
 from base64 import b64decode
-from contextlib import suppress
 from datetime import datetime
-from os import mkdir, path
+from os import path
 from time import time
 from traceback import format_exc
 
@@ -41,6 +40,7 @@ Drop:
 class Installer:
     def __init__(self):
         self.message = None
+        self.managed_time = None
 
         self.keywords = ["Installed", "Installing", "Install"]
         self.updating = path.isfile(f"{dir_type}/core/dexscript.py")
@@ -86,7 +86,7 @@ class Installer:
     async def run(self, ctx):
         self.message = await ctx.send(embed=self.embed)
 
-        managed_time = time()
+        self.managed_time = time()
 
         # Fetches the `dexscript.py` file for later use.
         request = get(f"{GITHUB[0]}/dexscript.py", GITHUB[1])
@@ -172,7 +172,7 @@ class Installer:
             )
 
         self.embed.set_footer(
-            text=f"DexScript took {round((t2 - t1) * 1000)}ms "
+            text=f"DexScript took {round((time() - self.managed_time) * 1000)}ms "
             f"to {self.keywords[2].lower()}"
         )
 
@@ -184,10 +184,10 @@ try:
     await installer.run(ctx)
 except Exception:
     installer.embed.set_footer(
-        text=f"Error occurred {round((time() - t1) * 1000)}ms "
+        text=f"Error occurred {round((time() - installer.managed_time) * 1000)}ms "
         f"into {installer.keywords[1].lower()}"
     )
-    
+
     await installer.error(
         f"Failed to {installer.keywords[2].lower()} DexScript.", format_exc()
     )
