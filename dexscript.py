@@ -170,8 +170,8 @@ class Models:
         ----------
         string: str
           The string you want to translate.
-        
         """
+
         if dir_type == "ballsdex":
             return getattr(item, string) if item else string
 
@@ -195,8 +195,8 @@ class Models:
             The reference that will be used when autocorrecting the provided string.
         error: str
             The message that will be raised when the difference ratio is deemed insignificant.
-        
         """
+
         autocorrection = get_close_matches(string, correction_list)
 
         if not autocorrection or autocorrection[0] != string:
@@ -250,8 +250,8 @@ class Models:
             The identifier the model will hold.
         yield_creation: Bool
             Whether you want to create a yield rather than a TortoiseModel.
-        
         """
+
         fields = {}
         model_data = MODELS[model.__name__.lower()]
 
@@ -299,8 +299,8 @@ class Models:
             The model you want to use as a base.
         identfier: str
             The name of the model you are trying to fetch.
-        
         """
+
         try:
             returned_model = await model.name.filter(
                 **{Models.translate(model.extra_data[0].lower()): Models.autocorrect(
@@ -348,9 +348,9 @@ class DexClasses:
             plural = "" if len(dex_yields) == 1 else "s"
             number = action if action != "" else len(dex_yields)
 
-            await self.ctx.send(f"Pushed `{number}` yield{plural}.")
-
             dex_yields = []
+
+            await self.ctx.send(f"Pushed `{number}` yield{plural}.")
 
         async def create(self, model: TortoiseModel, identifier: str, create_yield: bool = False):
             new_model = await Models.create(model, identifier, create_yield or False)
@@ -600,7 +600,7 @@ class DexScript(commands.Cog):
         if request.status_code != request_codes.ok:
             return
 
-        new_version = b64decode(r.json()["content"]).decode("UTF-8").rstrip()
+        new_version = b64decode(request.json()["content"]).decode("UTF-8").rstrip()
 
         if new_version != __version__:
             return (
@@ -650,6 +650,7 @@ class DexScript(commands.Cog):
         """
         Displays information about DexScript.
         """
+        
         embed = Embed(
             title="DexScript - BETA",
             description=(
@@ -679,19 +680,19 @@ class DexScript(commands.Cog):
         Updates DexScript to the latest version.
         """
 
-        r = request_get(
+        request = request_get(
             "https://api.github.com/repos/Dotsian/DexScript/contents/installer.py",
             {"ref": script_settings.branch},
         )
 
-        if r.status_code == request_codes.ok:
-            content = b64decode(r.json()["content"])
+        if request.status_code == request_codes.ok:
+            content = b64decode(request.json()["content"])
             await ctx.invoke(self.bot.get_command("eval"), body=content.decode("UTF-8"))
             return
         
         await ctx.send(
             "Failed to update DexScript. Report this issue to `dot_zz` on Discord.\n" 
-            f"```ERROR CODE: {r.status_code}```"
+            f"```ERROR CODE: {request.status_code}```"
         )
 
     @commands.command(name="reload-ds")
