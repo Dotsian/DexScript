@@ -7,6 +7,7 @@
 
 from base64 import b64decode
 from datetime import datetime
+from dataclasses import dataclass
 from os import path
 from time import time
 from traceback import format_exc
@@ -21,11 +22,7 @@ if dir_type == "ballsdex":
 else:
     from carfigures.settings import settings
 
-GITHUB = ["https://api.github.com/repos/Dotsian/DexScript/contents/", {"ref": "beta"}]
-BUGLINK = "https://github.com/Dotsian/DexScript/issues/new/choose"
-
-# TODO: Convert dict into class
-SETTINGS = {"debug": False, "outdated_warnings": True, "branch": "main"}
+GITHUB = ["Dotsian/DexScript", "beta"]
 
 MIGRATIONS = """
 Upgrade:
@@ -35,6 +32,12 @@ Upgrade:
 Drop:
     from ballsdex.core.dexscript import DexScript -n
 """
+
+@dataclasses
+class Settings:
+    debug = False
+    outdated_warnings = True
+    branch = "main"
 
 
 class Installer:
@@ -75,7 +78,8 @@ class Installer:
         self.embed.title = "DexScript ERROR"
 
         self.embed.description = (
-            f"{error}\n" f"Please submit a [bug report](<{BUGLINK}>) to the GitHub page." 
+            f"{error}\n Please submit a [bug report]"
+            f"(<https://github.com/{GITHUB[0]}/issues/new/choose>) to the GitHub page." 
             f"{final_log}"
         )
 
@@ -88,8 +92,10 @@ class Installer:
 
         self.managed_time = time()
 
+        link = f"https://api.github.com/repos/{GITHUB[0]}/contents/"
+
         # Fetches the `dexscript.py` file for later use.
-        request = get(f"{GITHUB[0]}/dexscript.py", GITHUB[1])
+        request = get(f"{link}/dexscript.py", {"ref": GITHUB[1]})
 
         if request.status_code != codes.ok:
             await self.error("Failed to fetch the `dexscript.py` file.")
@@ -119,7 +125,7 @@ class Installer:
         # Create the script setting file if it doesn't exist.
         if not path.isfile("script-config.yml"):
             with open("script-config.yml", "w") as opened_file:
-                opened_file.write(dump(SETTINGS))
+                opened_file.write(dump(vars(Settings())))
 
         # Create the DexScript file.
         with open(f"{dir_type}/core/dexscript.py", "w") as opened_file:
@@ -155,7 +161,7 @@ class Installer:
         self.embed.title = f"{self.keywords[0]} DexScript"
 
         if self.updating:
-            request = get(f"{GITHUB[0]}/version.txt", GITHUB[1])
+            request = get(f"{link}/version.txt", {"ref": GITHUB[1]})
 
             new_version = b64decode(
                 request.json()["content"]

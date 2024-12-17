@@ -120,16 +120,12 @@ class Yield:
 
 @dataclass
 class Settings:
-    debug: bool = False
-    outdated_warnings: bool = True
-    branch: str = "main"
-
-    @property
-    def values(self):
-        return vars(self)
+    debug = False
+    outdated_warnings = True
+    branch = "main"
 
     def load(self):
-        with open("script-config.yml") as file:
+        with open("script-config.yml", "r") as file:
             content = yaml_load(file.read())
 
             for key, value in content.items():
@@ -137,7 +133,7 @@ class Settings:
 
     def save(self):
         with open("script-config.yml", "w") as file:
-            file.write(yaml_dump(self.values))
+            file.write(yaml_dump(vars(self)))
 
 
 script_settings = Settings()
@@ -650,7 +646,7 @@ class DexScript(commands.Cog):
         """
         Displays information about DexScript.
         """
-        
+
         embed = Embed(
             title="DexScript - BETA",
             description=(
@@ -719,11 +715,11 @@ class DexScript(commands.Cog):
           The value you want to set the setting to.
         """
 
-        if setting not in script_settings.values:
+        if setting not in vars(script_settings):
             await ctx.send(f"`{setting}` is not a valid setting.")
             return
 
-        selected_setting = script_settings.values.get(setting)
+        selected_setting = vars(script_settings).get(setting)
 
         if value is None and not isinstance(selected_setting, bool):
             await ctx.send("You must specify a value for this setting.")
