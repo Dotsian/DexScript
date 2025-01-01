@@ -2,16 +2,15 @@ import base64
 import logging
 import os
 import re
-import time
 import traceback
-import yaml
+from dataclasses import dataclass, datafield
 from difflib import get_close_matches
 from enum import Enum
+from pathlib import Path
 from typing import Any
 
 import discord
 import requests
-import datetime
 from dateutil.parser import parse as parse_date
 from discord.ext import commands
 
@@ -19,7 +18,6 @@ dir_type = "ballsdex" if os.path.isdir("ballsdex") else "carfigures"
 
 if dir_type == "ballsdex":
     from ballsdex.core.models import Ball, Economy, GuildConfig, Regime, Special, User
-    from ballsdex.packages.admin.cog import save_file
     from ballsdex.settings import settings
 else:
     from carfigures.core.models import Admin as User
@@ -28,16 +26,16 @@ else:
     from carfigures.core.models import Country as Economy
     from carfigures.core.models import Event as Special
     from carfigures.core.models import GuildConfig
-    from carfigures.packages.superuser.cog import save_file
     from carfigures.settings import settings
 
 
 log = logging.getLogger(f"{dir_type}.core.dexscript")
 
-__version__ = "0.4.3.1"
+__version__ = "0.4.3.2"
 
 
 START_CODE_BLOCK_RE = re.compile(r"^((```sql?)(?=\s)|(```))")
+FILENAME_RE = re.compile(r"^(.+)(\.\S+)$")
 
 MODELS = {
     "user": [User, "USERNAME"],
@@ -48,18 +46,12 @@ MODELS = {
     "special": [Special, "NAME"],
 }
 
-KEYWORDS = [
-    "local",
-    "global",
-]
-
 SETTINGS = {
     "DEBUG": False,
     "OUTDATED-WARNING": True,
     "REFERENCE": "main",
 }
 
-dex_globals = {}
 dex_yields = []
 
 
@@ -68,10 +60,8 @@ class Types(Enum):
     NUMBER = 1
     STRING = 2
     BOOLEAN = 3
-    VARIABLE = 4
-    KEYWORD = 5
-    MODEL = 6
-    DATETIME = 7
+    MODEL = 4
+    DATETIME = 5
 
 
 class YieldType(Enum):
@@ -87,6 +77,23 @@ class DexScriptError(Exception):
     pass
 
 
+# Ported from the Ballsdex admin package.
+async def save_file(attachment: discord.Attachment) -> Path:
+    path = Path(f"./static/uploads/{attachment.filename}")
+    match = FILENAME_RE.match(attachment.filename)
+
+    if not match:
+        raise TypeError("The file you uploaded lacks an extension.")
+    
+    i = 1
+
+    while path.exists():
+        path = Path(f"./static/uploads/{match.group(1)}-{i}{match.group(2)}")
+        i = i + 1
+    
+    await attachment.save(path)
+    return path
+
 def in_list(list_attempt, index):
     try:
         list_attempt[index]
@@ -95,22 +102,28 @@ def in_list(list_attempt, index):
         return False
 
 
+@dataclass
 class Value:
-    def __init__(self, name: Any, type: Types):
-        self.name = name
-        self.type = type
-        self.extra_data = []
+    name: Any
+    type: Types
+    extra_data: list = datafield(default_factory=list)
 
-    def __repr__(self):
-        return self.name
+    def __str__(self):
+        return str(self.name)
 
 
+@dataclass
 class Yield:
-    def __init__(self, model, identifier, value, type: YieldType):
-        self.model = model
-        self.identifier = identifier
-        self.value = value
-        self.type = type
+    model: Any
+    identifier: Any
+    value: dict
+    type: YieldType
+
+    @staticmethod
+    def get(model, identifier):
+        return next(
+            (x for x in dex_yields if (x.model, x.identifier.name) == (model, identifier)), None
+        )
 
 
 class Methods:
@@ -165,7 +178,7 @@ class Methods:
         await self.ctx.send(f"Deleted `{self.args[2]}`")
 
     async def update(self):
-        found_yield = self.parser.get_yield(self.args[1].name, self.args[2].name)
+        found_yield = Yield.get(self.args[1].name, self.args[2].name)
 
         new_attribute = None
 
@@ -175,7 +188,7 @@ class Methods:
         else:
             new_attribute = self.args[4]
 
-        update_message = f"`{self.args[2]}'s` {self.args[3]} to {new_attribute.name}"
+        update_message = f"`{self.args[2]}'s` {self.args[3]} to `{new_attribute.name}`"
 
         if found_yield is None:
             returned_model = await self.parser.get_model(self.args[1], self.args[2].name)
@@ -194,6 +207,25 @@ class Methods:
 
     async def view(self):
         returned_model = await self.parser.get_model(self.args[1], self.args[2].name)
+
+        if not in_list(self.args, 3):
+            fields = {"content": "```"}
+
+            for key, value in vars(returned_model).items():
+                if key.startswith("_"):
+                    continue
+
+                fields["content"] += f"{key}: {value}\n"
+
+                if isinstance(value, str) and value.startswith("/static"):
+                    if fields.get("files") is None:
+                        fields["files"] = []
+                    fields["files"].append(discord.File(value[1:]))
+
+            fields["content"] += "```"
+
+            await self.ctx.send(**fields)
+            return
 
         attribute = getattr(returned_model, self.args[3].name.lower())
 
@@ -236,7 +268,7 @@ class Methods:
                 await self.ctx.send(f"Wrote to `{self.args[2]}`")
 
             case "clear":
-                with open(self.args[2].name, "w") as opened_file:
+                with open(self.args[2].name, "w") as _:
                     pass
 
                 await self.ctx.send(f"Cleared `{self.args[2]}`")
@@ -266,9 +298,6 @@ class DexScriptParser:
 
     def __init__(self, ctx):
         self.ctx = ctx
-
-        self.dex_locals = {}
-
         self.values = []
 
     @staticmethod
@@ -337,27 +366,10 @@ class DexScriptParser:
 
         return returned_model[0]
 
-    def get_yield(self, model, identifier):
-        for item in dex_yields:
-            if item.model != model or item.identifier.name != identifier:
-                continue
-
-            return item
-
     def var(self, value):
         return_value = value
 
         match value.type:
-            case Types.VARIABLE:
-                return_value = value
-
-                if value.name in self.dex_locals:
-                    return_value = self.dex_locals[value.name]
-                elif value.name in dex_globals:
-                    return_value = dex_globals[value.name]
-                else:
-                    raise DexScriptError(f"'{value.name}' is an unknown variable.")
-
             case Types.MODEL:
                 current_model = MODELS[value.name.lower()]
 
@@ -392,16 +404,6 @@ class DexScriptParser:
 
         return getattr(item, translated_string) if item else translated_string
 
-    def keyword(self, line):
-        identity = line[1].name
-        value = line[2].name
-
-        match line[0].name.lower():
-            case "local":
-                self.dex_locals[identity] = value
-            case "global":
-                dex_globals[identity] = value
-
     def create_value(self, line):
         type = Types.STRING
 
@@ -410,10 +412,6 @@ class DexScriptParser:
 
         if lower in vars(Methods):
             type = Types.METHOD
-        elif lower in KEYWORDS:
-            type = Types.KEYWORD
-        elif lower.startswith("$"):
-            type = Types.VARIABLE
         elif lower in MODELS:
             type = Types.MODEL
         elif self.is_date(lower) and lower.count("-") >= 2:
@@ -429,8 +427,7 @@ class DexScriptParser:
 
     async def execute(self, code: str):
         try:
-            if (seperator := "\n") not in code:
-                seperator = "^"
+            seperator = "\n" if "\n" in code else ";'"
 
             split_code = [x for x in code.split(seperator) if x.strip() != ""]
 
@@ -459,10 +456,6 @@ class DexScriptParser:
 
             for line2 in parsed_code:
                 for value in line2:
-                    if value.type == Types.KEYWORD:
-                        self.keyword(parsed_code)
-                        continue
-
                     if value.type != Types.METHOD:
                         continue
 
@@ -579,95 +572,6 @@ class DexScript(commands.Cog):
 
         await ctx.send(embed=embed)
 
-    @commands.command()
-    @commands.is_owner()
-    async def install(self, ctx: commands.Context, package: str):
-        """
-        Installs a package to your Discord bot.
-        """
-
-        t1 = time.time()
-
-        package_info = package.replace("https://github.com/", "").split("/")
-
-        original_name = package_info[1]
-
-        embed = discord.Embed(
-            title=f"Installing {package_info[1]}",
-            description=(
-                f"{package_info[1]} is being installed on your bot.\n"
-                "Please do not turn off your bot."
-            ),
-            color=discord.Color.from_str("#03BAFC"),
-            timestamp=datetime.datetime.now(),
-        )
-
-        original_message = await ctx.send(embed=embed)
-
-        link = f"https://api.github.com/repos/{package_info[0]}/{package_info[1]}/contents/"
-
-        request = requests.get(link + "package.yml")
-
-        if request.status_code == requests.codes.ok:
-            content = base64.b64decode(request.json()["content"])
-
-            yaml_content = yaml.load(content, yaml.Loader)
-
-            # TODO: Simplify this.
-            package_info = [
-                yaml_content.get("author"), 
-                yaml_content.get("name"), 
-                yaml_content.get("description"),
-                yaml_content.get("version"),
-                yaml_content.get("files")
-            ]
-        else:
-            await ctx.send(
-                f"Failed to install {package_info[1]}.\n" 
-                f"Report this issue to `{package_info[0]}`.\n"
-                f"```ERROR CODE: {request.status_code}```"
-            )
-            return
-
-        try:
-            os.mkdir(f"{dir_type}/packages/{package_info[1]}")
-        except FileExistsError:
-            pass
-
-        for file in package_info[4]:
-            file_path = f"{package_info[1]}/{file}"
-            request_content = requests.get(f"{link}{file_path}")
-
-            if request_content.status_code == requests.codes.ok:
-                content = base64.b64decode(request_content.json()["content"])
-
-                with open(f"{dir_type}/packages/{file_path}", "w") as opened_file:
-                    opened_file.write(content.decode("UTF-8"))
-            else:
-                await ctx.send(
-                    f"Failed to install the `{file}` file.\n" 
-                    f"Report this issue to `{package_info[0]}`.\n"
-                    f"```ERROR CODE: {request_content.status_code}```"
-                )
-
-        try:
-            await self.bot.load_extension(f"{dir_type}.packages.{package_info[1]}")
-        except commands.ExtensionAlreadyLoaded:
-            await self.bot.reload_extension(f"{dir_type}.packages.{package_info[1]}")
-
-        t2 = time.time()
-
-        embed.title = f"{original_name} Installed"
-
-        embed.description = (
-            f"{original_name} has been installed to your bot\n"
-            f"{package_info[2]}"
-        )
-
-        embed.set_footer(text=f"{original_name} took {round((t2 - t1) * 1000)}ms to install")
-
-        await original_message.edit(embed=embed)
-
     @commands.command(name="update-ds")
     @commands.is_owner()
     async def update_ds(self, ctx: commands.Context):
@@ -685,9 +589,9 @@ class DexScript(commands.Cog):
             await ctx.invoke(self.bot.get_command("eval"), body=content.decode("UTF-8"))
         else:
             await ctx.send(
-                "Failed to update DexScript.\n" "Report this issue to `dot_zz` on Discord."
+                "Failed to update DexScript. Report this issue to `dot_zz` on Discord.\n"
+                f"```\nERROR CODE: {r.status_code}\n```"
             )
-            print(f"ERROR CODE: {r.status_code}")
 
     @commands.command(name="reload-ds")
     @commands.is_owner()

@@ -7,10 +7,6 @@
 
 DexScript is a set of commands created by DotZZ. The commands simplify editing, adding, and deleting models such as balls, regimes, specials, etc.
 
-As of 0.4.3, DexScript has added package installation that allows users to easily add a package via DexScript.
-
-If you want to allow users to install your package, follow the `Package Uploading` guide on the wiki.
-
 ## Supported forks
 
 DexScript can be used for BallsDex and CarFigures instances; each has its own respective guide on how to use DexScript with it.
@@ -32,8 +28,8 @@ Yes, you can test beta things, and if you are wondering how to do that, follow t
 ## Information
 
 > ``Made by dot_zz``
-> ``Version 0.4.3.1``
+> ``Version 0.4.3.2``
 > ``MIT License``
 > ``Made on September 14, 2024``
-> ``Last updated on October 18, 2024``
+> ``Last updated on January 1, 2025``
 > [``DexScript Discord server``](https://discord.gg/pkKvMdP74Z)

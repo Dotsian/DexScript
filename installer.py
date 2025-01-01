@@ -1,142 +1,185 @@
-import base64
-import datetime
-import os
-import time
+# OFFICIAL DEXSCRIPT INSTALLER
+# > This will install DexScript onto your bot.
+# > For additional information, read  the wiki guide.
+# > An explanation of the code will be provided below.
+# THE CODE BELOW IS RAN VIA THE INVOCATION OF THE `EVAL` COMMAND.
 
-import requests
 
-dir_type = "ballsdex" if os.path.isdir("ballsdex") else "carfigures"
+from base64 import b64decode
+from datetime import datetime
+from os import path
+from time import time
+from traceback import format_exc
+
+from requests import codes, get
+
+dir_type = "ballsdex" if path.isdir("ballsdex") else "carfigures"
 
 if dir_type == "ballsdex":
     from ballsdex.settings import settings
 else:
     from carfigures.settings import settings
 
+GITHUB = ["Dotsian/DexScript", "main"]
 
-updating = os.path.isfile(f"{dir_type}/core/dexscript.py")
+MIGRATIONS = """
+Upgrade:
+    /-/-await self.add_cog(Core(self)) || /-/-await self.load_extension("$DIR.core.dexscript") -n
 
-keywords = [["Updated", "Updating"], ["Installed", "Installing"]][not updating]
-
-embed = discord.Embed(
-    title=f"{keywords[0]} DexScript",
-    description=(
-        f"DexScript is being {keywords[1].lower()} on your bot.\n"
-        "Please do not turn off your bot."
-    ),
-    color=discord.Color.from_str("#03BAFC"),
-    timestamp=datetime.datetime.now(),
-)
-
-embed.set_thumbnail(url="https://i.imgur.com/uKfx0qO.png")
-
-original_message = await ctx.send(embed=embed)
-
-t1 = time.time()
-
-GITHUB = ["https://api.github.com/repos/Dotsian/DexScript/contents/", {"ref": "main"}]
-BUGLINK = "<https://github.com/Dotsian/DexScript/issues/new/choose>"
-request = requests.get(f"{GITHUB[0]}/dexscript.py", GITHUB[1])
+Drop:
+    from ballsdex.core.dexscript import DexScript -n
+"""
 
 
-async def display_error(error, log=None):
-    final_log = f"\n\n```\n{log}\n```" if log is not None else ""
+class Installer:
+    def __init__(self):
+        self.message = None
+        self.managed_time = None
 
-    embed.title = "DexScript ERROR"
-    embed.description = (
-        f"{error}\n" f"Please submit a [bug report]({BUGLINK}) on the GitHub page." f"{final_log}"
-    )
-    embed.color = discord.Color.red()
+        self.keywords = ["Installed", "Installing", "Install"]
+        self.updating = path.isfile(f"{dir_type}/core/dexscript.py")
 
-    await original_message.edit(embed=embed)
+        if self.updating:
+            self.keywords = ["Updated", "Updating", "Update"]
 
+        self.embed = discord.Embed(
+            title=f"{self.keywords[1]} DexScript",
+            description=(
+                f"DexScript is being {self.keywords[0].lower()} to your bot.\n"
+                "Please do not turn off your bot."
+            ),
+            color=discord.Color.from_str("#03BAFC"),
+            timestamp=datetime.now(),
+        )
 
-if request.status_code != requests.codes.ok:
-    await display_error("Failed to fetch the `dexscript.py` file.")
-    return
+        embed.set_thumbnail(url="https://i.imgur.com/uKfx0qO.png")
 
-request = request.json()
-content = base64.b64decode(request["content"])
+    @staticmethod
+    def format_migration(line):
+        return (
+            line.replace("    ", "")
+            .replace("/-", "    ")
+            .replace(" -n", "\n")
+            .replace("$DIR", dir_type)
+        )
 
-additions = {
-    "        await self.add_cog(Core(self))": (
-        f'        await self.load_extension("{dir_type}.core.dexscript")\n'
-    ),
-    "import types": "import os\n"
-}
+    async def error(self, error, log=None):
+        final_log = "" if log is None else f"\n\n```\n{log}\n```"
 
-deprecated = {
-    f"from {dir_type}.core.dexscript import DexScript\n": "",
-    "        await self.add_cog(DexScript(self))": (
-        f't\tawait self.load_extension("{dir_type}.core.dexscript")'
-    ),
-}
+        self.embed.title = "DexScript ERROR"
 
+        self.embed.description = (
+            f"{error}\n Please submit a [bug report]"
+            f"(<https://github.com/{GITHUB[0]}/issues/new/choose>) to the GitHub page." 
+            f"{final_log}"
+        )
 
-def format_line(line):
-    if line in deprecated:
-        return deprecated[line]
+        self.embed.color = discord.Color.red()
 
-    return line
+        await self.message.edit(embed=self.embed)
 
-async def install():
-    # Create the DexScript file.
-    with open(f"{dir_type}/core/dexscript.py", "w") as opened_file:
-        opened_file.write(content.decode("UTF-8"))
+    async def run(self, ctx):
+        self.message = await ctx.send(embed=self.embed)
 
-    # Add the ability to load the DexScript cog to the bot.py file.
-    with open(f"{dir_type}/core/bot.py", "r") as opened_file_1:
-        lines = opened_file_1.readlines()
-        contents = ""
+        self.managed_time = time()
 
-        for index, line in enumerate(lines):
-            contents += line
+        link = f"https://api.github.com/repos/{GITHUB[0]}/contents/"
 
-            for key, item in additions.items():
-                if line.rstrip() != key or lines[index + 1] == item:
+        # Fetches the `dexscript.py` file for later use.
+        request = get(f"{link}/dexscript.py", {"ref": GITHUB[1]})
+
+        if request.status_code != codes.ok:
+            await self.error("Failed to fetch the `dexscript.py` file.")
+            return
+
+        request = request.json()
+        content = b64decode(request["content"])
+
+        migration_dict = {"Upgrade": {}, "Drop": []}
+        current_migration = ""
+
+        # Parse the `MIGRATIONS` variable, insert each value into `migration_dict`.
+        for line in MIGRATIONS.split("\n"):
+            if line == "":
+                current_migration = ""
+
+            if current_migration == "Drop":
+                migration_dict[current_migration].append(self.format_migration(line))
+
+            if current_migration != "" and "||" in line:
+                items = self.format_migration(line).split(" || ")
+                migration_dict[current_migration][items[0]] = items[1]
+
+            if line[:-1] in ["Upgrade", "Drop"]:
+                current_migration = line[:-1]
+
+        # Create the DexScript file.
+        with open(f"{dir_type}/core/dexscript.py", "w") as opened_file:
+            opened_file.write(content.decode("UTF-8"))
+
+        # Add the ability to load the DexScript package to the bot.py file.
+        # Also applies the migration values from `migration_dict`.
+        with open(f"{dir_type}/core/bot.py", "r") as opened_file_1:
+            lines = opened_file_1.readlines()
+            contents = ""
+
+            for index, line in enumerate(lines):
+                if line in migration_dict["Drop"]:
                     continue
 
-                contents += format_line(item)
+                contents += line + "\n"
 
-        with open(f"{dir_type}/core/bot.py", "w") as opened_file_2:
-            opened_file_2.write(contents)
+                for key, item in migration_dict["Upgrade"].items():
+                    if line.rstrip() != key or lines[index + 1] == item:
+                        continue
 
-    try:
-        await bot.load_extension(f"{dir_type}.core.dexscript")
-    except commands.ExtensionAlreadyLoaded:
-        await bot.reload_extension(f"{dir_type}.core.dexscript")
+                    contents += item
 
+            with open(f"{dir_type}/core/bot.py", "w") as opened_file_2:
+                opened_file_2.write(contents)
 
-keyword = "update" if updating else "install"
+        # Loads or reloads the DexScript extension.
+        try:
+            await bot.load_extension(f"{dir_type}.core.dexscript")
+        except commands.ExtensionAlreadyLoaded:
+            await bot.reload_extension(f"{dir_type}.core.dexscript")
+
+        self.embed.title = f"{self.keywords[0]} DexScript"
+
+        if self.updating:
+            request = get(f"{link}/version.txt", {"ref": GITHUB[1]})
+
+            new_version = b64decode(
+                request.json()["content"]
+            ).decode("UTF-8").rstrip()
+
+            self.embed.description = (
+                f"DexScript has been updated to v{new_version}.\n"
+                f"Use `{settings.prefix}about` to view details about DexScript."
+            )
+        else:
+            self.embed.description = (
+                "DexScript has been installed to your bot\n"
+                f"Use `{settings.prefix}about` to view details about DexScript."
+            )
+
+        self.embed.set_footer(
+            text=f"DexScript took {round((time() - self.managed_time) * 1000)}ms "
+            f"to {self.keywords[2].lower()}"
+        )
+
+        await self.message.edit(embed=self.embed)
+
+installer = Installer()
 
 try:
-    await install()
-except Exception as e:
-    embed.set_footer(
-        text=f"Error occurred {round((time.time() - t1) * 1000)}ms into {keywords[0].lower()}"
+    await installer.run(ctx)
+except Exception:
+    installer.embed.set_footer(
+        text=f"Error occurred {round((time() - installer.managed_time) * 1000)}ms "
+        f"into {installer.keywords[1].lower()}"
     )
 
-    await display_error(f"Failed to {keyword} DexScript.", e)
-    return
-
-t2 = time.time()
-
-embed.title = f"DexScript {keywords[1]}"
-
-if updating:
-    r = requests.get(f"{GITHUB[0]}/version.txt", GITHUB[1])
-
-    new_version = base64.b64decode(r.json()["content"]).decode("UTF-8").rstrip()
-
-    embed.description = (
-        f"DexScript has been updated to v{new_version}.\n"
-        f"Use `{settings.prefix}about` to view details about DexScript."
+    await installer.error(
+        f"Failed to {installer.keywords[2].lower()} DexScript.", format_exc()
     )
-else:
-    embed.description = (
-        "DexScript has been installed to your bot\n"
-        f"Use `{settings.prefix}about` to view details about DexScript."
-    )
-
-embed.set_footer(text=f"DexScript took {round((t2 - t1) * 1000)}ms to {keyword}")
-
-await original_message.edit(embed=embed)
