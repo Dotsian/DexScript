@@ -3,7 +3,8 @@ import logging
 import os
 import re
 import traceback
-from dataclasses import dataclass, datafield
+from dataclasses import dataclass
+from dataclasses import field as datafield
 from difflib import get_close_matches
 from enum import Enum
 from pathlib import Path
