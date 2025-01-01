@@ -78,7 +78,6 @@ def format_line(line):
 
     return line
 
-
 async def install():
     # Create the DexScript file.
     with open(f"{dir_type}/core/dexscript.py", "w") as opened_file:
@@ -100,35 +99,6 @@ async def install():
 
         with open(f"{dir_type}/core/bot.py", "w") as opened_file_2:
             opened_file_2.write(contents)
-
-    # Adds the new package loading system
-    with open(f"{dir_type}/core/bot.py", "r") as file:
-        code = file.read()
-
-    tracking = False
-
-    for line in code.split("\n"):
-        if tracking:
-            code = code.replace("\n" + line, "")
-
-        if line == "]" and tracking:
-            tracking = False
-            break
-
-        if not line.startswith("PACKAGES"):
-            continue
-
-        if len(line) == 12:
-            tracking = True
-
-        new_line = (
-            f'PACKAGES = [x for x in os.listdir("{dir_type}/packages") if x != "__pycache__"]'
-        )
-
-        code = code.replace(line, new_line.strip())
-
-    with open(f"{dir_type}/core/bot.py", "w") as file:
-        file.write(code)
 
     try:
         await bot.load_extension(f"{dir_type}.core.dexscript")
