@@ -52,7 +52,7 @@ class Installer:
             timestamp=datetime.now(),
         )
 
-        embed.set_thumbnail(url="https://i.imgur.com/uKfx0qO.png")
+        self.embed.set_thumbnail(url="https://i.imgur.com/uKfx0qO.png")
 
     @staticmethod
     def format_migration(line):
