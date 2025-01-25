@@ -174,7 +174,9 @@ class Methods:
     async def filter_update(self, ctx):
         attribute = self.args[2].name.lower()
 
-        await self.args[1].name.filter(**{attribute: self.args[3].name}).update(**{attribute: self.args[4].name})
+        await self.args[1].name.filter(**{attribute: self.args[3].name}).update(
+            **{attribute: self.args[4].name}
+        )
 
         await ctx.send(
             f"Updated all `{self.args[1]}` instances from a "
@@ -186,7 +188,8 @@ class Methods:
         await self.args[1].name.filter(**{self.args[2].name.lower(): self.args[3].name}).delete()
 
         await ctx.send(
-            f"Deleted all `{self.args[1]}` instances with a `{self.args[2]}` value of `{self.args[3]}`"
+            f"Deleted all `{self.args[1]}` instances with a "
+            f"`{self.args[2]}` value of `{self.args[3]}`"
         )
 
 
