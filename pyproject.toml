@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "dexscript"
-version = "0.4.3.2"
+version = "0.4.3.3"
 description = ""
 authors = ["dotzz <official.dotzz@gmail.com>"]
 license = "MIT"
@@ -8,7 +8,7 @@ license = "MIT"
 [tool.poetry.dependencies]
 python = "^3.12"
 "discord.py" = "^2.4.0"
-ruff = "^0.8.4"
+ruff = "^0.9.3"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

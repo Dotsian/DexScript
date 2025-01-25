@@ -1,4 +1,5 @@
 import base64
+import inspect
 import logging
 import os
 import re
@@ -18,29 +19,25 @@ from discord.ext import commands
 dir_type = "ballsdex" if os.path.isdir("ballsdex") else "carfigures"
 
 if dir_type == "ballsdex":
-    from ballsdex.core.models import Ball, Economy, GuildConfig, Regime, Special, User
+    from ballsdex.core.models import Ball, Economy, Regime, Special
     from ballsdex.settings import settings
 else:
-    from carfigures.core.models import Admin as User
     from carfigures.core.models import Car as Ball
     from carfigures.core.models import CarType as Regime
     from carfigures.core.models import Country as Economy
     from carfigures.core.models import Event as Special
-    from carfigures.core.models import GuildConfig
     from carfigures.settings import settings
 
 
 log = logging.getLogger(f"{dir_type}.core.dexscript")
 
-__version__ = "0.4.3.2"
+__version__ = "0.4.3.3"
 
 
 START_CODE_BLOCK_RE = re.compile(r"^((```sql?)(?=\s)|(```))")
 FILENAME_RE = re.compile(r"^(.+)(\.\S+)$")
 
 MODELS = {
-    "user": [User, "USERNAME"],
-    "guildconfig": [GuildConfig, "ID"],
     "ball": [Ball, "COUNTRY"],
     "regime": [Regime, "NAME"],
     "economy": [Economy, "NAME"],
@@ -94,6 +91,7 @@ async def save_file(attachment: discord.Attachment) -> Path:
     
     await attachment.save(path)
     return path
+
 
 def in_list(list_attempt, index):
     try:
@@ -340,10 +338,10 @@ class DexScriptParser:
 
             fields[key] = 1
 
-            if key in ["country", "full_name", "catch_names", "name", "username"]:
+            if key in ["country", "full_name", "catch_names", "name"]:
                 fields[key] = identifier
             elif key == "emoji_id":
-                fields[key] = 100**8
+                fields[key] = 100 ** 8
             elif key == "regime_id":
                 first_regime = await Regime.first()
                 fields[key] = first_regime.pk
@@ -354,16 +352,21 @@ class DexScriptParser:
         await model.create(**fields)
 
     async def get_model(self, model, identifier):
+        attribute = re.search(
+            r"return\s+self\.(\w+)", inspect.getsource(model.name.__str__)
+        ).group(1)
+
+        correction_list = await model.name.all().values_list(attribute, flat=True)
+        translated_identifier = self.translate(model.extra_data[0].lower())
+
         try:
             returned_model = await model.name.filter(
                 **{
-                    self.translate(model.extra_data[0].lower()): self.autocorrect(
-                        identifier, [str(x) for x in await model.name.all()]
-                    )
+                    translated_identifier: self.autocorrect(identifier, correction_list)
                 }
             )
         except AttributeError:
-            raise DexScriptError(f"{model} is not a valid model.")
+            raise DexScriptError(f"'{model}' is not a valid model.")
 
         return returned_model[0]
 
@@ -395,7 +398,6 @@ class DexScriptParser:
         string: str
           The string you want to translate.
         """
-
         if dir_type == "ballsdex":
             return getattr(item, string) if item else string
 
@@ -467,7 +469,7 @@ class DexScriptParser:
                     except IndexError:
                         # TODO: Remove `error` duplicates.
 
-                        error = f"Argument is missing when calling {value.name}."
+                        error = f"Argument missing when calling {value.name}."
                         return ((error, error), CodeStatus.FAILURE)
         except Exception as error:
             return ((error, traceback.format_exc()), CodeStatus.FAILURE)
@@ -488,7 +490,6 @@ class DexScript(commands.Cog):
         """
         Automatically removes code blocks from the code.
         """
-
         if content.startswith("```") and content.endswith("```"):
             return START_CODE_BLOCK_RE.sub("", content)[:-3]
 
@@ -500,14 +501,15 @@ class DexScript(commands.Cog):
             return None
 
         r = requests.get(
-            "https://api.github.com/repos/Dotsian/DexScript/contents/version.txt",
+            "https://api.github.com/repos/Dotsian/DexScript/contents/pyproject.toml",
             {"ref": SETTINGS["REFERENCE"]},
         )
 
         if r.status_code != requests.codes.ok:
             return
 
-        new_version = base64.b64decode(r.json()["content"]).decode("UTF-8").rstrip()
+        toml_content = base64.b64decode(r.json()["content"]).decode("UTF-8")
+        new_version = re.search(r'version\s*=\s*"(.*?)"', toml_content).group(1)
 
         if new_version != __version__:
             return (
@@ -529,7 +531,6 @@ class DexScript(commands.Cog):
         code: str
           The code you'd like to execute.
         """
-
         body = self.cleanup_code(code)
 
         version_check = self.check_version()
@@ -551,7 +552,6 @@ class DexScript(commands.Cog):
         """
         Displays information about DexScript.
         """
-
         embed = discord.Embed(
             title="DexScript - BETA",
             description=(
@@ -579,7 +579,6 @@ class DexScript(commands.Cog):
         """
         Updates DexScript to the latest version.
         """
-
         r = requests.get(
             "https://api.github.com/repos/Dotsian/DexScript/contents/installer.py",
             {"ref": SETTINGS["REFERENCE"]},
@@ -600,7 +599,6 @@ class DexScript(commands.Cog):
         """
         Reloads DexScript.
         """
-
         await self.bot.reload_extension(f"{dir_type}.core.dexscript")
         await ctx.send("Reloaded DexScript")
 
@@ -617,7 +615,6 @@ class DexScript(commands.Cog):
         value: str
           The value you want to set the setting to.
         """
-
         response = f"`{setting}` is not a valid setting."
 
         if setting in SETTINGS:
