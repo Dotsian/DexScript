@@ -3,6 +3,7 @@ import inspect
 import logging
 import os
 import re
+import shutil
 import traceback
 from dataclasses import dataclass
 from dataclasses import field as datafield
@@ -38,10 +39,10 @@ START_CODE_BLOCK_RE = re.compile(r"^((```sql?)(?=\s)|(```))")
 FILENAME_RE = re.compile(r"^(.+)(\.\S+)$")
 
 MODELS = {
-    "ball": [Ball, "COUNTRY"],
-    "regime": [Regime, "NAME"],
-    "economy": [Economy, "NAME"],
-    "special": [Special, "NAME"],
+    "ball": Ball,
+    "regime": Regime,
+    "economy": Economy,
+    "special": Special,
 }
 
 SETTINGS = {
@@ -49,8 +50,6 @@ SETTINGS = {
     "OUTDATED-WARNING": True,
     "REFERENCE": "main",
 }
-
-dex_yields = []
 
 
 class Types(Enum):
@@ -60,10 +59,6 @@ class Types(Enum):
     BOOLEAN = 3
     MODEL = 4
     DATETIME = 5
-
-
-class YieldType(Enum):
-    CREATE_MODEL = 0
 
 
 class CodeStatus(Enum):
@@ -111,100 +106,41 @@ class Value:
         return str(self.name)
 
 
-@dataclass
-class Yield:
-    model: Any
-    identifier: Any
-    value: dict
-    type: YieldType
-
-    @staticmethod
-    def get(model, identifier):
-        return next(
-            (x for x in dex_yields if (x.model, x.identifier.name) == (model, identifier)), None
-        )
-
-
 class Methods:
-    def __init__(self, parser, ctx, args: list[Value]):
-        self.ctx = ctx
+    def __init__(self, parser, args: list[Value]):
         self.args = args
-
         self.parser = parser
 
-    async def push(self):
-        global dex_yields
 
-        if in_list(self.args, 1) and self.args[1].name.lower() == "-clear":
-            dex_yields = []
+    async def create(self, ctx):
+        await self.parser.create_model(self.args[1].name, self.args[2])
 
-            await self.ctx.send("Cleared yield cache.")
-            return
+        await ctx.send(f"Created `{self.args[2]}`")
 
-        for index, yield_object in enumerate(dex_yields, start=1):
-            if in_list(self.args, 1) and int(self.args[1].name) >= index:
-                break
 
-            match yield_object.type:
-                case YieldType.CREATE_MODEL:
-                    await yield_object.model.create(**yield_object.value)
+    async def delete(self, ctx):
+        await self.parser.get_model(self.args[1], self.args[2].name).delete()
 
-        plural = "" if len(dex_yields) == 1 else "s"
-        number = self.args[1].name if in_list(self.args, 1) else len(dex_yields)
+        await ctx.send(f"Deleted `{self.args[2]}`")
 
-        await self.ctx.send(f"Pushed `{number}` yield{plural}.")
 
-        dex_yields = []
-
-    async def create(self):
-        result = await self.parser.create_model(
-            self.args[1].name, self.args[2], self.args[3] if in_list(self.args, 3) else False
-        )
-
-        suffix = ""
-
-        if result is not None:
-            suffix = " and yielded it until `push`"
-            dex_yields.append(result)
-
-        await self.ctx.send(f"Created `{self.args[2]}`{suffix}")
-
-    async def delete(self):
-        returned_model = await self.parser.get_model(self.args[1], self.args[2].name)
-
-        await returned_model.delete()
-
-        await self.ctx.send(f"Deleted `{self.args[2]}`")
-
-    async def update(self):
-        found_yield = Yield.get(self.args[1].name, self.args[2].name)
-
+    async def update(self, ctx):
         new_attribute = None
 
-        if self.ctx.message.attachments != []:
-            image_path = await save_file(self.ctx.message.attachments[0])
+        if ctx.message.attachments != []:
+            image_path = await save_file(ctx.message.attachments[0])
             new_attribute = Value(f"/{image_path}", Types.STRING)
         else:
             new_attribute = self.args[4]
 
-        update_message = f"`{self.args[2]}'s` {self.args[3]} to `{new_attribute.name}`"
+        await self.parser.get_model(self.args[1], self.args[2].name).update(
+            **{self.args[3].name.lower(): new_attribute.name}
+        )
 
-        if found_yield is None:
-            returned_model = await self.parser.get_model(self.args[1], self.args[2].name)
+        await ctx.send(f"Updated `{self.args[2]}'s` {self.args[3]} to `{new_attribute.name}`")
 
-            setattr(returned_model, self.args[3].name.lower(), new_attribute.name)
 
-            await returned_model.save()
-
-            await self.ctx.send(f"Updated {update_message}")
-
-            return
-
-        found_yield.value[self.args[3].name.lower()] = new_attribute.name
-
-        await self.ctx.send(f"Updated yielded {update_message}")
-
-    async def view(self):
+    async def view(self, ctx):
         returned_model = await self.parser.get_model(self.args[1], self.args[2].name)
 
         if not in_list(self.args, 3):
@@ -223,71 +159,92 @@ class Methods:
 
             fields["content"] += "```"
 
-            await self.ctx.send(**fields)
+            await ctx.send(**fields)
             return
 
         attribute = getattr(returned_model, self.args[3].name.lower())
 
         if isinstance(attribute, str) and os.path.isfile(attribute[1:]):
-            await self.ctx.send(f"```{attribute}```", file=discord.File(attribute[1:]))
+            await ctx.send(f"```{attribute}```", file=discord.File(attribute[1:]))
             return
 
-        await self.ctx.send(f"```{attribute}```")
+        await ctx.send(f"```{attribute}```")
 
-    async def list(self):
+
+    async def filter_update(self, ctx):
+        attribute = self.args[2].name.lower()
+
+        await self.args[1].name.filter(**{attribute: self.args[3].name}).update(**{attribute: self.args[4].name})
+
+        await ctx.send(
+            f"Updated all `{self.args[1]}` instances from a "
+            f"`{self.args[2]}` value of `{self.args[3]}` to `{self.args[4]}`"
+        )
+
+
+    async def filter_remove(self, ctx):
+        await self.args[1].name.filter(**{self.args[2].name.lower(): self.args[3].name}).delete()
+
+        await ctx.send(
+            f"Deleted all `{self.args[1]}` instances with a `{self.args[2]}` value of `{self.args[3]}`"
+        )
+
+
+    async def filter_view(self, ctx):
+        pass
+
+
+    async def attributes(self, ctx):
         model = self.args[1].name
-
-        parameters = "GLOBAL YIELDS:\n\n"
 
         model_name = model if isinstance(model, str) else model.__name__
 
-        if model_name.lower() != "-yields":
-            parameters = f"{model_name.upper()} FIELDS:\n\n"
+        parameters = f"{model_name.upper()} ATTRIBUTES:\n\n"
 
-            for field in vars(model()):  # type: ignore
-                if field[:1] == "_":
-                    continue
+        for field in vars(model()):  # type: ignore
+            if field[:1] == "_":
+                continue
 
-                parameters += f"- {field.replace(' ', '_').upper()}\n"
-        else:
-            for index, dex_yield in enumerate(dex_yields, start=1):
-                parameters += f"{index}. {dex_yield.identifier.name.upper()}\n"
+            parameters += f"- {field.replace(' ', '_').upper()}\n"
 
-        await self.ctx.send(f"```\n{parameters}\n```")
+        await ctx.send(f"```\n{parameters}\n```")
 
-    async def file(self):
+
+    async def dev(self, ctx):
         match self.args[1].name.lower():
             case "write":
-                new_file = self.ctx.message.attachments[0]
+                new_file = ctx.message.attachments[0]
 
                 with open(self.args[2].name, "w") as opened_file:
                     contents = await new_file.read()
                     opened_file.write(contents.decode("utf-8"))
 
-                await self.ctx.send(f"Wrote to `{self.args[2]}`")
+                await ctx.send(f"Wrote to `{self.args[2]}`")
 
             case "clear":
                 with open(self.args[2].name, "w") as _:
                     pass
 
-                await self.ctx.send(f"Cleared `{self.args[2]}`")
+                await ctx.send(f"Cleared `{self.args[2]}`")
 
             case "read":
-                await self.ctx.send(file=discord.File(self.args[2].name))
+                await ctx.send(file=discord.File(self.args[2].name))
 
             case "delete":
                 os.remove(self.args[2].name)
 
-                await self.ctx.send(f"Deleted `{self.args[2]}`")
+                await ctx.send(f"Deleted `{self.args[2]}`")
+
+            case "rmdir":
+                shutil.rmtree(self.args[2].name)
+
+                await ctx.send(f"Deleted `{self.args[2]}` directory")
 
             case _:
                 raise DexScriptError(
                     f"'{self.args[0]}' is not a valid file operation. "
-                    "(READ, WRITE, CLEAR, or DELETE)"
+                    "(READ, WRITE, CLEAR, RMDIR, or DELETE)"
                 )
-
-    async def show(self):
-        await self.ctx.send(f"```\n{self.args[1]}\n```")
 
 
 class DexScriptParser:
@@ -325,8 +282,14 @@ class DexScriptParser:
             raise DexScriptError(f"'{string}' {error}{suggestion}")
 
         return autocorrection[0]
+    
+    @staticmethod
+    def extract_str_attr(object):
+        expression = r"return\s+self\.(\w+)"
 
-    async def create_model(self, model, identifier, yield_creation):
+        return re.search(expression, inspect.getsource(object.__str__)).group(1)
+
+    async def create_model(self, model, identifier):
         fields = {}
 
         for key, field in vars(model()).items():
@@ -346,15 +309,10 @@ class DexScriptParser:
                 first_regime = await Regime.first()
                 fields[key] = first_regime.pk
 
-        if yield_creation:
-            return Yield(model, identifier, fields, YieldType.CREATE_MODEL)
-
         await model.create(**fields)
 
     async def get_model(self, model, identifier):
-        attribute = re.search(
-            r"return\s+self\.(\w+)", inspect.getsource(model.name.__str__)
-        ).group(1)
+        attribute = self.extract_str_attr(model.name)
 
         correction_list = await model.name.all().values_list(attribute, flat=True)
         translated_identifier = self.translate(model.extra_data[0].lower())
@@ -377,8 +335,10 @@ class DexScriptParser:
             case Types.MODEL:
                 current_model = MODELS[value.name.lower()]
 
-                value.name = current_model[0]
-                value.extra_data.append(current_model[1])
+                string_key = self.extract_str_attr(current_model)
+
+                value.name = current_model
+                value.extra_data.append(string_key)
 
             case Types.BOOLEAN:
                 value.name = value.name.lower() == "true"
@@ -462,10 +422,10 @@ class DexScriptParser:
                     if value.type != Types.METHOD:
                         continue
 
-                    new_method = Methods(self, self.ctx, line2)
+                    new_method = Methods(self, line2)
 
                     try:
-                        await getattr(new_method, value.name.lower())()
+                        await getattr(new_method, value.name.lower())(self.ctx)
                     except IndexError:
                         # TODO: Remove `error` duplicates.
 
