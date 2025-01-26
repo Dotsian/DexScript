@@ -32,7 +32,7 @@ class InstallerConfig:
     """
     Configuration class for the installer.
     """
-    github = ["Dotsian/DexScript", "main"]
+    github = ["Dotsian/DexScript", "dev"]
     migrations = [
         (
             "¶¶await self.add_cog(Core(self))",
