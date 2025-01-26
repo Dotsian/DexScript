@@ -193,10 +193,6 @@ class Methods:
         )
 
 
-    async def filter_view(self, ctx):
-        pass
-
-
     async def attributes(self, ctx):
         model = self.args[1].name
 
@@ -233,20 +229,27 @@ class Methods:
             case "read":
                 await ctx.send(file=discord.File(self.args[2].name))
 
+            case "listdir":
+                value = self.args[2].name if in_list(self.args, 2) else None
+
+                await ctx.send(f"```{'\n'.join(os.listdir(value))}```")
+
             case "delete":
-                os.remove(self.args[2].name)
+                is_dir = os.path.isdir(self.args[2].name)
 
-                await ctx.send(f"Deleted `{self.args[2]}`")
+                file_type = "directory" if is_dir else "file"
 
-            case "rmdir":
-                shutil.rmtree(self.args[2].name)
+                if is_dir:
+                    shutil.rmtree(self.args[2].name)
+                else:
+                    os.remove(self.args[2].name)
 
-                await ctx.send(f"Deleted `{self.args[2]}` directory")
+                await ctx.send(f"Deleted `{self.args[2]}` {file_type}")
 
             case _:
                 raise DexScriptError(
                     f"'{self.args[0]}' is not a valid file operation. "
-                    "(READ, WRITE, CLEAR, RMDIR, or DELETE)"
+                    "(READ, WRITE, CLEAR, LISTDIR, or DELETE)"
                 )
 
 
