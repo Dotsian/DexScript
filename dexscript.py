@@ -513,10 +513,12 @@ class DexScriptParser:
                 
                 method_function = getattr(Methods(self), method.name.lower())
 
+                line2.pop(0)
+
                 try:
-                    await method_function(self.ctx, *line2.pop(0))
-                except TypeError as error:
-                    final = error
+                    await method_function(self.ctx, *line2)
+                except TypeError:
+                    final = traceback.format_exc()
 
                     if not SETTINGS["DEBUG"]:
                         final = f"Argument missing when calling {method.name}."
