@@ -491,7 +491,7 @@ class DexScriptParser:
             Types.METHOD: lower in method_functions,
             Types.MODEL: lower in MODELS,
             Types.DATETIME: is_date(lower) and lower.count("-") >= 2,
-            Types.NUMBER: is_number(lower)
+            Types.NUMBER: is_number(lower),
             Types.BOOLEAN: lower in ["true", "false"]
         }
 
