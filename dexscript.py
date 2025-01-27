@@ -211,8 +211,8 @@ class Methods:
         self, ctx, model, attribute, old_value, new_value, tortoise_operator=None
     ):
         """
-        Updates all instances of a model to the specified value where the specified attribute meets 
-        the condition  defined by the optional `TORTOISE_OPERATOR` argument 
+        Updates all instances of a model to the specified value where the specified attribute 
+        meets the condition  defined by the optional `TORTOISE_OPERATOR` argument 
         (e.g., greater than, equal to, etc.).
 
         Documentation
