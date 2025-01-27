@@ -91,6 +91,22 @@ def in_list(list_attempt, index):
         return False
 
 
+def is_number(string):
+    try:
+        float(string)
+        return True
+    except ValueError:
+        return False
+
+
+def is_date(string):
+    try:
+        parse_date(string)
+        return True
+    except Exception:
+        return False
+
+
 @dataclass
 class Value:
     name: Any
@@ -343,22 +359,6 @@ class DexScriptParser:
         self.values = []
 
     @staticmethod
-    def is_number(string):
-        try:
-            float(string)
-            return True
-        except ValueError:
-            return False
-
-    @staticmethod
-    def is_date(string):
-        try:
-            parse_date(string)
-            return True
-        except Exception:
-            return False
-
-    @staticmethod
     def autocorrect(string, correction_list, error="does not exist."):
         autocorrection = get_close_matches(string, correction_list)
 
@@ -378,22 +378,41 @@ class DexScriptParser:
     async def create_model(self, model, identifier):
         fields = {}
 
-        for key, field in vars(model()).items():
-            if field is not None:
+        for field, field_type in model._meta.fields_map.items():
+            field_data = vars(model()).get(field)
+
+            special_list = {
+                "Identifiers": ["country", "catch_names", "name"],
+                "Ignore": ["id", "short_name"]
+            }
+
+            for key, value in special_list.items():
+                special_list[key] = self.translate(value)
+
+            if field_data is not None or field in special_list["Ignore"]:
                 continue
 
-            if key in ["id", "short_name"]:
-                continue
-
-            fields[key] = 1
-
-            if key in ["country", "full_name", "catch_names", "name"]:
+            if key in special_list["Identifiers"]:
                 fields[key] = identifier
-            elif key == "emoji_id":
-                fields[key] = 100 ** 8
-            elif key == "regime_id":
-                first_regime = await Regime.first()
-                fields[key] = first_regime.pk
+                continue
+
+            match field_type:
+                case "ForeignKeyFieldInstance":
+                    first_model = await MODELS[field].first()
+
+                    if first_model is None:
+                        raise DexScriptError(f"Could not find default {field}")
+
+                    fields[field] = first_model.pk
+
+                case "BigIntField":
+                    fields[field] = 100 ** 8
+
+                case "BackwardFKRelation" | "JSONField":
+                    continue
+
+                case _:
+                    fields[field] = 1
 
         await model.create(**fields)
 
@@ -435,44 +454,53 @@ class DexScriptParser:
         return return_value
 
     @staticmethod
-    def translate(string: str, item=None):
+    def translate(original: str | list[str]):
         """
         Translates model and field names into a format for both Ballsdex and CarFigures.
 
         Parameters
         ----------
-        string: str
-          The string you want to translate.
+        original: str | list[str]
+            The original string or list of strings you want to translate.
         """
         if dir_type == "ballsdex":
-            return getattr(item, string) if item else string
+            return original
 
-        translation = {"BALL": "ENTITY", "COUNTRY": "full_name"}
+        translation = {
+            "BALL": "ENTITY",
+            "COUNTRY": "fullName",
+            "SHORT_NAME": "shortName",
+            "CATCH_NAMES": "catchNames",
+            "ICON": "image",
+        }
 
-        translated_string = translation.get(string.upper(), string)
+        if isinstance(original, list):
+            translated_copy = [translation.get(x.upper(), x) for x in original]
+        else:
+            translated_copy = translation.get(original.upper(), original)
 
-        return getattr(item, translated_string) if item else translated_string
+        return translated_copy
 
     def create_value(self, line):
-        type = Types.STRING
-
-        value = Value(line, type)
+        value = Value(line, TYpes.STRING)
         lower = line.lower()
 
         method_functions = [x for x in dir(Methods) if not x.startswith("__")]
 
-        if lower in method_functions:
-            type = Types.METHOD
-        elif lower in MODELS:
-            type = Types.MODEL
-        elif self.is_date(lower) and lower.count("-") >= 2:
-            type = Types.DATETIME
-        elif self.is_number(lower):
-            type = Types.NUMBER
-        elif lower in ["true", "false"]:
-            type = Types.BOOLEAN
+        type_dict = {
+            Types.METHOD: lower in method_functions,
+            Types.MODEL: lower in MODELS,
+            Types.DATETIME: is_date(lower) and lower.count("-") >= 2,
+            Types.NUMBER: is_number(lower)
+            Types.BOOLEAN: lower in ["true", "false"]
+        }
 
-        value.type = type
+        for key, value in type_dict.items():
+            if value is False:
+                continue
+
+            value.type = key
+            break
 
         return self.var(value)
 
