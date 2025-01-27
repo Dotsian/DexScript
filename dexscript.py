@@ -61,11 +61,6 @@ class Types(Enum):
     DATETIME = 5
 
 
-class CodeStatus(Enum):
-    SUCCESS = 0
-    FAILURE = 1
-
-
 class DexScriptError(Exception):
     pass
 
@@ -107,43 +102,83 @@ class Value:
 
 
 class Methods:
-    def __init__(self, parser, args: list[Value]):
-        self.args = args
+    def __init__(self, parser):
         self.parser = parser
 
 
-    async def create(self, ctx):
-        await self.parser.create_model(self.args[1].name, self.args[2])
+    async def help(self, ctx):
+        """
+        Lists all DexScript commands and provides documentation for them.
 
-        await ctx.send(f"Created `{self.args[2]}`")
+        Documentation
+        -------------
+        HELP
+        """
+        # getattr(Methods, command).__doc__.replace("\n", "").split("Documentation-------------")
+        pass
 
 
-    async def delete(self, ctx):
-        await self.parser.get_model(self.args[1], self.args[2].name).delete()
+    async def create(self, ctx, model, identifier):
+        """
+        Creates a model instance.
 
-        await ctx.send(f"Deleted `{self.args[2]}`")
+        Documentation
+        -------------
+        CREATE > MODEL > IDENTIFIER
+        """
+        await self.parser.create_model(model.name, identifier)
+
+        await ctx.send(f"Created `{identifier}`")
 
 
-    async def update(self, ctx):
+    async def delete(self, ctx, model, identifier):
+        """
+        Deletes a model instance.
+
+        Documentation
+        -------------
+        DELETE > MODEL > IDENTIFIER
+        """
+        await self.parser.get_model(model, identifier.name).delete()
+
+        await ctx.send(f"Deleted `{identifier}`")
+
+
+    async def update(self, ctx, model, identifier, attribute, value):
+        """
+        Updates a model instance's attribute.
+
+        Documentation
+        -------------
+        UPDATE > MODEL > IDENTIFIER > ATTRIBUTE > VALUE
+        """
         new_attribute = None
 
         if ctx.message.attachments != []:
             image_path = await save_file(ctx.message.attachments[0])
             new_attribute = Value(f"/{image_path}", Types.STRING)
         else:
-            new_attribute = self.args[4]
+            new_attribute = value
 
-        await self.parser.get_model(self.args[1], self.args[2].name).update(
-            **{self.args[3].name.lower(): new_attribute.name}
+        await self.parser.get_model(model, identifier.name).update(
+            **{attribute.name.lower(): new_attribute.name}
         )
 
-        await ctx.send(f"Updated `{self.args[2]}'s` {self.args[3]} to `{new_attribute.name}`")
+        await ctx.send(f"Updated `{identifier}'s` {attribute} to `{new_attribute.name}`")
 
 
-    async def view(self, ctx):
-        returned_model = await self.parser.get_model(self.args[1], self.args[2].name)
+    async def view(self, ctx, model, identifier, attribute=None):
+        """
+        Displays an attribute of a model instance. If `ATTRIBUTE` is left blank, 
+        it will display every attribute of that model instance.
 
-        if not in_list(self.args, 3):
+        Documentation
+        -------------
+        VIEW > MODEL > IDENTIFIER > ATTRIBUTE(?)
+        """
+        returned_model = await self.parser.get_model(model, identifier.name)
+
+        if attribute is None:
             fields = {"content": "```"}
 
             for key, value in vars(returned_model).items():
@@ -155,6 +190,7 @@ class Methods:
                 if isinstance(value, str) and value.startswith("/static"):
                     if fields.get("files") is None:
                         fields["files"] = []
+                    
                     fields["files"].append(discord.File(value[1:]))
 
             fields["content"] += "```"
@@ -162,93 +198,137 @@ class Methods:
             await ctx.send(**fields)
             return
 
-        attribute = getattr(returned_model, self.args[3].name.lower())
+        new_attribute = getattr(returned_model, attribute.name.lower())
 
-        if isinstance(attribute, str) and os.path.isfile(attribute[1:]):
-            await ctx.send(f"```{attribute}```", file=discord.File(attribute[1:]))
+        if isinstance(new_attribute, str) and os.path.isfile(new_attribute[1:]):
+            await ctx.send(f"```{new_attribute}```", file=discord.File(new_attribute[1:]))
             return
 
-        await ctx.send(f"```{attribute}```")
+        await ctx.send(f"```{new_attribute}```")
 
 
-    async def filter_update(self, ctx):
-        attribute = self.args[2].name.lower()
+    async def filter_update(
+        self, ctx, model, attribute, old_value, new_value, tortoise_operator=None
+    ):
+        """
+        Updates all instances of a model to the specified value where the specified attribute meets 
+        the condition  defined by the optional `TORTOISE_OPERATOR` argument 
+        (e.g., greater than, equal to, etc.).
 
-        await self.args[1].name.filter(**{attribute: self.args[3].name}).update(
-            **{attribute: self.args[4].name}
+        Documentation
+        -------------
+        FILTER_UPDATE > MODEL > ATTRIBUTE > OLD_VALUE > NEW_VALUE > TORTOISE_OPERATOR(?)
+        """
+        lower_name = attribute.name.lower()
+
+        if tortoise_operator is not None:
+            lower_name += f"__{tortoise_operator.name.lower()}"
+
+        await model.name.filter(**{lower_name: old_value.name}).update(
+            **{lower_name: new_value.name}
         )
 
         await ctx.send(
-            f"Updated all `{self.args[1]}` instances from a "
-            f"`{self.args[2]}` value of `{self.args[3]}` to `{self.args[4]}`"
+            f"Updated all `{model}` instances from a "
+            f"`{attribute}` value of `{old_value}` to `{new_value}`"
         )
 
 
-    async def filter_remove(self, ctx):
-        await self.args[1].name.filter(**{self.args[2].name.lower(): self.args[3].name}).delete()
+    async def filter_delete(
+        self, ctx, model, attribute, value, tortoise_operator=None
+    ):
+        """
+        Deletes all instances of a model where the specified attribute meets the condition 
+        defined by the optional `TORTOISE_OPERATOR` argument (e.g., greater than, equal to, etc.).
+
+        Documentation
+        -------------
+        FILTER_DELETE > MODEL > ATTRIBUTE > VALUE > TORTOISE_OPERATOR(?)
+        """
+        lower_name = attribute.name.lower()
+        
+        if tortoise_operator is not None:
+            lower_name += f"__{tortoise_operator.name.lower()}"
+        
+        await model.name.filter(**{lower_name: value.name}).delete()
 
         await ctx.send(
-            f"Deleted all `{self.args[1]}` instances with a "
-            f"`{self.args[2]}` value of `{self.args[3]}`"
+            f"Deleted all `{model}` instances with a "
+            f"`{attribute}` value of `{value}`"
         )
 
 
-    async def attributes(self, ctx):
-        model = self.args[1].name
+    async def attributes(self, ctx, model):
+        """
+        Lists all changeable attributes of a model.
 
-        model_name = model if isinstance(model, str) else model.__name__
+        Documentation
+        -------------
+        ATTRIBUTES > MODEL
+        """
+        model_name = (
+            model.name if isinstance(model.name, str) else model.name.__name__
+        )
 
         parameters = f"{model_name.upper()} ATTRIBUTES:\n\n"
 
-        for field in vars(model()):  # type: ignore
+        for field in vars(model.name()):  # type: ignore
             if field[:1] == "_":
                 continue
 
             parameters += f"- {field.replace(' ', '_').upper()}\n"
 
-        await ctx.send(f"```\n{parameters}\n```")
+        await ctx.send(f"```{parameters}```")
 
 
-    async def dev(self, ctx):
-        match self.args[1].name.lower():
+    async def dev(self, ctx, operation, file_name=None):
+        """
+        Developer commands for managing and modifying the bot's internal filesystem.
+
+        Documentation
+        -------------
+        DEV > OPERATION > FILE_NAME(?)
+        """
+        match operation.name.lower():
             case "write":
+                if file_name is None:
+                    raise DexScriptError("`File name is None")
+                
                 new_file = ctx.message.attachments[0]
 
-                with open(self.args[2].name, "w") as opened_file:
+                with open(file_name.name, "w") as opened_file:
                     contents = await new_file.read()
                     opened_file.write(contents.decode("utf-8"))
 
-                await ctx.send(f"Wrote to `{self.args[2]}`")
+                await ctx.send(f"Wrote to `{file_name}`")
 
             case "clear":
-                with open(self.args[2].name, "w") as _:
+                with open(file_name.name, "w") as _:
                     pass
 
-                await ctx.send(f"Cleared `{self.args[2]}`")
+                await ctx.send(f"Cleared `{file_name}`")
 
             case "read":
-                await ctx.send(file=discord.File(self.args[2].name))
+                await ctx.send(file=discord.File(file_name.name))
 
             case "listdir":
-                value = self.args[2].name if in_list(self.args, 2) else None
-
-                await ctx.send(f"```{'\n'.join(os.listdir(value))}```")
+                await ctx.send(f"```{'\n'.join(os.listdir(file_name))}```")
 
             case "delete":
-                is_dir = os.path.isdir(self.args[2].name)
+                is_dir = os.path.isdir(file_name.name)
 
                 file_type = "directory" if is_dir else "file"
 
                 if is_dir:
-                    shutil.rmtree(self.args[2].name)
+                    shutil.rmtree(file_name.name)
                 else:
-                    os.remove(self.args[2].name)
+                    os.remove(file_name.name)
 
-                await ctx.send(f"Deleted `{self.args[2]}` {file_type}")
+                await ctx.send(f"Deleted `{file_name}` {file_type}")
 
             case _:
                 raise DexScriptError(
-                    f"'{self.args[0]}' is not a valid file operation. "
+                    f"'{operation}' is not a valid dev operation. "
                     "(READ, WRITE, CLEAR, LISTDIR, or DELETE)"
                 )
 
@@ -379,7 +459,9 @@ class DexScriptParser:
         value = Value(line, type)
         lower = line.lower()
 
-        if lower in vars(Methods):
+        method_functions = [x for x in dir(Methods) if not x.startswith("__")]
+
+        if lower in method_functions:
             type = Types.METHOD
         elif lower in MODELS:
             type = Types.MODEL
@@ -394,7 +476,7 @@ class DexScriptParser:
 
         return self.var(value)
 
-    async def execute(self, code: str):
+    async def execute(self, code: str) -> str | None:
         try:
             seperator = "\n" if "\n" in code else ";'"
 
@@ -424,23 +506,21 @@ class DexScriptParser:
                             parsed_code.append(line_code)
 
             for line2 in parsed_code:
-                for value in line2:
-                    if value.type != Types.METHOD:
-                        continue
+                method = line2[0]
 
-                    new_method = Methods(self, line2)
+                if method.type != Types.METHOD:
+                    return f"'{method.name}' is not a valid command."
+                
+                method_function = getattr(Methods(self), method.name.lower())
 
-                    try:
-                        await getattr(new_method, value.name.lower())(self.ctx)
-                    except IndexError:
-                        # TODO: Remove `error` duplicates.
-
-                        error = f"Argument missing when calling {value.name}."
-                        return ((error, error), CodeStatus.FAILURE)
+                try:
+                    await method_function(self.ctx, *line2.pop(0))
+                except TypeError:
+                    return f"Argument missing when calling {method.name}."
         except Exception as error:
-            return ((error, traceback.format_exc()), CodeStatus.FAILURE)
+            return traceback.format_exc() if SETTINGS["DEBUG"] else error
 
-        return (None, CodeStatus.SUCCESS)
+        return None
 
 
 class DexScript(commands.Cog):
@@ -495,7 +575,7 @@ class DexScript(commands.Cog):
         Parameters
         ----------
         code: str
-          The code you'd like to execute.
+          The code you want to execute.
         """
         body = self.cleanup_code(code)
 
@@ -505,12 +585,13 @@ class DexScript(commands.Cog):
             await ctx.send(f"-# {version_check}")
 
         dexscript_instance = DexScriptParser(ctx)
-        result, status = await dexscript_instance.execute(body)
+        result = await dexscript_instance.execute(body)
 
-        if status == CodeStatus.FAILURE and result is not None:
-            await ctx.send(f"```ERROR: {result[SETTINGS['DEBUG']]}\n```")
-        else:
-            await ctx.message.add_reaction("✅")
+        if result is not None:
+            await ctx.send(f"```ERROR: {result}```")
+            return
+        
+        await ctx.message.add_reaction("✅")
 
     @commands.command()
     @commands.is_owner()
@@ -556,7 +637,7 @@ class DexScript(commands.Cog):
         else:
             await ctx.send(
                 "Failed to update DexScript. Report this issue to `dot_zz` on Discord.\n"
-                f"```\nERROR CODE: {r.status_code}\n```"
+                f"```ERROR CODE: {r.status_code}```"
             )
 
     @commands.command(name="reload-ds")
