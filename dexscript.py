@@ -17,20 +17,17 @@ import requests
 from dateutil.parser import parse as parse_date
 from discord.ext import commands
 
-dir_type = "ballsdex" if os.path.isdir("ballsdex") else "carfigures"
+DIR = "ballsdex" if os.path.isdir("ballsdex") else "carfigures"
 
-if dir_type == "ballsdex":
+if DIR == "ballsdex":
     from ballsdex.core.models import Ball, Economy, Regime, Special
     from ballsdex.settings import settings
 else:
-    from carfigures.core.models import Car as Ball
-    from carfigures.core.models import CarType as Regime
-    from carfigures.core.models import Country as Economy
-    from carfigures.core.models import Event as Special
+    from carfigures.core.models import Car, CarType, Country, Event
     from carfigures.settings import settings
 
 
-log = logging.getLogger(f"{dir_type}.core.dexscript")
+log = logging.getLogger(f"{DIR}.core.dexscript")
 
 __version__ = "0.4.3.3"
 
@@ -39,16 +36,19 @@ START_CODE_BLOCK_RE = re.compile(r"^((```sql?)(?=\s)|(```))")
 FILENAME_RE = re.compile(r"^(.+)(\.\S+)$")
 
 MODELS = {
-    "ball": Ball,
-    "regime": Regime,
-    "economy": Economy,
-    "special": Special,
-}
-
-SETTINGS = {
-    "DEBUG": False,
-    "OUTDATED-WARNING": True,
-    "REFERENCE": "main",
+    "ballsdex": [
+        Ball,
+        Regime,
+        Economy,
+        Special
+    ],
+    "carfigures": [
+        Car,
+        CarType,
+        Country,
+        Event
+        FontPack
+    ]
 }
 
 
@@ -83,30 +83,6 @@ async def save_file(attachment: discord.Attachment) -> Path:
     return path
 
 
-def in_list(list_attempt, index):
-    try:
-        list_attempt[index]
-        return True
-    except Exception:
-        return False
-
-
-def is_number(string):
-    try:
-        float(string)
-        return True
-    except ValueError:
-        return False
-
-
-def is_date(string):
-    try:
-        parse_date(string)
-        return True
-    except Exception:
-        return False
-
-
 @dataclass
 class Value:
     name: Any
@@ -115,6 +91,119 @@ class Value:
 
     def __str__(self):
         return str(self.name)
+
+
+@dataclass
+class Settings:
+    """
+    Settings class for DexScript.
+    """
+
+    debug = False
+    versioncheck = False
+    reference = "main"
+
+
+config = Settings()
+
+
+@dataclass
+class Models:
+    """
+    Model functions.
+    """
+
+    @staticmethod
+    def fetch_model(field):
+        return next(
+            (x for x in self.all() if x.__name__ == field), None
+        )
+
+    @staticmethod
+    def all(names=False):
+        allowed_list = {
+            "ballsdex": [
+                Ball,
+                Regime,
+                Economy,
+                Special
+            ],
+            "carfigures": [
+                Car,
+                CarType,
+                Country,
+                Event
+                FontPack
+            ]
+        }
+
+        return_list = allowed_list[DIR]
+
+        if names:
+            return_list = [x.__name__ for x in return_list]
+
+        return return_list
+
+    
+
+    @staticmethod
+    def port(original: str | list[str]):
+        """
+        Translates model and field names into a format for both Ballsdex and CarFigures.
+
+        Parameters
+        ----------
+        original: str | list[str]
+            The original string or list of strings you want to translate.
+        """
+        if DIR == "ballsdex":
+            return original
+
+        translation = {
+            "BALL": "ENTITY",
+            "COUNTRY": "fullName",
+            "SHORT_NAME": "shortName",
+            "CATCH_NAMES": "catchNames",
+            "ICON": "image",
+        }
+
+        if isinstance(original, list):
+            translated_copy = [translation.get(x.upper(), x) for x in original]
+        else:
+            translated_copy = translation.get(original.upper(), original)
+
+        return translated_copy
+
+
+@dataclass
+class Utils:
+    """
+    DexScript utility functions.
+    """
+
+    @staticmethod
+    def in_list(list_attempt, index):
+        try:
+            list_attempt[index]
+            return True
+        except Exception:
+            return False
+
+    @staticmethod
+    def is_number(string):
+        try:
+            float(string)
+            return True
+        except ValueError:
+            return False
+
+    @staticmethod
+    def is_date(string):
+        try:
+            parse_date(string)
+            return True
+        except Exception:
+            return False
 
 
 class Methods:
@@ -175,6 +264,8 @@ class Methods:
             new_attribute = Value(f"/{image_path}", Types.STRING)
         else:
             new_attribute = value
+
+        models_list = Models.all(True)
 
         await self.parser.get_model(model, identifier.name).update(
             **{attribute.name.lower(): new_attribute.name}
@@ -392,7 +483,7 @@ class DexScriptParser:
             }
 
             for key, value in special_list.items():
-                special_list[key] = self.translate(value)
+                special_list[key] = Models.port(value)
 
             if field_data is not None or field in special_list["Ignore"]:
                 continue
@@ -403,12 +494,13 @@ class DexScriptParser:
 
             match field_type:
                 case "ForeignKeyFieldInstance":
-                    first_model = await MODELS[field].first()
+                    model = Utils.fetch_model(field)
+                    instance = await model.first()
 
-                    if first_model is None:
+                    if instance is None:
                         raise DexScriptError(f"Could not find default {field}")
 
-                    fields[field] = first_model.pk
+                    fields[field] = instance.pk
 
                 case "BigIntField":
                     fields[field] = 100 ** 8
@@ -425,7 +517,7 @@ class DexScriptParser:
         attribute = self.extract_str_attr(model.name)
 
         correction_list = await model.name.all().values_list(attribute, flat=True)
-        translated_identifier = self.translate(model.extra_data[0].lower())
+        translated_identifier = Models.port(model.extra_data[0].lower())
 
         try:
             returned_model = await model.name.filter(
@@ -443,11 +535,11 @@ class DexScriptParser:
 
         match value.type:
             case Types.MODEL:
-                current_model = MODELS[value.name.lower()]
+                model = Utils.fetch_model(value.name.lower())
 
-                string_key = self.extract_str_attr(current_model)
+                string_key = self.extract_str_attr(model)
 
-                value.name = current_model
+                value.name = model
                 value.extra_data.append(string_key)
 
             case Types.BOOLEAN:
@@ -458,34 +550,6 @@ class DexScriptParser:
 
         return return_value
 
-    @staticmethod
-    def translate(original: str | list[str]):
-        """
-        Translates model and field names into a format for both Ballsdex and CarFigures.
-
-        Parameters
-        ----------
-        original: str | list[str]
-            The original string or list of strings you want to translate.
-        """
-        if dir_type == "ballsdex":
-            return original
-
-        translation = {
-            "BALL": "ENTITY",
-            "COUNTRY": "fullName",
-            "SHORT_NAME": "shortName",
-            "CATCH_NAMES": "catchNames",
-            "ICON": "image",
-        }
-
-        if isinstance(original, list):
-            translated_copy = [translation.get(x.upper(), x) for x in original]
-        else:
-            translated_copy = translation.get(original.upper(), original)
-
-        return translated_copy
-
     def create_value(self, line):
         value = Value(line, Types.STRING)
         lower = line.lower()
@@ -494,7 +558,7 @@ class DexScriptParser:
 
         type_dict = {
             Types.METHOD: lower in method_functions,
-            Types.MODEL: lower in MODELS,
+            Types.MODEL: lower in MODELS[DIR],
             Types.DATETIME: is_date(lower) and lower.count("-") >= 2,
             Types.NUMBER: is_number(lower),
             Types.BOOLEAN: lower in ["true", "false"]
@@ -553,12 +617,12 @@ class DexScriptParser:
                 except TypeError:
                     final = f"Argument missing when calling {method.name}."
 
-                    if SETTINGS["DEBUG"]:
+                    if config.debug
                         final = traceback.format_exc()
 
                     return final
         except Exception as error:
-            return traceback.format_exc() if SETTINGS["DEBUG"] else error
+            return traceback.format_exc() if config.debug else error
 
         return None
 
@@ -583,12 +647,12 @@ class DexScript(commands.Cog):
 
     @staticmethod
     def check_version():
-        if not SETTINGS["OUTDATED-WARNING"]:
+        if not config.versioncheck:
             return None
 
         r = requests.get(
             "https://api.github.com/repos/Dotsian/DexScript/contents/pyproject.toml",
-            {"ref": SETTINGS["REFERENCE"]},
+            {"ref": config.branch},
         )
 
         if r.status_code != requests.codes.ok:
@@ -668,7 +732,7 @@ class DexScript(commands.Cog):
         """
         r = requests.get(
             "https://api.github.com/repos/Dotsian/DexScript/contents/installer.py",
-            {"ref": SETTINGS["REFERENCE"]},
+            {"ref": config.branch},
         )
 
         if r.status_code == requests.codes.ok:
@@ -686,12 +750,14 @@ class DexScript(commands.Cog):
         """
         Reloads DexScript.
         """
-        await self.bot.reload_extension(f"{dir_type}.core.dexscript")
+        await self.bot.reload_extension(f"{DIR}.core.dexscript")
         await ctx.send("Reloaded DexScript")
 
     @commands.command()
     @commands.is_owner()
-    async def setting(self, ctx: commands.Context, setting: str, value: str):
+    async def setting(
+        self, ctx: commands.Context, setting: str, value: str | None = None
+    ):
         """
         Changes a setting based on the value provided.
 
@@ -699,20 +765,18 @@ class DexScript(commands.Cog):
         ----------
         setting: str
           The setting you want to toggle.
-        value: str
+        value: str | None
           The value you want to set the setting to.
         """
         response = f"`{setting}` is not a valid setting."
 
-        if setting in SETTINGS:
-            selected_setting = SETTINGS[setting]
+        if name, setting_value in vars(config):
+            new_value = value
 
-            if isinstance(selected_setting, bool):
-                SETTINGS[setting] = bool(value)
-            elif isinstance(selected_setting, str):
-                SETTINGS[setting] = value
+            if isinstance(setting_value, bool):
+                new_value = bool(value) if value else not setting_value
 
-            response = f"`{setting}` has been set to `{value}`"
+            response = f"`{name}` has been set to `{value}`"
 
         await ctx.send(response)
 
