@@ -297,55 +297,63 @@ class Methods:
         await ctx.send(f"```{parameters}```")
 
 
-    async def dev(self, ctx, operation, file_name=None):
+    async def dev(self, ctx, operation, file_path=None):
         """
         Developer commands for managing and modifying the bot's internal filesystem.
 
         Documentation
         -------------
-        DEV > OPERATION > FILE_NAME(?)
+        DEV > OPERATION > FILE_PATH(?)
         """
-        match operation.name.lower():
+        lower = operation.name.lower()
+        valid_operations = ["write", "clear", "read", "listdir", "delete"]
+
+        if lower != "listdir" and lower in valid_operations and file_path is None:
+            raise DexScriptError("`file_path` is None")
+        
+        match lower:
             case "write":
-                if file_name is None:
-                    raise DexScriptError("`File name is None")
+                if file_path is None:
+                    raise DexScriptError("`file_path` is None")
                 
                 new_file = ctx.message.attachments[0]
 
-                with open(file_name.name, "w") as opened_file:
+                with open(file_path.name, "w") as opened_file:
                     contents = await new_file.read()
                     opened_file.write(contents.decode("utf-8"))
 
-                await ctx.send(f"Wrote to `{file_name}`")
+                await ctx.send(f"Wrote to `{file_path}`")
 
             case "clear":
-                with open(file_name.name, "w") as _:
+                with open(file_path.name, "w") as _:
                     pass
 
-                await ctx.send(f"Cleared `{file_name}`")
+                await ctx.send(f"Cleared `{file_path}`")
 
             case "read":
-                await ctx.send(file=discord.File(file_name.name))
+                await ctx.send(file=discord.File(file_path.name))
 
             case "listdir":
-                await ctx.send(f"```{'\n'.join(os.listdir(file_name))}```")
+                path = file_path.name if file_path is not None else None
+
+                await ctx.send(f"```{'\n'.join(os.listdir(path))}```")
 
             case "delete":
-                is_dir = os.path.isdir(file_name.name)
+                is_dir = os.path.isdir(file_path.name)
 
                 file_type = "directory" if is_dir else "file"
 
                 if is_dir:
-                    shutil.rmtree(file_name.name)
+                    shutil.rmtree(file_path.name)
                 else:
-                    os.remove(file_name.name)
+                    os.remove(file_path.name)
 
-                await ctx.send(f"Deleted `{file_name}` {file_type}")
+                await ctx.send(f"Deleted `{file_path}` {file_type}")
 
             case _:
                 raise DexScriptError(
-                    f"'{operation}' is not a valid dev operation. "
-                    "(READ, WRITE, CLEAR, LISTDIR, or DELETE)"
+                    f"'{operation}' is not a valid dev operation.\n"
+                    f"({", ".join([x.upper() for x in valid_operations])})"
                 )
 
 
