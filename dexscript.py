@@ -313,9 +313,6 @@ class Methods:
         
         match lower:
             case "write":
-                if file_path is None:
-                    raise DexScriptError("`file_path` is None")
-                
                 new_file = ctx.message.attachments[0]
 
                 with open(file_path.name, "w") as opened_file:
