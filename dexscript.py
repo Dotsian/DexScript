@@ -482,7 +482,7 @@ class DexScriptParser:
         return translated_copy
 
     def create_value(self, line):
-        value = Value(line, TYpes.STRING)
+        value = Value(line, Types.STRING)
         lower = line.lower()
 
         method_functions = [x for x in dir(Methods) if not x.startswith("__")]
