@@ -495,8 +495,8 @@ class DexScriptParser:
             Types.BOOLEAN: lower in ["true", "false"]
         }
 
-        for key, value in type_dict.items():
-            if value is False:
+        for key, operation in type_dict.items():
+            if operation is False:
                 continue
 
             value.type = key
@@ -546,10 +546,10 @@ class DexScriptParser:
                 try:
                     await method_function(self.ctx, *line2)
                 except TypeError:
-                    final = traceback.format_exc()
+                    final = f"Argument missing when calling {method.name}."
 
-                    if not SETTINGS["DEBUG"]:
-                        final = f"Argument missing when calling {method.name}."
+                    if SETTINGS["DEBUG"]:
+                        final = traceback.format_exc()
 
                     return final
         except Exception as error:
