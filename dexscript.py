@@ -545,7 +545,7 @@ class DexScriptParser:
 
         return value
 
-    def error(message, log):
+    def error(self, message, log):
         return (message, log)[config.debug]
 
     async def execute(self, code: str):
