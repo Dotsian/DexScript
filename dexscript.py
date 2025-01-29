@@ -528,8 +528,6 @@ class DexScriptParser:
             value.type = key
             break
 
-                return_value = value
-
         match value.type:
             case Types.MODEL:
                 model = Models.fetch_model(value.name.lower())
@@ -733,6 +731,8 @@ class DexScript(commands.Cog):
         value: str | None
           The value you want to set the setting to.
         """
+        setting = setting.lower()
+
         if setting not in vars(config):
             await ctx.send(f"`{setting}` is not a valid setting.")
             return
