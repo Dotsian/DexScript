@@ -20,10 +20,10 @@ from discord.ext import commands
 DIR = "ballsdex" if os.path.isdir("ballsdex") else "carfigures"
 
 if DIR == "ballsdex":
-    from ballsdex.core.models import Ball, Economy, Regime, Special
+    from ballsdex.core.models import Ball, Economy, Regime, Special # noqa: F401
     from ballsdex.settings import settings
 else:
-    from carfigures.core.models import Car, CarType, Country, Event, FontPack
+    from carfigures.core.models import Car, CarType, Country, Event, FontsPack # noqa: F401
     from carfigures.settings import settings
 
 
@@ -107,24 +107,24 @@ class Models:
     def all(names=False):
         allowed_list = {
             "ballsdex": [
-                Ball,
-                Regime,
-                Economy,
-                Special
+                "Ball",
+                "Regime",
+                "Economy",
+                "Special"
             ],
             "carfigures": [
-                Car,
-                CarType,
-                Country,
-                Event,
-                FontPack
+                "Car",
+                "CarType",
+                "Country",
+                "Event",
+                "FontsPack"
             ]
         }
 
         return_list = allowed_list[DIR]
 
-        if names:
-            return_list = [x.__name__ for x in return_list]
+        if not names:
+            return_list = [globals().get(x) for x in return_list if globals().get(x) is not None]
 
         return return_list
 
