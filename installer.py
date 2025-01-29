@@ -80,7 +80,7 @@ class Installer:
 
         description = (
             f"Please submit a [bug report]"
-            f"(<https://github.com/{GITHUB[0]}/issues/new/choose>) to the GitHub page"
+            f"(<https://github.com/{config.github[0]}/issues/new/choose>) to the GitHub page"
         )
 
         if exception:
