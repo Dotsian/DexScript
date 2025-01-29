@@ -94,7 +94,7 @@ class Installer:
         fields = {"embed": self.embed}
 
         if exception:
-            fields["file"] = discord.File(StringIO(error), filename="DexScript.log")
+            fields["attachments"] = [discord.File(StringIO(error), filename="DexScript.log")]
 
         await self.message.edit(**fields)
 
