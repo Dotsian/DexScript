@@ -99,9 +99,7 @@ class Models:
 
     @staticmethod
     def fetch_model(field):
-        return next(
-            (x for x in Models.all() if x.__name__ == field), None
-        )
+        return globals().get(field)
 
     @staticmethod
     def all(names=False):
@@ -225,21 +223,22 @@ class Methods:
         await ctx.send(f"Deleted `{identifier}`")
 
 
-    async def update(self, ctx, model, identifier, attribute, value):
+    async def update(self, ctx, model, identifier, attribute, value=None):
         """
-        Updates a model instance's attribute.
+        Updates a model instance's attribute. If value is None, it will check
+        for any attachments.
 
         Documentation
         -------------
-        UPDATE > MODEL > IDENTIFIER > ATTRIBUTE > VALUE
+        UPDATE > MODEL > IDENTIFIER > ATTRIBUTE > VALUE(?)
         """
-        new_attribute = None
+        new_attribute = value
 
-        if ctx.message.attachments != []:
-            image_path = await save_file(ctx.message.attachments[0])
+        if value is None and self.parser.attachments != []:
+            image_path = await save_file(self.parser.attachments[0])
             new_attribute = Value(f"/{image_path}", Types.STRING)
-        else:
-            new_attribute = value
+
+            self.parser.attachments.pop(0)
 
         # models_list = Models.all(True)
 
@@ -290,6 +289,7 @@ class Methods:
         await ctx.send(f"```{new_attribute}```")
 
 
+    # TODO: Add attachment support.
     async def filter_update(
         self, ctx, model, attribute, old_value, new_value, tortoise_operator=None
     ):
@@ -428,6 +428,7 @@ class DexScriptParser:
 
     def __init__(self, ctx):
         self.ctx = ctx
+        self.attachments = ctx.message.attachments
         self.values = []
 
     @staticmethod
@@ -470,8 +471,8 @@ class DexScriptParser:
 
             match field_type:
                 case "ForeignKeyFieldInstance":
-                    model = Utils.fetch_model(field)
-                    instance = await model.first()
+                    fetched_model = Models.fetch_model(field)
+                    instance = await fetched_model.first()
 
                     if instance is None:
                         raise DexScriptError(f"Could not find default {field}")
@@ -506,26 +507,6 @@ class DexScriptParser:
 
         return returned_model[0]
 
-    def var(self, value):
-        return_value = value
-
-        match value.type:
-            case Types.MODEL:
-                model = Utils.fetch_model(value.name.lower())
-
-                string_key = self.extract_str_attr(model)
-
-                value.name = model
-                value.extra_data.append(string_key)
-
-            case Types.BOOLEAN:
-                value.name = value.name.lower() == "true"
-
-            case Types.DATETIME:
-                value.name = parse_date(value.name)
-
-        return return_value
-
     def create_value(self, line):
         value = Value(line, Types.STRING)
         lower = line.lower()
@@ -547,60 +528,61 @@ class DexScriptParser:
             value.type = key
             break
 
-        return self.var(value)
+                return_value = value
 
-    async def execute(self, code: str) -> str | None:
-        try:
-            seperator = "\n" if "\n" in code else ";'"
+        match value.type:
+            case Types.MODEL:
+                model = Models.fetch_model(value.name.lower())
 
-            split_code = [x for x in code.split(seperator) if x.strip() != ""]
+                string_key = self.extract_str_attr(model)
 
-            parsed_code: list[list[Value]] = []
+                value.name = model
+                value.extra_data.append(string_key)
 
-            for line in split_code:
-                line_code: list[Value] = []
-                full_line = ""
+            case Types.BOOLEAN:
+                value.name = value.name.lower() == "true"
 
-                for index2, char in enumerate(line):
-                    if char == "":
-                        continue
+            case Types.DATETIME:
+                value.name = parse_date(value.name)
 
-                    full_line += char
+        return value
 
-                    if full_line == "--":
-                        break
+    def error(message, log):
+        return (message, log)[config.debug]
 
-                    if char in [">"] or index2 == len(line) - 1:
-                        line_code.append(self.create_value(full_line.replace(">", "").strip()))
+    async def execute(self, code: str):
+        loaded_methods = Methods(self)
 
-                        full_line = ""
+        split_code = [x for x in code.split("\n") if x.strip() != ""]
 
-                        if len(line_code) == len(line.split(">")):
-                            parsed_code.append(line_code)
+        parsed_code = [
+            [self.create_value(s.strip()) for s in re.findall(r"[^>]+", line)]
+            for line in split_code if not line.strip().startswith("--")
+        ]
 
-            for line2 in parsed_code:
-                method = line2[0]
+        for line2 in parsed_code:
+            if line2 == []:
+                continue
+            
+            method = line2[0]
 
-                if method.type != Types.METHOD:
-                    return f"'{method.name}' is not a valid command."
-                
-                method_function = getattr(Methods(self), method.name.lower())
+            if method.type != Types.METHOD:
+                return self.error(
+                    f"'{method.name}' is not a valid command.",
+                    traceback.format_exc()
+                )
+            
+            method_function = getattr(loaded_methods, method.name.lower())
 
-                line2.pop(0)
+            line2.pop(0)
 
-                try:
-                    await method_function(self.ctx, *line2)
-                except TypeError:
-                    final = f"Argument missing when calling {method.name}."
-
-                    if config.debug:
-                        final = traceback.format_exc()
-
-                    return final
-        except Exception as error:
-            return traceback.format_exc() if config.debug else error
-
-        return None
+            try:
+                await method_function(self.ctx, *line2)
+            except TypeError:
+                return self.error(
+                    f"Argument missing when calling '{method.name}'.",
+                    traceback.format_exc()
+                )
 
 
 class DexScript(commands.Cog):
@@ -665,13 +647,20 @@ class DexScript(commands.Cog):
             await ctx.send(f"-# {version_check}")
 
         dexscript_instance = DexScriptParser(ctx)
-        result = await dexscript_instance.execute(body)
 
-        if result is not None:
-            await ctx.send(f"```ERROR: {result}```")
+        try:
+            result = await dexscript_instance.execute(body)
+        except Exception as error:
+            full_error = traceback.format_exc() if config.debug else error
+
+            await ctx.send(f"```ERROR: {full_error}```")
             return
-        
-        await ctx.message.add_reaction("✅")
+        else:
+            if result is not None:
+                await ctx.send(f"```ERROR: {result}```")
+                return
+            
+            await ctx.message.add_reaction("✅")
 
     @commands.command()
     @commands.is_owner()
