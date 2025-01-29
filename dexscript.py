@@ -23,33 +23,17 @@ if DIR == "ballsdex":
     from ballsdex.core.models import Ball, Economy, Regime, Special
     from ballsdex.settings import settings
 else:
-    from carfigures.core.models import Car, CarType, Country, Event
+    from carfigures.core.models import Car, CarType, Country, Event, FontPack
     from carfigures.settings import settings
 
 
 log = logging.getLogger(f"{DIR}.core.dexscript")
 
-__version__ = "0.4.3.3"
+__version__ = "0.5"
 
 
 START_CODE_BLOCK_RE = re.compile(r"^((```sql?)(?=\s)|(```))")
 FILENAME_RE = re.compile(r"^(.+)(\.\S+)$")
-
-MODELS = {
-    "ballsdex": [
-        Ball,
-        Regime,
-        Economy,
-        Special
-    ],
-    "carfigures": [
-        Car,
-        CarType,
-        Country,
-        Event
-        FontPack
-    ]
-}
 
 
 class Types(Enum):
@@ -99,9 +83,9 @@ class Settings:
     Settings class for DexScript.
     """
 
-    debug = False
-    versioncheck = False
-    reference = "main"
+    debug: bool = False
+    versioncheck: bool = False
+    reference: str = "main"
 
 
 config = Settings()
@@ -116,7 +100,7 @@ class Models:
     @staticmethod
     def fetch_model(field):
         return next(
-            (x for x in self.all() if x.__name__ == field), None
+            (x for x in Models.all() if x.__name__ == field), None
         )
 
     @staticmethod
@@ -132,7 +116,7 @@ class Models:
                 Car,
                 CarType,
                 Country,
-                Event
+                Event,
                 FontPack
             ]
         }
@@ -180,14 +164,6 @@ class Utils:
     """
     DexScript utility functions.
     """
-
-    @staticmethod
-    def in_list(list_attempt, index):
-        try:
-            list_attempt[index]
-            return True
-        except Exception:
-            return False
 
     @staticmethod
     def is_number(string):
@@ -265,7 +241,7 @@ class Methods:
         else:
             new_attribute = value
 
-        models_list = Models.all(True)
+        # models_list = Models.all(True)
 
         await self.parser.get_model(model, identifier.name).update(
             **{attribute.name.lower(): new_attribute.name}
@@ -558,9 +534,9 @@ class DexScriptParser:
 
         type_dict = {
             Types.METHOD: lower in method_functions,
-            Types.MODEL: lower in MODELS[DIR],
-            Types.DATETIME: is_date(lower) and lower.count("-") >= 2,
-            Types.NUMBER: is_number(lower),
+            Types.MODEL: lower in Models.all(True),
+            Types.DATETIME: Utils.is_date(lower) and lower.count("-") >= 2,
+            Types.NUMBER: Utils.is_number(lower),
             Types.BOOLEAN: lower in ["true", "false"]
         }
 
@@ -617,7 +593,7 @@ class DexScriptParser:
                 except TypeError:
                     final = f"Argument missing when calling {method.name}."
 
-                    if config.debug
+                    if config.debug:
                         final = traceback.format_exc()
 
                     return final
@@ -768,17 +744,19 @@ class DexScript(commands.Cog):
         value: str | None
           The value you want to set the setting to.
         """
-        response = f"`{setting}` is not a valid setting."
+        if setting not in vars(config):
+            await ctx.send(f"`{setting}` is not a valid setting.")
+            return
+        
+        setting_value = vars(config)[setting]
+        new_value = value
 
-        if name, setting_value in vars(config):
-            new_value = value
+        if isinstance(setting_value, bool):
+            new_value = bool(value) if value else not setting_value
 
-            if isinstance(setting_value, bool):
-                new_value = bool(value) if value else not setting_value
+        setattr(config, setting, new_value)
 
-            response = f"`{name}` has been set to `{value}`"
-
-        await ctx.send(response)
+        await ctx.send(f"`{setting}` has been set to `{new_value}`")
 
 
 async def setup(bot):
