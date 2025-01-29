@@ -20,14 +20,10 @@ from discord.ext import commands
 DIR = "ballsdex" if os.path.isdir("ballsdex") else "carfigures"
 
 if DIR == "ballsdex":
-    from ballsdex.core.models import (
-        Ball, Economy, Regime, Special # noqa: F401 # noqa: I001
-    )
+    from ballsdex.core.models import Ball, Economy, Regime, Special # noqa: F401, I001
     from ballsdex.settings import settings
 else:
-    from carfigures.core.models import (
-        Car, CarType, Country, Event, FontsPack # noqa: F401 # noqa: I001
-    )
+    from carfigures.core.models import Car, CarType, Country, Event, FontsPack # noqa: F401, I001
     from carfigures.settings import settings
 
 
