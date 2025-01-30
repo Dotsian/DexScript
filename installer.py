@@ -79,7 +79,7 @@ class Installer:
 
         description = (
             f"Please submit a [bug report]"
-            f"(<https://github.com/{GITHUB[0]}/issues/new/choose>) to the GitHub page"
+            f"(<https://github.com/{config.github[0]}/issues/new/choose>) to the GitHub page"
         )
 
         if exception:
@@ -93,7 +93,7 @@ class Installer:
         fields = {"embed": self.embed}
 
         if exception:
-            fields["file"] = discord.File(StringIO(error), filename="DexScript.log")
+            fields["attachments"] = [discord.File(StringIO(error), filename="DexScript.log")]
 
         await self.message.edit(**fields)
 
