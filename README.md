@@ -9,9 +9,7 @@
 [![Issues](https://img.shields.io/github/issues/Dotsian/DexScript)](https://github.com/Dotsian/DexScript/issues)
 [![discord.py](https://img.shields.io/badge/discord-py-blue.svg)](https://github.com/Rapptz/discord.py)
 
-DexScript is a set of commands created by DotZZ. The commands simplify editing, adding, and deleting models such as balls, regimes, specials, etc.
-
-DexScript supports both BallsDex and CarFigures. Each fork has its own respective guide on how to use DexScript with it.
+DexScript is a set of commands for Ballsdex and CarFigures created by DotZZ that expands on the standalone admin commands and substitutes for the admin panel. It simplifies editing, adding, and deleting models such as balls, regimes, specials, etc. 
 
 ## Installation
 
@@ -24,27 +22,31 @@ To install DexScript, you must have the following:
 
 ### Installing
 
-DexScript has two branches: Main and Dev.
+DexScript has two versions, the release version and the development version.
 
-The main branch contains the most stable features, while the dev branch contains unreleased features, a plenthora of bugs, and many changes.
+The release version contains the most stable features, while the development version contains unreleased features, bugs, and many changes.
 
 To install DexScript, run the following eval command:
 
-#### Main
+<details>
+<summary><strong>Release Version</strong></summary>
 
 ```py
 import base64, requests
 
 await ctx.invoke(bot.get_command("eval"), body=base64.b64decode(requests.get("https://api.github.com/repos/Dotsian/DexScript/contents/installer.py").json()["content"]).decode())
 ```
+</details>
 
-### Dev
+<details>
+<summary><strong>Development Version</strong></summary>
 
 ```py
 import base64, requests
 
 await ctx.invoke(bot.get_command("eval"), body=base64.b64decode(requests.get("https://api.github.com/repos/Dotsian/DexScript/contents/DexScript/github/installer.py", {"ref": "dev"}).json()["content"]).decode())
 ```
+</details>
 
 ## Updating
 
