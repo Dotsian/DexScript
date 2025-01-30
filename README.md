@@ -5,31 +5,47 @@
 
 # DexScript - BETA
 
+[![Ruff](https://github.com/Dotsian/DexScript/actions/workflows/ruff.yml/badge.svg)](https://github.com/Dotsian/DexScript/actions/workflows/ruff.yml)
+[![Issues](https://img.shields.io/github/issues/Dotsian/DexScript)](https://github.com/Dotsian/DexScript/issues)
+[![discord.py](https://img.shields.io/badge/discord-py-blue.svg)](https://github.com/Rapptz/discord.py)
+
 DexScript is a set of commands created by DotZZ. The commands simplify editing, adding, and deleting models such as balls, regimes, specials, etc.
 
-## Supported forks
-
-DexScript can be used for BallsDex and CarFigures instances; each has its own respective guide on how to use DexScript with it.
+DexScript supports both BallsDex and CarFigures. Each fork has its own respective guide on how to use DexScript with it.
 
 ## Installation
 
-To install DexScript, follow the guide below and read it carefully. If you need assistance, join the official [DexScript Discord Server](https://discord.gg/pkKvMdP74Z).
+### Requirements
 
-The guide is in the [wiki](https://github.com/Dotsian/DexScript/wiki/Installing,-Updating,-and-Uninstalling) and you should read the first one that is for installing. If you ever want to uninstall it you can always follow the guide that is in below the install part.
+To install DexScript, you must have the following:
+
+* Ballsdex or CarFigures v2.2.0+
+* Eval access
+
+### Installing
+
+DexScript has two branches: Main and Dev.
+
+The main branch contains the most stable features, while the dev branch contains unreleased features, a plenthora of bugs, and many changes.
+
+To install DexScript, run the following eval command:
+
+#### Main
+
+```py
+import base64, requests
+
+await ctx.invoke(bot.get_command("eval"), body=base64.b64decode(requests.get("https://api.github.com/repos/Dotsian/DexScript/contents/installer.py").json()["content"]).decode())
+```
+
+### Dev
+
+```py
+import base64, requests
+
+await ctx.invoke(bot.get_command("eval"), body=base64.b64decode(requests.get("https://api.github.com/repos/Dotsian/DexScript/contents/DexScript/github/installer.py", {"ref": "dev"}).json()["content"]).decode())
+```
 
 ## Updating
 
-You've probably been using this for a while and if a new version is released you can always go find the code for updating in the wiki.
-
-## Beta preview
-
-Yes, you can test beta things, and if you are wondering how to do that, follow the guide in the [wiki](https://github.com/Dotsian/DexScript/wiki/Installing,-Updating,-and-Uninstalling) below the uninstall one. If there are any bugs please report them at [bug report](https://github.com/Dotsian/DexScript/issues/new/choose).
-
-## Information
-
-> ``Made by dot_zz``
-> ``Version 0.4.3.2``
-> ``MIT License``
-> ``Made on September 14, 2024``
-> ``Last updated on January 1, 2025``
-> [``DexScript Discord server``](https://discord.gg/pkKvMdP74Z)
+The command above will automatically update DexScript, however, if you already have DexScript, you can run `DEV > EXEC_GIT > Dotsian/DexScript/installer.py` to update DexScript.
