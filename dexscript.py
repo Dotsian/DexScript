@@ -102,7 +102,7 @@ class Models:
         return globals().get(field)
 
     @staticmethod
-    def all(names=False):
+    def all(names=False, key=None):
         allowed_list = {
             "ballsdex": [
                 "Ball",
@@ -123,6 +123,9 @@ class Models:
 
         if not names:
             return_list = [globals().get(x) for x in return_list if globals().get(x) is not None]
+
+        if key is not None:
+            return_list = [key(x) for x in return_list]
 
         return return_list
 
@@ -515,7 +518,7 @@ class DexScriptParser:
 
         type_dict = {
             Types.METHOD: lower in method_functions,
-            Types.MODEL: lower in Models.all(True),
+            Types.MODEL: lower in Models.all(True, key=str.lower),
             Types.DATETIME: Utils.is_date(lower) and lower.count("-") >= 2,
             Types.NUMBER: Utils.is_number(lower),
             Types.BOOLEAN: lower in ["true", "false"]
