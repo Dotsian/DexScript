@@ -18,10 +18,9 @@ from discord.ext import commands
 dir_type = "ballsdex" if os.path.isdir("ballsdex") else "carfigures"
 
 if dir_type == "ballsdex":
-    from ballsdex.core.models import Ball, Economy, GuildConfig, Regime, Special, User
+    from ballsdex.core.models import Ball, Economy, GuildConfig, Regime, Special
     from ballsdex.settings import settings
 else:
-    from carfigures.core.models import Admin as User
     from carfigures.core.models import Car as Ball
     from carfigures.core.models import CarType as Regime
     from carfigures.core.models import Country as Economy
@@ -39,7 +38,6 @@ START_CODE_BLOCK_RE = re.compile(r"^((```sql?)(?=\s)|(```))")
 FILENAME_RE = re.compile(r"^(.+)(\.\S+)$")
 
 MODELS = {
-    "user": [User, "USERNAME"],
     "guildconfig": [GuildConfig, "ID"],
     "ball": [Ball, "COUNTRY"],
     "regime": [Regime, "NAME"],
@@ -340,7 +338,7 @@ class DexScriptParser:
 
             fields[key] = 1
 
-            if key in ["country", "full_name", "catch_names", "name", "username"]:
+            if key in ["country", "full_name", "catch_names", "name"]:
                 fields[key] = identifier
             elif key == "emoji_id":
                 fields[key] = 100**8
