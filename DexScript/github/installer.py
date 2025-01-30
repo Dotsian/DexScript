@@ -19,9 +19,9 @@ from traceback import format_exc
 
 from requests import codes, get
 
-dir_type = "ballsdex" if path.isdir("ballsdex") else "carfigures"
+DIR = "ballsdex" if path.isdir("ballsdex") else "carfigures"
 
-if dir_type == "ballsdex":
+if DIR == "ballsdex":
     from ballsdex.settings import settings
 else:
     from carfigures.settings import settings
@@ -32,7 +32,8 @@ class InstallerConfig:
     """
     Configuration class for the installer.
     """
-    github = ["Dotsian/DexScript", "main"]
+    
+    github = ["Dotsian/DexScript", "dev"]
     migrations = [
         (
             "¶¶await self.add_cog(Core(self))",
@@ -48,7 +49,7 @@ class Installer:
         self.managed_time = None
 
         self.keywords = ["Installed", "Installing", "Install"]
-        self.updating = path.isfile(f"{dir_type}/core/dexscript.py")
+        self.updating = path.isfile(f"{DIR}/core/dexscript.py")
 
         if self.updating:
             self.keywords = ["Updated", "Updating", "Update"]
@@ -71,7 +72,7 @@ class Installer:
             line.replace("    ", "")
             .replace("¶", "    ")
             .replace("/n", "\n")
-            .replace("$DIR", dir_type)
+            .replace("$DIR", DIR)
         )
 
     async def error(self, error, exception=False):
@@ -79,7 +80,7 @@ class Installer:
 
         description = (
             f"Please submit a [bug report]"
-            f"(<https://github.com/{GITHUB[0]}/issues/new/choose>) to the GitHub page"
+            f"(<https://github.com/{config.github[0]}/issues/new/choose>) to the GitHub page"
         )
 
         if exception:
@@ -93,7 +94,7 @@ class Installer:
         fields = {"embed": self.embed}
 
         if exception:
-            fields["file"] = discord.File(StringIO(error), filename="DexScript.log")
+            fields["attachments"] = [discord.File(StringIO(error), filename="DexScript.log")]
 
         await self.message.edit(**fields)
 
@@ -126,10 +127,10 @@ class Installer:
         request = request.json()
         content = b64decode(request["content"])
 
-        with open(f"{dir_type}/core/dexscript.py", "w") as opened_file:
+        with open(f"{DIR}/core/dexscript.py", "w") as opened_file:
             opened_file.write(content.decode("UTF-8"))
 
-        with open(f"{dir_type}/core/bot.py", "r") as read_file:
+        with open(f"{DIR}/core/bot.py", "r") as read_file:
             lines = read_file.readlines()
 
         stripped_lines = [x.rstrip() for x in lines]
@@ -144,13 +145,13 @@ class Installer:
 
                 lines.insert(stripped_lines.index(original) + 1, new)
 
-        with open(f"{dir_type}/core/bot.py", "w") as write_file:
+        with open(f"{DIR}/core/bot.py", "w") as write_file:
             write_file.writelines(lines)
 
         try:
-            await bot.load_extension(f"{dir_type}.core.dexscript")
+            await bot.load_extension(f"{DIR}.core.dexscript")
         except commands.ExtensionAlreadyLoaded:
-            await bot.reload_extension(f"{dir_type}.core.dexscript")
+            await bot.reload_extension(f"{DIR}.core.dexscript")
 
         if self.updating:
             request = get(f"{link}/version.txt", {"ref": config.github[1]})

@@ -1,3 +1,6 @@
+# OLD UNINSTALLER
+# SUBJECT TO CHANGE
+
 import datetime
 import os
 import time
