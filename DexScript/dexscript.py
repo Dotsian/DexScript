@@ -367,61 +367,78 @@ class Methods:
         await ctx.send(f"```{parameters}```")
 
 
-    async def dev(self, ctx, operation, file_path=None):
+    async def dev(self, ctx, operation, arg1):
+        """
+        Developer commands for executing evals.
+
+        Documentation
+        -------------
+        DEV  > OPERATION > ARG1(?)
+        """
+        match operation:
+            case "exec_git":
+                link = arg1.name.replace("https://github.com/", "")
+                ""
+                https://github.com/Dotsian/DexScript/blob/dev/installer.py
+                r = requests.get(
+                    "https://api.github.com/repos/Dotsian/DexScript/contents/DexScript/github/installer.py",
+                    {"ref": "dev"}
+                )
+
+                if r.status_code == requests.codes.ok:
+                    content = base64.b64decode(r.json()["content"])
+                    await ctx.invoke(bot.get_command("eval"), body=content.decode("UTF-8"))
+                else:
+                    await ctx.send("Failed to install DexScript BETA.\nReport this issue to `dot_zz` on Discord.")
+                    print(f"ERROR CODE: {r.status_code}")
+
+    class File:
         """
         Developer commands for managing and modifying the bot's internal filesystem.
 
         Documentation
         -------------
-        DEV > OPERATION > FILE_PATH(?)
+        REFER TO WIKI.
         """
-        lower = operation.name.lower()
-        valid_operations = ["write", "clear", "read", "listdir", "delete"]
 
-        if lower != "listdir" and lower in valid_operations and file_path is None:
-            raise DexScriptError("`file_path` is None")
-        
-        match lower:
-            case "write":
-                new_file = ctx.message.attachments[0]
+        async def read(self, ctx, file_path):
+            await ctx.send(file=discord.File(file_path.name))
 
-                with open(file_path.name, "w") as opened_file:
-                    contents = await new_file.read()
-                    opened_file.write(contents.decode("utf-8"))
+                
+        async def write(self, ctx, file_path):
+            new_file = ctx.message.attachments[0]
 
-                await ctx.send(f"Wrote to `{file_path}`")
+            with open(file_path.name, "w") as opened_file:
+                contents = await new_file.read()
+                opened_file.write(contents.decode("utf-8"))
 
-            case "clear":
-                with open(file_path.name, "w") as _:
-                    pass
+            await ctx.send(f"Wrote to `{file_path}`")
 
-                await ctx.send(f"Cleared `{file_path}`")
 
-            case "read":
-                await ctx.send(file=discord.File(file_path.name))
+        async def clear(self, ctx, file_path):
+            with open(file_path.name, "w") as _:
+                pass
 
-            case "listdir":
-                path = file_path.name if file_path is not None else None
+            await ctx.send(f"Cleared `{file_path}`")
 
-                await ctx.send(f"```{'\n'.join(os.listdir(path))}```")
 
-            case "delete":
-                is_dir = os.path.isdir(file_path.name)
+        async def listdir(self, ctx, file_path=None):
+            path = file_path.name if file_path is not None else None
 
-                file_type = "directory" if is_dir else "file"
+            await ctx.send(f"```{'\n'.join(os.listdir(path))}```")
+            
 
-                if is_dir:
-                    shutil.rmtree(file_path.name)
-                else:
-                    os.remove(file_path.name)
+        async def delete(self, ctx, file_path):
+            is_dir = os.path.isdir(file_path.name)
 
-                await ctx.send(f"Deleted `{file_path}` {file_type}")
+            file_type = "directory" if is_dir else "file"
 
-            case _:
-                raise DexScriptError(
-                    f"'{operation}' is not a valid dev operation.\n"
-                    f"({", ".join([x.upper() for x in valid_operations])})"
-                )
+            if is_dir:
+                shutil.rmtree(file_path.name)
+            else:
+                os.remove(file_path.name)
+
+            await ctx.send(f"Deleted `{file_path}` {file_type}")
 
 
 class DexScriptParser:
@@ -533,7 +550,7 @@ class DexScriptParser:
 
         match value.type:
             case Types.MODEL:
-                model = Models.fetch_model(value.name.lower())
+                model = Models.fetch_model(line)
 
                 string_key = self.extract_str_attr(model)
 
@@ -541,7 +558,7 @@ class DexScriptParser:
                 value.extra_data.append(string_key)
 
             case Types.BOOLEAN:
-                value.name = value.name.lower() == "true"
+                value.name = lower == "true"
 
             case Types.DATETIME:
                 value.name = parse_date(value.name)
