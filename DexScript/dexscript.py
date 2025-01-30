@@ -1,3 +1,4 @@
+import asyncio
 import base64
 import inspect
 import logging
@@ -165,6 +166,16 @@ class Utils:
     """
     DexScript utility functions.
     """
+
+    @staticmethod
+    def cleanup_code(content):
+        """
+        Automatically removes code blocks from the code.
+        """
+        if content.startswith("```") and content.endswith("```"):
+            return START_CODE_BLOCK_RE.sub("", content)[:-3]
+
+        return content.strip("` \n")
 
     @staticmethod
     def is_number(string):
@@ -365,6 +376,84 @@ class Methods:
             parameters += f"- {field.replace(' ', '_').upper()}\n"
 
         await ctx.send(f"```{parameters}```")
+
+
+    class Eval:
+        """
+        Developer commands for executing evals.
+
+        Documentation
+        -------------
+        REFER TO WIKI.
+        """
+
+        def __loaded__(self):
+            os.makedirs("eval_presets", exist_ok=True)
+
+
+        async def exec_git(self, ctx, link):
+            link = link.split("/")
+            api = f"https://api.github.com/repos/{link[0]}/{link[1]}/contents/{link[2]}"
+            
+            request = requests.get(api)
+
+            if request.status_code != requests.codes.ok:
+                raise DexScriptError(f"Request Error Code {request.status_code}")
+
+            content = base64.b64decode(r.json()["content"])
+
+            try:
+                await ctx.invoke(bot.get_command("eval"), body=content.decode("UTF-8"))
+            except Exception as error:
+                raise DexScriptError(error)
+            else:
+                await ctx.message.add_reaction("✅")
+                
+
+        async def save(self, ctx, name):
+            if len(name) > 25:
+                raise DexScriptError(f"`{name}` is above the 25 character limit.")
+            
+            if os.path.isfile(f"eval_presets/{name}.py"):
+                raise DexScriptError(f"`{name}` aleady exists.")
+
+            save_content = ""
+
+            await ctx.send("Please paste the eval command below...")
+
+            try:
+                message = await bot.wait_for(
+                    "message", timeout=15, check=lambda m: m.author == ctx.message.author
+                )
+            except asyncio.TimeoutError:
+                await channel.send("Preset saving has timed out.")
+                return
+            with open(f"eval_presets/{name}.py", "w") as file:
+                file.write(Utils.cleanup_code(message.content))
+
+            await ctx.send(f"`{name}` eval preset has been saved!")
+
+
+        async def remove(self, ctx, name):
+            if not os.path.isfile(f"eval_presets/{name}.py"):
+                raise DexScriptError(f"`{name}` does not exists.")
+
+            os.remove(f"eval_presets/{name}.py")
+
+            await ctx.send(f"Removed `{name}` preset.")
+
+
+        async def run(self, ctx, name): # TODO: Allow args to be passed through `run`.
+            if not os.path.isfile(f"eval_presets/{name}.py"):
+                raise DexScriptError(f"`{name}` does not exists.")
+
+            with open(f"eval_presets/{name}.py", "r") as file:
+                try:
+                    await ctx.invoke(bot.get_command("eval"), body=file.read())
+                except Exception as error:
+                    raise DexScriptError(error)
+                else:
+                    await ctx.message.add_reaction("✅")
 
 
     async def dev(self, ctx, operation, arg1):
@@ -612,16 +701,6 @@ class DexScript(commands.Cog):
         self.bot = bot
 
     @staticmethod
-    def cleanup_code(content):
-        """
-        Automatically removes code blocks from the code.
-        """
-        if content.startswith("```") and content.endswith("```"):
-            return START_CODE_BLOCK_RE.sub("", content)[:-3]
-
-        return content.strip("` \n")
-
-    @staticmethod
     def check_version():
         if not config.versioncheck:
             return None
@@ -657,7 +736,7 @@ class DexScript(commands.Cog):
         code: str
           The code you want to execute.
         """
-        body = self.cleanup_code(code)
+        body = Utils.cleanup_code(code)
 
         version_check = self.check_version()
 
@@ -686,18 +765,33 @@ class DexScript(commands.Cog):
         """
         Displays information about DexScript.
         """
+        guide_link = "https://github.com/Dotsian/DexScript/wiki/Commands"
+        discord_link = "https://discord.gg/EhCxuNQfzt"
+
+        description = (
+            "DexScript is a set of commands for Ballsdex and CarFigures created by DotZZ "
+            "that expands on the standalone admin commands and substitutes for the admin panel. "
+            "It simplifies editing, adding, deleting, and displaying data for models such as "
+            "balls, regimes, specials, etc.\n\n"
+            f"Refer to the official [DexScript guide](<{guide_link}>) for information "
+            f"about DexScript's functionality or use the `{settings.prefix}.run HELP` to display "
+            "a list of all commands and what they do.\n\n"
+            "If you want to follow DexScript or require assistance, join the official "
+            f"[DexScript Discord server](<{discord_link}>)."
+        )
+
         embed = discord.Embed(
             title="DexScript - BETA",
-            description=(
-                "DexScript is a set of commands created by DotZZ "
-                "that allows you to easily "
-                "modify, delete, and display data for models.\n\n"
-                "For a guide on how to use DexScript, "
-                "refer to the official [DexScript guide](<https://github.com/Dotsian/DexScript/wiki/Commands>).\n\n"
-                "If you want to follow DexScript, "
-                "join the official [DexScript Discord](<https://discord.gg/EhCxuNQfzt>) server."
-            ),
+            description=description,
             color=discord.Color.from_str("#03BAFC"),
+        )
+
+        embed.add_field(
+            name="Updating DexScript",
+            value=(
+                "To update DexScript, run "
+                f"`{settings.prefix}.run EVAL > EXEC_GIT > Dotsian/DexScript/installer.py`"
+            )
         )
 
         version_check = "OUTDATED" if self.check_version() is not None else "LATEST"
@@ -706,26 +800,6 @@ class DexScript(commands.Cog):
         embed.set_footer(text=f"DexScript {__version__} ({version_check})")
 
         await ctx.send(embed=embed)
-
-    @commands.command(name="update-ds")
-    @commands.is_owner()
-    async def update_ds(self, ctx: commands.Context):
-        """
-        Updates DexScript to the latest version.
-        """
-        r = requests.get(
-            "https://api.github.com/repos/Dotsian/DexScript/contents/installer.py",
-            {"ref": config.branch},
-        )
-
-        if r.status_code == requests.codes.ok:
-            content = base64.b64decode(r.json()["content"])
-            await ctx.invoke(self.bot.get_command("eval"), body=content.decode("UTF-8"))
-        else:
-            await ctx.send(
-                "Failed to update DexScript. Report this issue to `dot_zz` on Discord.\n"
-                f"```ERROR CODE: {r.status_code}```"
-            )
 
     @commands.command(name="reload-ds")
     @commands.is_owner()
