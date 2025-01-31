@@ -1,9 +1,6 @@
-<a name="logo"/>
-<div align="center">
-<img src="https://i.imgur.com/uKfx0qO.png" alt="DexScript logo" width="200" height="200"></img>
-</div>
-
 # DexScript - BETA
+
+![DexScript Banner](assets/DexScriptPromo.png)
 
 [![Ruff](https://github.com/Dotsian/DexScript/actions/workflows/ruff.yml/badge.svg)](https://github.com/Dotsian/DexScript/actions/workflows/ruff.yml)
 [![Issues](https://img.shields.io/github/issues/Dotsian/DexScript)](https://github.com/Dotsian/DexScript/issues)
