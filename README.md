@@ -10,9 +10,9 @@
 
 DexScript is a set of commands for Ballsdex and CarFigures created by DotZZ that expands on the standalone admin commands and substitutes for the admin panel. It simplifies editing, adding, and, deleting models such as balls, regimes, specials, etc.
 
-Let's say you wanted to update a ball's rarity to 2. You could run `UPDATE > BALL > Kingdom of Cyprus > RARITY > 2.0`.
+Let's say you wanted to update a ball's rarity to 2. You could run `UPDATE > BALL > Mongolia > RARITY > 2.0`.
 
-_**INSERT SCREENSHOT HERE**_
+![Updating rarity showcase](assets/screenshots/showcase1.png)
 
 See how simple that is? Using DexScript is way more efficient than eval commands and the admin panel.
 
