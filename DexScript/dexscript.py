@@ -36,23 +36,23 @@ __version__ = "0.5"
 START_CODE_BLOCK_RE = re.compile(r"^((```sql?)(?=\s)|(```))")
 FILENAME_RE = re.compile(r"^(.+)(\.\S+)$")
 
+MEDIA_PATH = "./admin_panel/media" if os.path.isdir("./admin_panel.media") else "./static/uploads"
+
 
 class Types(Enum):
     METHOD = 0
-    NUMBER = 1
-    STRING = 2
-    BOOLEAN = 3
-    MODEL = 4
-    DATETIME = 5
+    METHOD_EXT = 1
+    BOOLEAN = 2
+    MODEL = 3
+    DATETIME = 4
 
 
 class DexScriptError(Exception):
     pass
 
 
-# Ported from the Ballsdex admin package.
 async def save_file(attachment: discord.Attachment) -> Path:
-    path = Path(f"./static/uploads/{attachment.filename}")
+    path = Path(f"{MEDIA_PATH}/{attachment.filename}")
     match = FILENAME_RE.match(attachment.filename)
 
     if not match:
@@ -61,7 +61,7 @@ async def save_file(attachment: discord.Attachment) -> Path:
     i = 1
 
     while path.exists():
-        path = Path(f"./static/uploads/{match.group(1)}-{i}{match.group(2)}")
+        path = Path(f"{MEDIA_PATH}/{match.group(1)}-{i}{match.group(2)}")
         i = i + 1
     
     await attachment.save(path)
@@ -71,7 +71,7 @@ async def save_file(attachment: discord.Attachment) -> Path:
 @dataclass
 class Value:
     name: Any
-    type: Types
+    type: Types = Types.DEFAULT
     extra_data: list = datafield(default_factory=list)
 
     def __str__(self):
@@ -168,25 +168,21 @@ class Utils:
     """
 
     @staticmethod
-    def cleanup_code(content):
-        """
-        Automatically removes code blocks from the code.
-        """
+    def remove_code_markdown(content) -> str:
         if content.startswith("```") and content.endswith("```"):
             return START_CODE_BLOCK_RE.sub("", content)[:-3]
 
         return content.strip("` \n")
 
-    @staticmethod
-    def is_number(string):
-        try:
-            float(string)
-            return True
-        except ValueError:
-            return False
+    @static_method
+    def is_image(path) -> bool:
+        if path.startswith("/static/uploads"):
+            path.replace("/static/uploads/", "")
+        
+        return os.path.isfile(f"{MEDIA_PATH}/{path}")
 
     @staticmethod
-    def is_date(string):
+    def is_date(string) -> bool:
         try:
             parse_date(string)
             return True
@@ -194,10 +190,15 @@ class Utils:
             return False
 
 
-class Methods:
-    def __init__(self, parser):
-        self.parser = parser
+@dataclass
+class IncludeParser:
+    parser: Any
 
+@dataclass
+class Methods(IncludeParser):
+    """
+    Main methods for DexScript.
+    """
 
     async def help(self, ctx):
         """
@@ -250,7 +251,7 @@ class Methods:
 
         if value is None and self.parser.attachments != []:
             image_path = await save_file(self.parser.attachments[0])
-            new_attribute = Value(f"/{image_path}", Types.STRING)
+            new_attribute = Value(f"/{image_path}")
 
             self.parser.attachments.pop(0)
 
@@ -283,7 +284,7 @@ class Methods:
 
                 fields["content"] += f"{key}: {value}\n"
 
-                if isinstance(value, str) and value.startswith("/static"):
+                if isinstance(value, str) and Utils.is_image(value):
                     if fields.get("files") is None:
                         fields["files"] = []
                     
@@ -301,58 +302,6 @@ class Methods:
             return
 
         await ctx.send(f"```{new_attribute}```")
-
-
-    # TODO: Add attachment support.
-    async def filter_update(
-        self, ctx, model, attribute, old_value, new_value, tortoise_operator=None
-    ):
-        """
-        Updates all instances of a model to the specified value where the specified attribute 
-        meets the condition  defined by the optional `TORTOISE_OPERATOR` argument 
-        (e.g., greater than, equal to, etc.).
-
-        Documentation
-        -------------
-        FILTER_UPDATE > MODEL > ATTRIBUTE > OLD_VALUE > NEW_VALUE > TORTOISE_OPERATOR(?)
-        """
-        lower_name = attribute.name.lower()
-
-        if tortoise_operator is not None:
-            lower_name += f"__{tortoise_operator.name.lower()}"
-
-        await model.name.filter(**{lower_name: old_value.name}).update(
-            **{lower_name: new_value.name}
-        )
-
-        await ctx.send(
-            f"Updated all `{model}` instances from a "
-            f"`{attribute}` value of `{old_value}` to `{new_value}`"
-        )
-
-
-    async def filter_delete(
-        self, ctx, model, attribute, value, tortoise_operator=None
-    ):
-        """
-        Deletes all instances of a model where the specified attribute meets the condition 
-        defined by the optional `TORTOISE_OPERATOR` argument (e.g., greater than, equal to, etc.).
-
-        Documentation
-        -------------
-        FILTER_DELETE > MODEL > ATTRIBUTE > VALUE > TORTOISE_OPERATOR(?)
-        """
-        lower_name = attribute.name.lower()
-        
-        if tortoise_operator is not None:
-            lower_name += f"__{tortoise_operator.name.lower()}"
-        
-        await model.name.filter(**{lower_name: value.name}).delete()
-
-        await ctx.send(
-            f"Deleted all `{model}` instances with a "
-            f"`{attribute}` value of `{value}`"
-        )
 
 
     async def attributes(self, ctx, model):
@@ -378,13 +327,66 @@ class Methods:
         await ctx.send(f"```{parameters}```")
 
 
+    class Filter:
+        """
+        Filter commands used for mass updating, deleting, and viewing models.
+        """
+
+        # TODO: Add attachment support.
+        async def update(
+            self, ctx, model, attribute, old_value, new_value, tortoise_operator=None
+        ):
+            """
+            Updates all instances of a model to the specified value where the specified attribute 
+            meets the condition  defined by the optional `TORTOISE_OPERATOR` argument 
+            (e.g., greater than, equal to, etc.).
+
+            Documentation
+            -------------
+            FILTER > UPDATE > MODEL > ATTRIBUTE > OLD_VALUE > NEW_VALUE > TORTOISE_OPERATOR(?)
+            """
+            lower_name = attribute.name.lower()
+
+            if tortoise_operator is not None:
+                lower_name += f"__{tortoise_operator.name.lower()}"
+
+            await model.name.filter(**{lower_name: old_value.name}).update(
+                **{lower_name: new_value.name}
+            )
+
+            await ctx.send(
+                f"Updated all `{model}` instances from a "
+                f"`{attribute}` value of `{old_value}` to `{new_value}`"
+            )
+
+        def delete(
+            self, ctx, model, attribute, value, tortoise_operator=None
+        ):
+            """
+            Deletes all instances of a model where the specified attribute meets the condition 
+            defined by the optional `TORTOISE_OPERATOR` argument 
+            (e.g., greater than, equal to, etc.).
+
+            Documentation
+            -------------
+            FILTER > DELETE > MODEL > ATTRIBUTE > VALUE > TORTOISE_OPERATOR(?)
+            """
+            lower_name = attribute.name.lower()
+            
+            if tortoise_operator is not None:
+                lower_name += f"__{tortoise_operator.name.lower()}"
+            
+            await model.name.filter(**{lower_name: value.name}).delete()
+
+            await ctx.send(
+                f"Deleted all `{model}` instances with a "
+                f"`{attribute}` value of `{value}`"
+            )
+
+
     class Eval:
         """
         Developer commands for executing evals.
-
-        Documentation
-        -------------
-        REFER TO WIKI.
         """
 
         def __loaded__(self):
@@ -429,7 +431,7 @@ class Methods:
                 await channel.send("Preset saving has timed out.")
                 return
             with open(f"eval_presets/{name}.py", "w") as file:
-                file.write(Utils.cleanup_code(message.content))
+                file.write(Utils.remove_code_markdown(message.content))
 
             await ctx.send(f"`{name}` eval preset has been saved!")
 
@@ -456,38 +458,9 @@ class Methods:
                     await ctx.message.add_reaction("✅")
 
 
-    async def dev(self, ctx, operation, arg1):
-        """
-        Developer commands for executing evals.
-
-        Documentation
-        -------------
-        DEV  > OPERATION > ARG1(?)
-        """
-        match operation:
-            case "exec_git":
-                link = arg1.name.replace("https://github.com/", "")
-                ""
-                https://github.com/Dotsian/DexScript/blob/dev/installer.py
-                r = requests.get(
-                    "https://api.github.com/repos/Dotsian/DexScript/contents/DexScript/github/installer.py",
-                    {"ref": "dev"}
-                )
-
-                if r.status_code == requests.codes.ok:
-                    content = base64.b64decode(r.json()["content"])
-                    await ctx.invoke(bot.get_command("eval"), body=content.decode("UTF-8"))
-                else:
-                    await ctx.send("Failed to install DexScript BETA.\nReport this issue to `dot_zz` on Discord.")
-                    print(f"ERROR CODE: {r.status_code}")
-
     class File:
         """
         Developer commands for managing and modifying the bot's internal filesystem.
-
-        Documentation
-        -------------
-        REFER TO WIKI.
         """
 
         async def read(self, ctx, file_path):
@@ -617,16 +590,26 @@ class DexScriptParser:
         return returned_model[0]
 
     def create_value(self, line):
-        value = Value(line, Types.STRING)
+        value = Value(line)
         lower = line.lower()
 
-        method_functions = [x for x in dir(Methods) if not x.startswith("__")]
+        classes = []
+        functions = []
+
+        method_items = [x for x in dir(Methods) if not x.startswith("__")]
+
+        for func in method_items:
+            if inspect.isclass(getattr(Methods, func)):
+                classes.append(func)
+                continue
+            
+            functions.append(func)
 
         type_dict = {
-            Types.METHOD: lower in method_functions,
+            Types.METHOD: lower in functions,
+            Types.METHOD_EXT: lower in classes,
             Types.MODEL: lower in Models.all(True, key=str.lower),
             Types.DATETIME: Utils.is_date(lower) and lower.count("-") >= 2,
-            Types.NUMBER: Utils.is_number(lower),
             Types.BOOLEAN: lower in ["true", "false"]
         }
 
@@ -673,18 +656,22 @@ class DexScriptParser:
             
             method = line2[0]
 
+            line2.pop(0)
+
             if method.type != Types.METHOD:
                 return self.error(
                     f"'{method.name}' is not a valid command.",
                     traceback.format_exc()
                 )
-            
-            method_function = getattr(loaded_methods, method.name.lower())
 
-            line2.pop(0)
+            method_call = getattr(loaded_methods, method.name.lower())
+
+            if line2[0].type == Types.METHOD_EXT:
+                method_call = getattr(method_call, line2[1].name.title())
+                line2.pop(0)
 
             try:
-                await method_function(self.ctx, *line2)
+                await method_call(self.ctx, *line2)
             except TypeError:
                 return self.error(
                     f"Argument missing when calling '{method.name}'.",
@@ -736,7 +723,7 @@ class DexScript(commands.Cog):
         code: str
           The code you want to execute.
         """
-        body = Utils.cleanup_code(code)
+        body = Utils.remove_code_markdown(code)
 
         version_check = self.check_version()
 
