@@ -70,7 +70,7 @@ class InstallerView(discord.ui.View):
         self.installer = installer
 
     @discord.ui.button(style=discord.ButtonStyle.primary, label="Update" if UPDATING else "Install")
-    async def install_button(self, interaction: discord.Interaction):
+    async def install_button(self, interaction: discord.Interaction, _: discord.ui.Button):
         self.install_button.disabled = True
         self.quit_button.disabled = True
 
@@ -80,7 +80,7 @@ class InstallerView(discord.ui.View):
         await interaction.response.defer()
 
     @discord.ui.button(style=discord.ButtonStyle.red, label="Exit")
-    async def quit_button(self, interaction: discord.Interaction):
+    async def quit_button(self, interaction: discord.Interaction, _: discord.ui.Button):
         self.install_button.disabled = True
         self.quit_button.disabled = True
         
