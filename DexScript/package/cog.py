@@ -7,7 +7,7 @@ import requests
 from discord.ext import commands
 
 from .parser import DexScriptParser
-from .utils import config, DIR, Utils, config
+from .utils import DIR, Utils, config
 
 if DIR == "ballsdex":
     from ballsdex.settings import settings
@@ -33,7 +33,7 @@ class DexScript(commands.Cog):
 
         r = requests.get(
             "https://api.github.com/repos/Dotsian/DexScript/contents/pyproject.toml",
-            {"ref": config.branch},
+            {"ref": config.reference},
         )
 
         if r.status_code != requests.codes.ok:
@@ -101,7 +101,8 @@ class DexScript(commands.Cog):
             "balls, regimes, specials, etc.\n\n"
             f"Refer to the official [DexScript guide](<{guide_link}>) for information "
             f"about DexScript's functionality or use `{settings.prefix}run HELP` to display "
-            f"a list of all commands and what they do.\nTo update DexScript, run `{settings.prefix}upgrade`.\n\n"
+            "a list of all commands and what they do.\n"
+            f"To update DexScript, run `{settings.prefix}upgrade`.\n\n"
             "If you want to follow DexScript or require assistance, join the official "
             f"[DexScript Discord server](<{discord_link}>)."
         )
