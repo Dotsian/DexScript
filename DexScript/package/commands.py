@@ -10,8 +10,7 @@ from .utils import Utils, MEDIA_PATH
 
 
 class DexCommand:
-    def __init__(self, parser, bot):
-        self.parser = parser
+    def __init__(self, bot):
         self.bot = bot
 
     def __loaded__(self):
@@ -96,7 +95,7 @@ class Global(DexCommand):
         -------------
         CREATE > MODEL > IDENTIFIER
         """
-        await self.parser.create_model(model.name, identifier)
+        await self.create_model(model.name, identifier)
 
         await ctx.send(f"Created `{identifier}`")
 
@@ -109,7 +108,7 @@ class Global(DexCommand):
         -------------
         DELETE > MODEL > IDENTIFIER
         """
-        await self.parser.get_model(model, identifier.name).delete()
+        await self.get_model(model, identifier.name).delete()
 
         await ctx.send(f"Deleted `{identifier}`")
 
@@ -125,13 +124,11 @@ class Global(DexCommand):
         """
         new_attribute = value.name if value is not None else None
 
-        if value is None and self.parser.attachments != []:
-            image_path = await Utils.save_file(self.parser.attachments[0])
+        if value is None:
+            image_path = await Utils.save_file(ctx.message.attachments[0])
             new_attribute = f"{MEDIA_PATH}/{image_path}"
 
-            self.parser.attachments.pop(0)
-
-        await self.parser.get_model(model, identifier.name).update(
+        await self.get_model(model, identifier.name).update(
             **{attribute.name.lower(): new_attribute}
         )
 
@@ -147,7 +144,7 @@ class Global(DexCommand):
         -------------
         VIEW > MODEL > IDENTIFIER > ATTRIBUTE(?)
         """
-        returned_model = await self.parser.get_model(model, identifier.name)
+        returned_model = await self.get_model(model, identifier.name)
 
         if attribute is None:
             fields = {"content": "```"}
