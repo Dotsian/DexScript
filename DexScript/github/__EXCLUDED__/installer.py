@@ -1,4 +1,4 @@
-# # # # # # # # # # # # # # # # # # # # # # # # # # # # 
+# # # # # # # # # # # # # # # # # # # # # # # # # # # #
 #           OFFICIAL DEXSCRIPT INSTALLER              #
 #                                                     #
 #     This will install DexScript onto your bot.      #
@@ -6,7 +6,7 @@
 #  An explanation of the code will be provided below. #
 #                                                     #
 #      THIS CODE IS RAN VIA THE `EVAL` COMMAND.       #
-# # # # # # # # # # # # # # # # # # # # # # # # # # # # 
+# # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
 
 from base64 import b64decode
@@ -32,14 +32,15 @@ class InstallerConfig:
     """
     Configuration class for the installer.
     """
-    
+
     github = ["Dotsian/DexScript", "dev"]
     migrations = [
         (
             "¶¶await self.add_cog(Core(self))",
-            '¶¶await self.load_extension("$DIR.packages.dexscript")\n'
+            '¶¶await self.load_extension("$DIR.packages.dexscript")\n',
         )
     ]
+
 
 config = InstallerConfig()
 
@@ -70,10 +71,7 @@ class Installer:
     @staticmethod
     def format_migration(line):
         return (
-            line.replace("    ", "")
-            .replace("¶", "    ")
-            .replace("/n", "\n")
-            .replace("$DIR", DIR)
+            line.replace("    ", "").replace("¶", "    ").replace("/n", "\n").replace("$DIR", DIR)
         )
 
     async def error(self, error, exception=False):
@@ -103,10 +101,10 @@ class Installer:
         """
         Installs or updates the latest DexScript version.
 
-        - Fetches the contents of the `dexscript.py` file from the official DexScript repository, 
+        - Fetches the contents of the `dexscript.py` file from the official DexScript repository,
           and writes that content onto a local `dexscript.py` file.
 
-        - Apply migrations from the `config.migrations` list onto the `bot.py` file to allow 
+        - Apply migrations from the `config.migrations` list onto the `bot.py` file to allow
           DexScript to load on bot startup.
 
         - Load or reload the DexScript extension.
@@ -157,9 +155,7 @@ class Installer:
         if self.updating:
             request = get(f"{link}/version.txt", {"ref": config.github[1]})
 
-            new_version = (
-                b64decode(request.json()["content"]).decode("UTF-8").rstrip()
-            )
+            new_version = b64decode(request.json()["content"]).decode("UTF-8").rstrip()
 
             self.embed.description = (
                 f"DexScript has been updated to v{new_version}.\n"
@@ -177,6 +173,7 @@ class Installer:
         )
 
         await self.message.edit(embed=self.embed)
+
 
 installer = Installer()
 

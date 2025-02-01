@@ -1,4 +1,4 @@
-# # # # # # # # # # # # # # # # # # # # # # # # # # # # 
+# # # # # # # # # # # # # # # # # # # # # # # # # # # #
 #           OFFICIAL DEXSCRIPT INSTALLER              #
 #                                                     #
 #     This will install DexScript onto your bot.      #
@@ -10,28 +10,29 @@
 
 import os
 import re
-import requests
 from base64 import b64decode
 from dataclasses import dataclass
 from datetime import datetime
 
 import discord
+import requests
 
 DIR = "ballsdex" if os.path.isdir("ballsdex") else "carfigures"
 UPDATING = os.path.isdir(f"{DIR}/packages/dexscript")
+
 
 @dataclass
 class InstallerConfig:
     """
     Configuration class for the installer.
     """
-    
+
     github = ["Dotsian/DexScript", "dev"]
     files = ["__init__.py", "cog.py", "commands.py", "parser.py", "utils.py"]
     migrations = [
         (
             "||await self.add_cog(Core(self))",
-            '||await self.load_extension("$DIR.packages.dexscript")\n'
+            '||await self.load_extension("$DIR.packages.dexscript")\n',
         )
     ]
     path = f"{DIR}/packages/dexscript"
@@ -42,26 +43,28 @@ config = InstallerConfig()
 
 class InstallerEmbed(discord.Embed):
     def __init__(self, installer):
-      super().__init__()
+        super().__init__()
 
-      self.installer = installer
+        self.installer = installer
 
-      self.title = "DexScript Installation"
-      self.description = "Welcome to the DexScript installer!"
-      self.color = discord.Color.from_str("#FFF" if DIR == "carfigures" else "#03BAFC")
-      self.timestamp = datetime.now()
+        self.title = "DexScript Installation"
+        self.description = "Welcome to the DexScript installer!"
+        self.color = discord.Color.from_str("#FFF" if DIR == "carfigures" else "#03BAFC")
+        self.timestamp = datetime.now()
 
-      latest_version = self.installer.latest_version
-      current_version = self.installer.current_version
+        latest_version = self.installer.latest_version
+        current_version = self.installer.current_version
 
-      if UPDATING and latest_version and current_version and latest_version != current_version:
-        self.description += (
-           "\n\n**Your current DexScript package version is outdated.**\n"
-           f"The latest version of DexScript is version {latest_version}, "
-           f"while this DexScript instance is on version {current_version}."
+        if UPDATING and latest_version and current_version and latest_version != current_version:
+            self.description += (
+                "\n\n**Your current DexScript package version is outdated.**\n"
+                f"The latest version of DexScript is version {latest_version}, "
+                f"while this DexScript instance is on version {current_version}."
+            )
+
+        self.set_image(
+            url="https://raw.githubusercontent.com/Dotsian/DexScript/refs/heads/dev/assets/DexScriptPromo.png"
         )
-
-      self.set_image(url="https://raw.githubusercontent.com/Dotsian/DexScript/refs/heads/dev/assets/DexScriptPromo.png")
 
 
 class InstallerView(discord.ui.View):
@@ -69,13 +72,15 @@ class InstallerView(discord.ui.View):
         super().__init__()
         self.installer = installer
 
-    @discord.ui.button(style=discord.ButtonStyle.primary, label="Update" if UPDATING else "Install")
+    @discord.ui.button(
+        style=discord.ButtonStyle.primary, label="Update" if UPDATING else "Install"
+    )
     async def install_button(self, interaction: discord.Interaction, _: discord.ui.Button):
         self.install_button.disabled = True
         self.quit_button.disabled = True
 
         await self.installer.install()
-        
+
         await interaction.message.edit(**self.installer.interface.fields)
         await interaction.response.defer()
 
@@ -83,42 +88,42 @@ class InstallerView(discord.ui.View):
     async def quit_button(self, interaction: discord.Interaction, _: discord.ui.Button):
         self.install_button.disabled = True
         self.quit_button.disabled = True
-        
+
         await interaction.message.edit(**self.installer.interface.fields)
         await interaction.response.defer()
 
 
 class InstallerGUI:
-  def __init__(self, installer):
-    self.loaded = False
+    def __init__(self, installer):
+        self.loaded = False
 
-    self.installer = installer
+        self.installer = installer
 
-    self.embed = InstallerEmbed(installer)
-    self.view = InstallerView(installer)
+        self.embed = InstallerEmbed(installer)
+        self.view = InstallerView(installer)
 
-  @property
-  def fields(self):
-    return {"embed": self.embed, "view": self.view}
+    @property
+    def fields(self):
+        return {"embed": self.embed, "view": self.view}
 
-  async def reload(self):
-    if not self.loaded:
-      self.loaded = True
+    async def reload(self):
+        if not self.loaded:
+            self.loaded = True
 
-      await ctx.send(**self.fields) # type: ignore
-      return
+            await ctx.send(**self.fields)  # type: ignore
+            return
 
-    await ctx.message.edit(**self.fields) # type: ignore
+        await ctx.message.edit(**self.fields)  # type: ignore
 
 
 class Installer:
     def __init__(self):
-       self.interface = InstallerGUI(self)
-    
+        self.interface = InstallerGUI(self)
+
     async def install(self):
         if os.path.isfile(f"{DIR}/core/dexscript.py"):
-           os.remove(f"{DIR}/core/dexscript.py")
-        
+            os.remove(f"{DIR}/core/dexscript.py")
+
         link = f"https://api.github.com/repos/{config.github[0]}/contents/"
 
         os.makedirs(config.path, exist_ok=True)
@@ -127,7 +132,7 @@ class Installer:
             request = requests.get(f"{link}/DexScript/package/{file}", {"ref": config.github[1]})
 
             if request.status_code != requests.codes.ok:
-                pass # TODO: Add error handling
+                pass  # TODO: Add error handling
 
             request = request.json()
             content = b64decode(request["content"])
@@ -154,17 +159,14 @@ class Installer:
             write_file.writelines(lines)
 
         # try:
-            # await bot.load_extension(config.path)
+        # await bot.load_extension(config.path)
         # except commands.ExtensionAlreadyLoaded:
-            # await bot.reload_extension(config.path)
+        # await bot.reload_extension(config.path)
 
     @staticmethod
     def format_migration(line):
         return (
-            line.replace("    ", "")
-            .replace("|", "    ")
-            .replace("/n", "\n")
-            .replace("$DIR", DIR)
+            line.replace("    ", "").replace("|", "    ").replace("/n", "\n").replace("$DIR", DIR)
         )
 
     @property
@@ -181,23 +183,23 @@ class Installer:
         new_version = re.search(r'version\s*=\s*"(.*?)"', toml_content)
 
         if not new_version:
-           return
+            return
 
         return new_version.group(1)
-    
+
     @property
     def current_version(self):
         if not os.path.isfile(f"{config.path}/cog.py"):
-           return
-        
+            return
+
         with open(f"{config.path}/cog.py", "r") as file:
             old_version = re.search(r'__version__\s*=\s*["\']([^"\']+)["\']', file.read())
 
         if not old_version:
-           return
-        
+            return
+
         return old_version.group(1)
 
 
 installer = Installer()
-await installer.interface.reload() # type: ignore
+await installer.interface.reload()  # type: ignore

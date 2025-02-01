@@ -82,20 +82,20 @@ class Utils:
 
         if not match:
             raise TypeError("The file you uploaded lacks an extension.")
-        
+
         i = 1
 
         while path.exists():
             path = Path(f"{MEDIA_PATH}/{match.group(1)}-{i}{match.group(2)}")
             i = i + 1
-        
+
         await attachment.save(path)
 
         if MEDIA_PATH == "./admin_panel/media":
             return path.relative_to("./admin_panel/media/")
 
         return path.relative_to("/static/uploads")
-    
+
     @staticmethod
     def extract_str_attr(object):
         expression = r"return\s+self\.(\w+)"
@@ -113,7 +113,7 @@ class Utils:
     def is_image(path) -> bool:
         if path.startswith("/static/uploads/"):
             path.replace("/static/uploads/", "")
-        
+
         return os.path.isfile(f"{MEDIA_PATH}/{path}")
 
     @staticmethod

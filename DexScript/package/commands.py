@@ -1,12 +1,12 @@
 import asyncio
 import os
-import requests
 import shutil
 from base64 import b64decode
 
 import discord
+import requests
 
-from .utils import Utils, MEDIA_PATH
+from .utils import MEDIA_PATH, Utils
 
 
 class DexCommand:
@@ -18,11 +18,14 @@ class DexCommand:
 
     async def create_model(self, model, identifier):
         fields = {}
-        
-        special_list = {k: Utils.port(v) for k, v in {
-            "Identifiers": ["country", "catch_names", "name"],
-            "Ignore": ["id", "short_name"]
-        }.items()}
+
+        special_list = {
+            k: Utils.port(v)
+            for k, v in {
+                "Identifiers": ["country", "catch_names", "name"],
+                "Ignore": ["id", "short_name"],
+            }.items()
+        }
 
         for field, field_type in model._meta.fields_map.items():
             if vars(model()).get(field) is not None or field in special_list["Ignore"]:
@@ -36,14 +39,14 @@ class DexCommand:
                 case "ForeignKeyFieldInstance":
                     pass
                     # instance = await Models.fetch_model(field).first()
-                    
+
                     # if instance is None:
-                        # raise Exception(f"Could not find default {field}")
-                    
+                    # raise Exception(f"Could not find default {field}")
+
                     # fields[field] = instance.pk
 
                 case "BigIntField":
-                    fields[field] = 100 ** 8
+                    fields[field] = 100**8
 
                 case "BackwardFKRelation" | "JSONField":
                     continue
@@ -61,9 +64,7 @@ class DexCommand:
 
         try:
             returned_model = await model.name.filter(
-                **{
-                    translated_identifier: Utils.autocorrect(identifier, correction_list)
-                }
+                **{translated_identifier: Utils.autocorrect(identifier, correction_list)}
             )
         except AttributeError:
             raise Exception(f"'{model}' is not a valid model.")
@@ -99,7 +100,6 @@ class Global(DexCommand):
 
         await ctx.send(f"Created `{identifier}`")
 
-
     async def delete(self, ctx, model, identifier):
         """
         Deletes a model instance.
@@ -111,7 +111,6 @@ class Global(DexCommand):
         await self.get_model(model, identifier.name).delete()
 
         await ctx.send(f"Deleted `{identifier}`")
-
 
     async def update(self, ctx, model, identifier, attribute, value=None):
         """
@@ -134,10 +133,9 @@ class Global(DexCommand):
 
         await ctx.send(f"Updated `{identifier}'s` {attribute} to `{new_attribute}`")
 
-
     async def view(self, ctx, model, identifier, attribute=None):
         """
-        Displays an attribute of a model instance. If `ATTRIBUTE` is left blank, 
+        Displays an attribute of a model instance. If `ATTRIBUTE` is left blank,
         it will display every attribute of that model instance.
 
         Documentation
@@ -158,7 +156,7 @@ class Global(DexCommand):
                 if isinstance(value, str) and Utils.is_image(value):
                     if fields.get("files") is None:
                         fields["files"] = []
-                    
+
                     fields["files"].append(discord.File(value[1:]))
 
             fields["content"] += "```"
@@ -174,7 +172,6 @@ class Global(DexCommand):
 
         await ctx.send(f"```{new_attribute}```")
 
-
     async def attributes(self, ctx, model):
         """
         Lists all changeable attributes of a model.
@@ -183,9 +180,7 @@ class Global(DexCommand):
         -------------
         ATTRIBUTES > MODEL
         """
-        model_name = (
-            model.name if isinstance(model.name, str) else model.name.__name__
-        )
+        model_name = model.name if isinstance(model.name, str) else model.name.__name__
 
         parameters = f"{model_name.upper()} ATTRIBUTES:\n\n"
 
@@ -204,12 +199,10 @@ class Filter(DexCommand):
     """
 
     # TODO: Add attachment support.
-    async def update(
-        self, ctx, model, attribute, old_value, new_value, tortoise_operator=None
-    ):
+    async def update(self, ctx, model, attribute, old_value, new_value, tortoise_operator=None):
         """
-        Updates all instances of a model to the specified value where the specified attribute 
-        meets the condition  defined by the optional `TORTOISE_OPERATOR` argument 
+        Updates all instances of a model to the specified value where the specified attribute
+        meets the condition  defined by the optional `TORTOISE_OPERATOR` argument
         (e.g., greater than, equal to, etc.).
 
         Documentation
@@ -230,13 +223,10 @@ class Filter(DexCommand):
             f"`{attribute}` value of `{old_value}` to `{new_value}`"
         )
 
-
-    async def delete(
-        self, ctx, model, attribute, value, tortoise_operator=None
-    ):
+    async def delete(self, ctx, model, attribute, value, tortoise_operator=None):
         """
-        Deletes all instances of a model where the specified attribute meets the condition 
-        defined by the optional `TORTOISE_OPERATOR` argument 
+        Deletes all instances of a model where the specified attribute meets the condition
+        defined by the optional `TORTOISE_OPERATOR` argument
         (e.g., greater than, equal to, etc.).
 
         Documentation
@@ -244,15 +234,14 @@ class Filter(DexCommand):
         FILTER > DELETE > MODEL > ATTRIBUTE > VALUE > TORTOISE_OPERATOR(?)
         """
         lower_name = attribute.name.lower()
-        
+
         if tortoise_operator is not None:
             lower_name += f"__{tortoise_operator.name.lower()}"
-        
+
         await model.name.filter(**{lower_name: value.name}).delete()
 
         await ctx.send(
-            f"Deleted all `{model}` instances with a "
-            f"`{attribute}` value of `{value}`"
+            f"Deleted all `{model}` instances with a " f"`{attribute}` value of `{value}`"
         )
 
 
@@ -263,7 +252,6 @@ class Eval(DexCommand):
 
     def __loaded__(self):
         os.makedirs("eval_presets", exist_ok=True)
-
 
     async def exec_git(self, ctx, link):
         """
@@ -280,7 +268,7 @@ class Eval(DexCommand):
         link.pop(0)
 
         api = f"https://api.github.com/repos/{start}/contents/{'/'.join(link)}"
-        
+
         request = requests.get(api)
 
         if request.status_code != requests.codes.ok:
@@ -294,7 +282,6 @@ class Eval(DexCommand):
             raise Exception(error)
         else:
             await ctx.message.add_reaction("✅")
-            
 
     async def save(self, ctx, name):
         """
@@ -306,7 +293,7 @@ class Eval(DexCommand):
         """
         if len(name.name) > 25:
             raise Exception(f"`{name}` is above the 25 character limit")
-        
+
         if os.path.isfile(f"eval_presets/{name}.py"):
             raise Exception(f"`{name}` aleady exists.")
 
@@ -324,7 +311,6 @@ class Eval(DexCommand):
 
         await ctx.send(f"`{name}` eval preset has been saved!")
 
-
     async def remove(self, ctx, name):
         """
         Removes an eval preset.
@@ -340,8 +326,7 @@ class Eval(DexCommand):
 
         await ctx.send(f"Removed `{name}` preset.")
 
-
-    async def run(self, ctx, name): # TODO: Allow args to be passed through `run`.
+    async def run(self, ctx, name):  # TODO: Allow args to be passed through `run`.
         """
         Runs an eval preset.
 
@@ -376,7 +361,6 @@ class File(DexCommand):
         """
         await ctx.send(file=discord.File(file_path.name))
 
-            
     async def write(self, ctx, file_path):
         """
         Writes to a file using the attached file's contents.
@@ -393,7 +377,6 @@ class File(DexCommand):
 
         await ctx.send(f"Wrote to `{file_path}`")
 
-
     async def clear(self, ctx, file_path):
         """
         Clears the contents of a file.
@@ -404,12 +387,11 @@ class File(DexCommand):
         """
         if not os.path.isfile(file_path):
             raise Exception(f"'{file_path}' does not exist")
-        
+
         with open(file_path.name, "w") as _:
             pass
 
         await ctx.send(f"Cleared `{file_path}`")
-
 
     async def listdir(self, ctx, file_path=None):
         """
@@ -422,7 +404,6 @@ class File(DexCommand):
         path = file_path.name if file_path is not None else None
 
         await ctx.send(f"```{'\n'.join(os.listdir(path))}```")
-        
 
     async def delete(self, ctx, file_path):
         """

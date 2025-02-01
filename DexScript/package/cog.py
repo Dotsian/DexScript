@@ -6,8 +6,8 @@ import discord
 import requests
 from discord.ext import commands
 
-from .utils import config, Utils, DIR
 from .parser import DexScriptParser
+from .utils import DIR, Utils, config
 
 if DIR == "ballsdex":
     from ballsdex.settings import settings
@@ -82,7 +82,7 @@ class DexScript(commands.Cog):
             if result is not None:
                 await ctx.send(f"```ERROR: {result}```")
                 return
-            
+
             await ctx.message.add_reaction("✅")
 
     @commands.command()
@@ -117,7 +117,7 @@ class DexScript(commands.Cog):
             value=(
                 "To update DexScript, run "
                 f"`{settings.prefix}run EVAL > EXEC_GIT > Dotsian/DexScript/github/installer.py`"
-            )
+            ),
         )
 
         version_check = "OUTDATED" if self.check_version() is not None else "LATEST"
@@ -129,9 +129,7 @@ class DexScript(commands.Cog):
 
     @commands.command()
     @commands.is_owner()
-    async def setting(
-        self, ctx: commands.Context, setting: str, value: str | None = None
-    ):
+    async def setting(self, ctx: commands.Context, setting: str, value: str | None = None):
         """
         Changes a setting based on the value provided.
 
@@ -147,7 +145,7 @@ class DexScript(commands.Cog):
         if setting not in vars(config):
             await ctx.send(f"`{setting}` is not a valid setting.")
             return
-        
+
         setting_value = vars(config)[setting]
         new_value = value
 
