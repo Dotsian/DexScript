@@ -105,10 +105,10 @@ class InstallerGUI:
     if not self.loaded:
       self.loaded = True
 
-      await ctx.send(**main_gui.fields) # type: ignore
+      await ctx.send(**self.fields) # type: ignore
       return
 
-    await ctx.message.edit(**main_gui.fields) # type: ignore
+    await ctx.message.edit(**self.fields) # type: ignore
 
 
 class Installer:
