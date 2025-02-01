@@ -121,6 +121,8 @@ class Installer:
         
         link = f"https://api.github.com/repos/{config.github[0]}/contents/"
 
+        os.makedirs(config.path, exist_ok=True)
+        
         for file in config.files:
             request = requests.get(f"{link}/DexScript/package/{file}", {"ref": config.github[1]})
 
