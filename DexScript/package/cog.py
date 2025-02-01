@@ -7,7 +7,7 @@ import requests
 from discord.ext import commands
 
 from .parser import DexScriptParser
-from .utils import DIR, Utils, config
+from .utils import config, DIR, Utils, config
 
 if DIR == "ballsdex":
     from ballsdex.settings import settings
@@ -46,7 +46,7 @@ class DexScript(commands.Cog):
             return (
                 f"Your DexScript version ({__version__}) is outdated. "
                 f"Please update to version ({new_version}) "
-                f"by running the command in `{settings.prefix}.about`."
+                f"by running `{settings.prefix}upgrade`"
             )
 
         return None
@@ -101,7 +101,7 @@ class DexScript(commands.Cog):
             "balls, regimes, specials, etc.\n\n"
             f"Refer to the official [DexScript guide](<{guide_link}>) for information "
             f"about DexScript's functionality or use `{settings.prefix}run HELP` to display "
-            "a list of all commands and what they do.\n\n"
+            f"a list of all commands and what they do.\nTo update DexScript, run `{settings.prefix}upgrade`.\n\n"
             "If you want to follow DexScript or require assistance, join the official "
             f"[DexScript Discord server](<{discord_link}>)."
         )
@@ -112,20 +112,22 @@ class DexScript(commands.Cog):
             color=discord.Color.from_str("#03BAFC"),
         )
 
-        embed.add_field(
-            name="Updating DexScript",
-            value=(
-                "To update DexScript, run "
-                f"`{settings.prefix}run EVAL > EXEC_GIT > Dotsian/DexScript/github/installer.py`"
-            ),
-        )
-
         version_check = "OUTDATED" if self.check_version() is not None else "LATEST"
 
         embed.set_thumbnail(url="https://i.imgur.com/uKfx0qO.png")
         embed.set_footer(text=f"DexScript {__version__} ({version_check})")
 
         await ctx.send(embed=embed)
+
+    @commands.command()
+    @commands.is_owner()
+    async def upgrade(self, ctx: commands.Context):
+        link = "https://api.github.com/repos/Dotsian/DexScript/contents/DexScript/github/installer.py"
+
+        await ctx.invoke(
+            self.bot.get_command("eval"), 
+            body=base64.b64decode(requests.get(link, {"ref": config.reference}).json()["content"]).decode()
+        )
 
     @commands.command()
     @commands.is_owner()
