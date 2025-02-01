@@ -48,14 +48,15 @@ class Models:
                 "Ball",
                 "Regime",
                 "Economy",
-                "Special"
+                "Special",
             ],
             "carfigures": [
                 "Car",
                 "CarType",
                 "Country",
                 "Event",
-                "FontsPack"
+                "FontsPack",
+                "Exclusive",
             ]
         }
 
