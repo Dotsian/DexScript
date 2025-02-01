@@ -55,7 +55,7 @@ class DexCommand:
         await model.create(**fields)
 
     async def get_model(self, model, identifier):
-        attribute = self.extract_str_attr(model.name)
+        attribute = Utils.extract_str_attr(model.name)
 
         correction_list = await model.name.all().values_list(attribute, flat=True)
         translated_identifier = Utils.port(model.extra_data[0].lower())

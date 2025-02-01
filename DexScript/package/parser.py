@@ -112,7 +112,7 @@ class DexScriptParser:
             case Types.MODEL:
                 model = globals().get(line)
 
-                string_key = self.extract_str_attr(model)
+                string_key = Utils.extract_str_attr(model)
 
                 value.name = model
                 value.extra_data.append(string_key)

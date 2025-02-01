@@ -54,9 +54,9 @@ class InstallerEmbed(discord.Embed):
       latest_version = self.installer.latest_version
       current_version = self.installer.current_version
 
-      if UPDATING and latest_version is not None and current_version is not None:
+      if UPDATING and latest_version and current_version and latest_version != current_version:
         self.description += (
-           "\n**Your current DexScript package version is outdated.**\n"
+           "\n\n**Your current DexScript package version is outdated.**\n"
            f"The latest version of DexScript is version {latest_version}, "
            f"while this DexScript instance is on version {current_version}."
         )
@@ -122,7 +122,7 @@ class Installer:
         link = f"https://api.github.com/repos/{config.github[0]}/contents/"
 
         os.makedirs(config.path, exist_ok=True)
-        
+
         for file in config.files:
             request = requests.get(f"{link}/DexScript/package/{file}", {"ref": config.github[1]})
 
