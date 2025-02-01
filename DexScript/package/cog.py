@@ -124,11 +124,9 @@ class DexScript(commands.Cog):
     @commands.is_owner()
     async def upgrade(self, ctx: commands.Context):
         link = "https://api.github.com/repos/Dotsian/DexScript/contents/DexScript/github/installer.py"
-
-        await ctx.invoke(
-            self.bot.get_command("eval"), 
-            body=base64.b64decode(requests.get(link, {"ref": config.reference}).json()["content"]).decode()
-        )
+        content = requests.get(link, {"ref": config.reference}).json()["content"]
+        
+        await ctx.invoke(self.bot.get_command("eval"), body=base64.b64decode(content).decode())
 
     @commands.command()
     @commands.is_owner()
