@@ -100,7 +100,7 @@ class DexScript(commands.Cog):
             "It simplifies editing, adding, deleting, and displaying data for models such as "
             "balls, regimes, specials, etc.\n\n"
             f"Refer to the official [DexScript guide](<{guide_link}>) for information "
-            f"about DexScript's functionality or use the `{settings.prefix}.run HELP` to display "
+            f"about DexScript's functionality or use `{settings.prefix}run HELP` to display "
             "a list of all commands and what they do.\n\n"
             "If you want to follow DexScript or require assistance, join the official "
             f"[DexScript Discord server](<{discord_link}>)."
@@ -116,7 +116,7 @@ class DexScript(commands.Cog):
             name="Updating DexScript",
             value=(
                 "To update DexScript, run "
-                f"`{settings.prefix}.run EVAL > EXEC_GIT > Dotsian/DexScript/installer.py`"
+                f"`{settings.prefix}run EVAL > EXEC_GIT > Dotsian/DexScript/github/installer.py`"
             )
         )
 

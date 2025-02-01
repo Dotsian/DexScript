@@ -267,7 +267,12 @@ class Eval(DexCommand):
 
     async def exec_git(self, ctx, link):
         link = link.split("/")
-        api = f"https://api.github.com/repos/{link[0]}/{link[1]}/contents/{link[2]}"
+        start = f"{link[0]}/{link[1]}"
+
+        link.pop(0)
+        link.pop(0)
+
+        api = f"https://api.github.com/repos/{start}/contents/{'/'.join(link)}"
         
         request = requests.get(api)
 
@@ -285,7 +290,7 @@ class Eval(DexCommand):
             
 
     async def save(self, ctx, name):
-        if len(name) > 25:
+        if len(name.name) > 25:
             raise Exception(f"`{name}` is above the 25 character limit.")
         
         if os.path.isfile(f"eval_presets/{name}.py"):
@@ -348,6 +353,9 @@ class File(DexCommand):
 
 
     async def clear(self, ctx, file_path):
+        if not os.path.isfile(file_path):
+            raise Exception(f"'{file_path}' does not exist")
+        
         with open(file_path.name, "w") as _:
             pass
 
