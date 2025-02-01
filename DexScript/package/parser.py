@@ -156,7 +156,8 @@ class DexScriptParser:
 
             line2.pop(0)
 
-            class_loaded = commands.Global() if method[0] == commands.Global else method[0]()
+            class_loaded = commands.Global if method[0] == commands.Global else method[0]
+            class_loaded = class_loaded(self, self.bot)
             class_loaded.__loaded__()
 
             method_call = getattr(class_loaded, method[1].name.lower())
