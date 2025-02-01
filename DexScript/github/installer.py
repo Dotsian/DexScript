@@ -1,14 +1,24 @@
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # 
+#           OFFICIAL DEXSCRIPT INSTALLER              #
+#                                                     #
+#     This will install DexScript onto your bot.      #
+#   For additional information, read the wiki guide.  #
+#  An explanation of the code will be provided below. #
+#                                                     #
+#      THIS CODE IS RAN VIA THE `EVAL` COMMAND.       #
+
+
+import os
 import re
 import requests
 from base64 import b64decode
-from os import path
 from dataclasses import dataclass
 from datetime import datetime
 
 import discord
 
-DIR = "ballsdex" if path.isdir("ballsdex") else "carfigures"
-UPDATING = path.isdir(f"{DIR}/packages/dexscript")
+DIR = "ballsdex" if os.path.isdir("ballsdex") else "carfigures"
+UPDATING = os.path.isdir(f"{DIR}/packages/dexscript")
 
 @dataclass
 class InstallerConfig:
@@ -106,6 +116,9 @@ class Installer:
        self.interface = InstallerGUI(self)
     
     async def install(self):
+        if os.path.isfile(f"{DIR}/core/dexscript.py"):
+           os.remove(f"{DIR}/core/dexscript.py")
+        
         link = f"https://api.github.com/repos/{config.github[0]}/contents/"
 
         for file in config.files:
@@ -172,7 +185,7 @@ class Installer:
     
     @property
     def current_version(self):
-        if not path.isfile(f"{config.path}/cog.py"):
+        if not os.path.isfile(f"{config.path}/cog.py"):
            return
         
         with open(f"{config.path}/cog.py", "r") as file:
