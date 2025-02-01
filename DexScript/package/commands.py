@@ -258,7 +258,7 @@ class Filter(DexCommand):
 
 class Eval(DexCommand):
     """
-    Developer commands for executing evals.
+    Commands for executing evals and managing eval presets.
     """
 
     def __loaded__(self):
@@ -266,7 +266,14 @@ class Eval(DexCommand):
 
 
     async def exec_git(self, ctx, link):
-        link = link.split("/")
+        """
+        Executes an eval command based on a GitHub file link.
+
+        Documentation
+        -------------
+        EVAL > EXEC_GIT > LINK
+        """
+        link = link.name.split("/")
         start = f"{link[0]}/{link[1]}"
 
         link.pop(0)
@@ -290,8 +297,15 @@ class Eval(DexCommand):
             
 
     async def save(self, ctx, name):
+        """
+        Saves an eval preset.
+
+        Documentation
+        -------------
+        EVAL > SAVE > NAME
+        """
         if len(name.name) > 25:
-            raise Exception(f"`{name}` is above the 25 character limit.")
+            raise Exception(f"`{name}` is above the 25 character limit")
         
         if os.path.isfile(f"eval_presets/{name}.py"):
             raise Exception(f"`{name}` aleady exists.")
@@ -312,8 +326,15 @@ class Eval(DexCommand):
 
 
     async def remove(self, ctx, name):
+        """
+        Removes an eval preset.
+
+        Documentation
+        -------------
+        EVAL > REMOVE > NAME
+        """
         if not os.path.isfile(f"eval_presets/{name}.py"):
-            raise Exception(f"`{name}` does not exists.")
+            raise Exception(f"`{name}` does not exists")
 
         os.remove(f"eval_presets/{name}.py")
 
@@ -321,8 +342,15 @@ class Eval(DexCommand):
 
 
     async def run(self, ctx, name): # TODO: Allow args to be passed through `run`.
+        """
+        Runs an eval preset.
+
+        Documentation
+        -------------
+        EVAL > RUN > NAME
+        """
         if not os.path.isfile(f"eval_presets/{name}.py"):
-            raise Exception(f"`{name}` does not exists.")
+            raise Exception(f"`{name}` does not exists")
 
         with open(f"eval_presets/{name}.py", "r") as file:
             try:
@@ -335,14 +363,28 @@ class Eval(DexCommand):
 
 class File(DexCommand):
     """
-    Developer commands for managing and modifying the bot's internal filesystem.
+    Commands for managing and modifying the bot's internal filesystem.
     """
 
     async def read(self, ctx, file_path):
+        """
+        Sends a file based on the specified file path.
+
+        Documentation
+        -------------
+        FILE > READ > FILE_PATH
+        """
         await ctx.send(file=discord.File(file_path.name))
 
             
     async def write(self, ctx, file_path):
+        """
+        Writes to a file using the attached file's contents.
+
+        Documentation
+        -------------
+        FILE > WRITE > FILE_PATH
+        """
         new_file = ctx.message.attachments[0]
 
         with open(file_path.name, "w") as opened_file:
@@ -353,6 +395,13 @@ class File(DexCommand):
 
 
     async def clear(self, ctx, file_path):
+        """
+        Clears the contents of a file.
+
+        Documentation
+        -------------
+        FILE > CLEAR > FILE_PATH
+        """
         if not os.path.isfile(file_path):
             raise Exception(f"'{file_path}' does not exist")
         
@@ -363,12 +412,26 @@ class File(DexCommand):
 
 
     async def listdir(self, ctx, file_path=None):
+        """
+        Lists all files inside of a directory.
+
+        Documentation
+        -------------
+        FILE > LISTDIR > FILE_PATH(?)
+        """
         path = file_path.name if file_path is not None else None
 
         await ctx.send(f"```{'\n'.join(os.listdir(path))}```")
         
 
     async def delete(self, ctx, file_path):
+        """
+        Deletes a file or directory based on the specified file path.
+
+        Documentation
+        -------------
+        FILE > DELETE > FILE_PATH
+        """
         is_dir = os.path.isdir(file_path.name)
 
         file_type = "directory" if is_dir else "file"
