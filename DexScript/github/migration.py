@@ -10,21 +10,24 @@ def repair_bot_file():
     """
     Repairs the `bot.py` file and removes extra newlines caused by an old DexScript installer.
     """
-    with open(f"{DIR}/core/bot.py", "r") as file:
-        content = file.read()
+    new_lines = []
 
-        if "import asyncio\n\n" not in content:
+    with open(f"{DIR}/core/bot.py", "r") as file:
+        if "import asyncio\n\n" not in file.read():
             return
 
-    new_lines = []
-    last_was_newline = False
+    with open(f"{DIR}/core/bot.py", "r") as file:
+        last_was_newline = False
 
-    for line in content.splitlines(keepends=True):
-        if last_was_newline and line == "\n":
-            continue
+        for line in file.readlines():
+            if last_was_newline is True:
+                last_was_newline = False
+                continue
+            
+            if line.endswith("\n") and line != "\n" or line == "\n":
+                last_was_newline = True
 
-        last_was_newline = line == "\n"
-        new_lines.append(line)
+            new_lines.append(line)
 
     with open(f"{DIR}/core/bot.py", "w") as file:
         file.writelines(new_lines)
