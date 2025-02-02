@@ -11,11 +11,6 @@ from dateutil.parser import parse as parse_date
 from . import commands
 from .utils import DIR, Utils, config
 
-if DIR == "ballsdex":
-    from ballsdex.core.models import Ball, Economy, Regime, Special  # noqa: F401, I001
-else:
-    from carfigures.core.models import Car, CarType, Country, Event, FontsPack  # noqa: F401, I001
-
 
 class Types(Enum):
     DEFAULT = 0
@@ -34,42 +29,6 @@ class Value:
 
     def __str__(self):
         return str(self.name)
-
-
-@dataclass
-class Models:
-    """
-    Model functions.
-    """
-
-    @staticmethod
-    def all(names=False, key=None):
-        model_list = {
-            "ballsdex": [
-                "Ball",
-                "Regime",
-                "Economy",
-                "Special",
-            ],
-            "carfigures": [
-                "Car",
-                "CarType",
-                "Country",
-                "Event",
-                "FontsPack",
-                "Exclusive",
-            ],
-        }
-
-        return_list = model_list[DIR]
-
-        if not names:
-            return_list = [globals().get(x) for x in return_list if globals().get(x) is not None]
-
-        if key is not None:
-            return_list = [key(x) for x in return_list]
-
-        return return_list
 
 
 class DexScriptParser:
@@ -101,7 +60,7 @@ class DexScriptParser:
         type_dict = {
             Types.METHOD: lower in self.global_methods,
             Types.CLASS: lower in [x[0].lower() for x in self.command_classes],
-            Types.MODEL: lower in Models.all(True, key=str.lower),
+            Types.MODEL: lower in Utils.models(True, key=str.lower),
             Types.DATETIME: Utils.is_date(lower) and lower.count("-") >= 2,
             Types.BOOLEAN: lower in ["true", "false"],
         }
@@ -115,7 +74,7 @@ class DexScriptParser:
 
         match value.type:
             case Types.MODEL:
-                model = globals().get(line)
+                model = Utils.fetch_model(line)
 
                 if model is None:
                     examples = "Ball, Regime, Special"

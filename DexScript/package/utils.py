@@ -10,6 +10,11 @@ from dateutil.parser import parse as parse_date
 
 DIR = "ballsdex" if os.path.isdir("ballsdex") else "carfigures"
 
+if DIR == "ballsdex":
+    from ballsdex.core.models import Ball, Economy, Regime, Special  # noqa: F401, I001
+else:
+    from carfigures.core.models import Car, CarType, Country, Event, FontsPack  # noqa: F401, I001
+
 START_CODE_BLOCK_RE = re.compile(r"^((```sql?)(?=\s)|(```))")
 FILENAME_RE = re.compile(r"^(.+)(\.\S+)$")
 
@@ -37,6 +42,39 @@ class Utils:
     """
 
     @staticmethod
+    def fetch_model(model):
+        return globals().get(model)
+
+    @staticmethod
+    def models(names=False, key=None):
+        model_list = {
+            "ballsdex": [
+                "Ball",
+                "Regime",
+                "Economy",
+                "Special",
+            ],
+            "carfigures": [
+                "Car",
+                "CarType",
+                "Country",
+                "Event",
+                "FontsPack",
+                "Exclusive",
+            ],
+        }
+
+        return_list = model_list[DIR]
+
+        if not names:
+            return_list = [globals().get(x) for x in return_list if globals().get(x) is not None]
+
+        if key is not None:
+            return_list = [key(x) for x in return_list]
+
+        return return_list
+
+    @staticmethod
     def autocorrect(string, correction_list, error="does not exist."):
         autocorrection = get_close_matches(string, correction_list)
 
@@ -46,34 +84,6 @@ class Utils:
             raise Exception(f"'{string}' {error}{suggestion}")
 
         return autocorrection[0]
-
-    @staticmethod
-    def port(original: str | list[str]):
-        """
-        Translates model and field names into a format for both Ballsdex and CarFigures.
-
-        Parameters
-        ----------
-        original: str | list[str]
-            The original string or list of strings you want to translate.
-        """
-        if DIR == "ballsdex":
-            return original
-
-        translation = {
-            "BALL": "ENTITY",
-            "COUNTRY": "fullName",
-            "SHORT_NAME": "shortName",
-            "CATCH_NAMES": "catchNames",
-            "ICON": "image",
-        }
-
-        if isinstance(original, list):
-            translated_copy = [translation.get(x.upper(), x) for x in original]
-        else:
-            translated_copy = translation.get(original.upper(), original)
-
-        return translated_copy
 
     @staticmethod
     async def save_file(attachment: discord.Attachment) -> Path:

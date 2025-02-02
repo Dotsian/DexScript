@@ -6,7 +6,7 @@ from base64 import b64decode
 import discord
 import requests
 
-from .utils import MEDIA_PATH, Utils
+from .utils import DIR, MEDIA_PATH, Utils
 
 
 class DexCommand:
@@ -20,12 +20,15 @@ class DexCommand:
         fields = {}
 
         special_list = {
-            k: Utils.port(v)
-            for k, v in {
-                "Identifiers": ["country", "catch_names", "name"],
-                "Ignore": ["id", "short_name"],
-            }.items()
+            "Identifiers": ["country", "catch_names", "name"],
+            "Ignore": ["id", "short_name"]
         }
+
+        if DIR == "carfigures":
+            special_list = {
+                "Identifiers": ["fullName", "catchNames", "name"],
+                "Ignore": ["id", "shortName"]
+            }
 
         for field, field_type in model._meta.fields_map.items():
             if vars(model()).get(field) is not None or field in special_list["Ignore"]:
@@ -37,13 +40,12 @@ class DexCommand:
 
             match field_type:
                 case "ForeignKeyFieldInstance":
-                    pass
-                    # instance = await Models.fetch_model(field).first()
+                    instance = Utils.fetch_model(field).first()
 
-                    # if instance is None:
-                    # raise Exception(f"Could not find default {field}")
+                    if instance is None:
+                        raise Exception(f"Could not find default {field}")
 
-                    # fields[field] = instance.pk
+                    fields[field] = instance.pk
 
                 case "BigIntField":
                     fields[field] = 100**8
@@ -57,14 +59,11 @@ class DexCommand:
         await model.create(**fields)
 
     async def get_model(self, model, identifier):
-        attribute = Utils.extract_str_attr(model.name)
-
-        correction_list = await model.name.all().values_list(attribute, flat=True)
-        translated_identifier = Utils.port(model.extra_data[0].lower())
+        correction_list = await model.name.all().values_list(model.extra_data[0], flat=True)
 
         try:
             returned_model = await model.name.filter(
-                **{translated_identifier: Utils.autocorrect(identifier, correction_list)}
+                **{model.extra_data[0]: Utils.autocorrect(identifier, correction_list)}
             )
         except AttributeError:
             raise Exception(f"'{model}' is not a valid model.")
