@@ -100,8 +100,14 @@ class Utils:
         )
     
     @staticmethod
-    def casing():
-        return Utils.to_camel_case if DIR == "carfigures" else Utils.to_snake_case
+    def casing(item):
+        """
+        Determines whether to use camelCase or snake_case depending on if the bot is using
+        CarFigures or Ballsdex.
+        """
+        return (
+            Utils.to_camel_case(item) if DIR == "carfigures" else Utils.to_snake_case(item)
+        )
 
     @staticmethod
     def autocorrect(string, correction_list, error="does not exist."):
