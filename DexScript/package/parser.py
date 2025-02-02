@@ -39,7 +39,7 @@ class DexScriptParser:
     def __init__(self, ctx, bot):
         self.ctx = ctx
         self.bot = bot
-        self.attachments = ctx.message.attachments
+        # self.attachments = ctx.message.attachments
 
         self.command_classes = inspect.getmembers(
             commands,

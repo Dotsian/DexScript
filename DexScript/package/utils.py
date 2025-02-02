@@ -73,6 +73,35 @@ class Utils:
             return_list = [key(x) for x in return_list]
 
         return return_list
+    
+    @staticmethod
+    def _common_format(string_or_list: str | list[str], func):
+        if isinstance(string_or_list, str):
+            return func(string_or_list)
+        
+        return [func(x) for x in string_or_list]
+    
+    @staticmethod
+    def to_camel_case(item):
+        """
+        Formats a string or list from snake_case into camelCase for CarFigure support.
+        """
+        return Utils._common_format(
+            item, func=lambda s: re.sub(r"(_[a-z])", lambda m: m.group(1)[1].upper(), s)
+        )
+    
+    @staticmethod
+    def to_snake_case(item):
+        """
+        Formats a string or list from camelCase into snake_case for CarFigure support.
+        """
+        return Utils._common_format(
+            item, func=lambda s: re.sub(r"(?<!^)(?=[A-Z])", "_", s).lower()
+        )
+    
+    @staticmethod
+    def casing():
+        return Utils.to_camel_case if DIR == "carfigures" else Utils.to_snake_case
 
     @staticmethod
     def autocorrect(string, correction_list, error="does not exist."):
