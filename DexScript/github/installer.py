@@ -11,14 +11,21 @@
 import os
 import re
 from base64 import b64decode
-from dataclasses import dataclass
+from dataclasses import dataclass, field as datafield
 from datetime import datetime
+from enum import Enum
+from traceback import format_exc
 
 import discord
 import requests
 
 DIR = "ballsdex" if os.path.isdir("ballsdex") else "carfigures"
 UPDATING = os.path.isdir(f"{DIR}/packages/dexscript")
+
+
+class MigrationType(Enum):
+    APPEND = 1
+    REPLACE = 2
 
 
 @dataclass
@@ -33,12 +40,28 @@ class InstallerConfig:
         (
             "||await self.add_cog(Core(self))",
             '||await self.load_extension("$DIR.packages.dexscript")\n',
+            MigrationType.APPEND
+        ),
+        (
+            '||await self.load_extension("$DIR.core.dexscript")',
+            '||await self.load_extension("$DIR.packages.dexscript")',
+            MigrationType.REPLACE
         )
     ]
     path = f"{DIR}/packages/dexscript"
 
+@dataclass
+class Logger:
+    name: str
+    output: list = datafield(default_factory=list)
+
+    def log(self, content, level):
+        current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        self.output.append(f"{current_time} [{self.name}] {level} - {content}")
+
 
 config = InstallerConfig()
+logger = Logger("DEXSCRIPT-INSTALLER")
 
 
 class InstallerEmbed(discord.Embed):
@@ -66,6 +89,11 @@ class InstallerEmbed(discord.Embed):
             url="https://raw.githubusercontent.com/Dotsian/DexScript/refs/heads/dev/assets/DexScriptPromo.png"
         )
 
+    def error(self, log):
+        self.title = "DexScript ERROR"
+        self.description = "An error occured in DexScript's installation setup."
+        self.color = discord.Color.red()
+
 
 class InstallerView(discord.ui.View):
     def __init__(self, installer):
@@ -76,10 +104,15 @@ class InstallerView(discord.ui.View):
         style=discord.ButtonStyle.primary, label="Update" if UPDATING else "Install"
     )
     async def install_button(self, interaction: discord.Interaction, _: discord.ui.Button):
-        self.install_button.disabled = True
         self.quit_button.disabled = True
 
-        await self.installer.install()
+        await interaction.message.edit(**self.installer.interface.fields)
+
+        try:
+            await self.installer.install()
+        except Exception as error:  # TODO: Add error handling
+            logger.log(format_exc(), "ERROR")
+            self.
 
         await interaction.message.edit(**self.installer.interface.fields)
         await interaction.response.defer()
@@ -138,16 +171,25 @@ class Installer:
         os.makedirs(config.path, exist_ok=True)
 
         for file in config.files:
+            logger.log(f"Fetching {file} from '{link}/DexScript/package'", "INFO")
+
             request = requests.get(f"{link}/DexScript/package/{file}", {"ref": config.github[1]})
 
             if request.status_code != requests.codes.ok:
-                pass  # TODO: Add error handling
+                raise Exception(
+                    f"Request to return {file} from '{link}/DexScript/package' "
+                    f"resulted with error code {request.status_code}"
+                )
 
             request = request.json()
             content = b64decode(request["content"])
 
             with open(f"{config.path}/{file}", "w") as opened_file:
                 opened_file.write(content.decode("UTF-8"))
+
+            logger.log(f"Installed {file} from '{link}/DexScript/package'", "INFO")
+
+        logger.log("Applying bot.py migrations", "INFO")
 
         with open(f"{DIR}/core/bot.py", "r") as read_file:
             lines = read_file.readlines()
@@ -159,18 +201,30 @@ class Installer:
                 original = self.format_migration(migration[0])
                 new = self.format_migration(migration[1])
 
-                if line.rstrip() != original or lines[index + 1] == new:
-                    continue
+                match migration[2]:
+                    case MigrationType.REPLACE:
+                        if line.rstrip() != original:
+                            continue
 
-                lines.insert(stripped_lines.index(original) + 1, new)
+                        lines[index] = new
+                        break
+                    case MigrationType.APPEND:
+                        if line.rstrip() != original or lines[index + 1] == new:
+                            continue
+
+                        lines.insert(stripped_lines.index(original) + 1, new)
 
         with open(f"{DIR}/core/bot.py", "w") as write_file:
             write_file.writelines(lines)
 
-        # try:
-        # await bot.load_extension(config.path)
-        # except commands.ExtensionAlreadyLoaded:
-        # await bot.reload_extension(config.path)
+        logger.log("Loading DexScript extension", "INFO")
+
+        try:
+            await bot.load_extension(config.path)
+        except commands.ExtensionAlreadyLoaded:
+            await bot.reload_extension(config.path)
+
+        logger.log("DexScript installation finished", "INFO")
 
     @staticmethod
     def format_migration(line):

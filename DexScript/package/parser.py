@@ -1,8 +1,7 @@
 import inspect
 import re
 import traceback
-from dataclasses import dataclass
-from dataclasses import field as datafield
+from dataclasses import dataclass, field as datafield
 from enum import Enum
 from typing import Any
 
