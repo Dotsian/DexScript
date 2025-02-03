@@ -84,6 +84,15 @@ class InstallerView(discord.ui.View):
         await interaction.message.edit(**self.installer.interface.fields)
         await interaction.response.defer()
 
+    @discord.ui.button(
+        style=discord.ButtonStyle.primary, label="Uninstall", disabled=not UPDATING
+    )
+    async def uninstall_button(self, interaction: discord.Interaction, _: discord.ui.Button):
+        # TODO: Add uninstallation
+        
+        await interaction.message.edit(**self.installer.interface.fields)
+        await interaction.response.defer()
+
     @discord.ui.button(style=discord.ButtonStyle.red, label="Exit")
     async def quit_button(self, interaction: discord.Interaction, _: discord.ui.Button):
         self.install_button.disabled = True
