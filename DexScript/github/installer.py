@@ -11,7 +11,8 @@
 import os
 import re
 from base64 import b64decode
-from dataclasses import dataclass, field as datafield
+from dataclasses import dataclass
+from dataclasses import field as datafield
 from datetime import datetime
 from enum import Enum
 from io import StringIO
@@ -46,7 +47,7 @@ class InstallerConfig:
     files = ["__init__.py", "cog.py", "commands.py", "parser.py", "utils.py"]
     appearance = {
         "logo": "https://raw.githubusercontent.com/Dotsian/DexScript/refs/heads/dev/assets/DexScriptLogo.png",
-        "logo_error": "", # TODO: Add error logo
+        "logo_error": "https://raw.githubusercontent.com/Dotsian/DexScript/refs/heads/dev/assets/DexScriptLogoError.png",
         "banner": "https://raw.githubusercontent.com/Dotsian/DexScript/refs/heads/dev/assets/DexScriptPromo.png"
     }
     migrations = [
