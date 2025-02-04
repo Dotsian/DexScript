@@ -280,9 +280,9 @@ class Installer:
         logger.log("Loading DexScript extension", "INFO")
 
         try:
-            await bot.load_extension(config.path)  # type: ignore
+            await bot.load_extension(config.path.replace("/", "."))  # type: ignore
         except commands.ExtensionAlreadyLoaded:
-            await bot.reload_extension(config.path)  # type: ignore
+            await bot.reload_extension(config.path.replace("/", "."))  # type: ignore
 
         logger.log("DexScript installation finished", "INFO")
 
