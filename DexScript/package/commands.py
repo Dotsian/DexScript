@@ -105,7 +105,9 @@ class Global(DexCommand):
         -------------
         UPDATE > MODEL > IDENTIFIER > ATTRIBUTE > VALUE(?)
         """
-        attribute_name = Utils.casing(attribute.name)
+        _attr_name = attrbute.name.__name__ if attribute.type == Types.MODEL else attribute.name
+
+        attribute_name = Utils.casing(_attr_name.lower())
         new_value = Utils.casing(value.name) if value is not None else None
 
         returned_model = self.get_model(model, identifier.name)
@@ -158,8 +160,10 @@ class Global(DexCommand):
 
             await ctx.send(**fields)
             return
+
+        _attr_name = attrbute.name.__name__ if attribute.type == Types.MODEL else attribute.name
         
-        attribute_name = Utils.casing(attribute.name.lower())
+        attribute_name = Utils.casing(_attr_name.lower())
 
         if not hasattr(returned_model, attribute_name):
             raise Exception(
@@ -212,7 +216,8 @@ class Filter(DexCommand):
         -------------
         FILTER > UPDATE > MODEL > ATTRIBUTE > OLD_VALUE > NEW_VALUE > TORTOISE_OPERATOR(?)
         """
-        casing_name = Utils.casing(attribute.name.lower())
+        _attr_name = attrbute.name.__name__ if attribute.type == Types.MODEL else attribute.name
+        casing_name = Utils.casing(_attr_name.lower())
 
         if not hasattr(model.name, casing_name):
             raise Exception(
@@ -250,7 +255,9 @@ class Filter(DexCommand):
         -------------
         FILTER > DELETE > MODEL > ATTRIBUTE > VALUE > TORTOISE_OPERATOR(?)
         """
-        casing_name = Utils.casing(attribute.name.lower())
+        _attr_name = attrbute.name.__name__ if attribute.type == Types.MODEL else attribute.name
+
+        casing_name = Utils.casing(_attr_name.lower())
 
         if not hasattr(model.name, casing_name):
             raise Exception(
