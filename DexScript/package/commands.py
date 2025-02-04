@@ -25,8 +25,10 @@ class DexCommand:
         }
 
         if DIR == "carfigures":
-            special_list["Identifiers"] = Utils.to_camel_case(special_list["Identifiers"])
-            special_list["Ignore"] = Utils.to_camel_case(special_list["Ignore"])
+            special_list = {
+                "Identifiers": ["fullName", "catchNames", "name"],
+                "Ignore": ["id", "shortName"]
+            }
 
         for field, field_type in model._meta.fields_map.items():
             if vars(model()).get(field) is not None or field in special_list["Ignore"]:
