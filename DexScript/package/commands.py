@@ -43,7 +43,7 @@ class DexCommand:
 
                     casing_field = Utils.casing(field, True)
                     
-                    instance = Utils.fetch_model(casing_field).first()
+                    instance = await Utils.fetch_model(casing_field).first()
 
                     if instance is None:
                         raise Exception(f"Could not find default {casing_field}")
