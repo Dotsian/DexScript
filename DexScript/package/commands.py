@@ -39,7 +39,7 @@ class DexCommand:
             match field_type.__class__.__name__:
                 case "ForeignKeyFieldInstance":
                     if field == "cartype":
-                        field == "car_type"
+                        field = "car_type"
 
                     casing_field = Utils.casing(field, True)
                     
