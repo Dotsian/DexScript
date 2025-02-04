@@ -6,7 +6,7 @@ from base64 import b64decode
 import discord
 import requests
 
-from .utils import DIR, MEDIA_PATH, Types, Utils
+from .utils import DIR, Types, Utils
 
 
 class DexCommand:
