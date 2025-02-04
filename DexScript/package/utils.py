@@ -3,6 +3,7 @@ import os
 import re
 from dataclasses import dataclass
 from difflib import get_close_matches
+from enum import Enum
 from pathlib import Path
 
 import discord
@@ -20,6 +21,14 @@ FILENAME_RE = re.compile(r"^(.+)(\.\S+)$")
 
 MEDIA_PATH = "./admin_panel/media" if os.path.isdir("./admin_panel/media") else "/static/uploads"
 
+
+class Types(Enum):
+    DEFAULT = 0
+    METHOD = 1
+    CLASS = 2
+    BOOLEAN = 3
+    MODEL = 4
+    DATETIME = 5
 
 @dataclass
 class Settings:

@@ -3,22 +3,12 @@ import re
 import traceback
 from dataclasses import dataclass
 from dataclasses import field as datafield
-from enum import Enum
 from typing import Any
 
 from dateutil.parser import parse as parse_date
 
 from . import commands
-from .utils import DIR, Utils, config
-
-
-class Types(Enum):
-    DEFAULT = 0
-    METHOD = 1
-    CLASS = 2
-    BOOLEAN = 3
-    MODEL = 4
-    DATETIME = 5
+from .utils import DIR, Types, Utils, config
 
 
 @dataclass

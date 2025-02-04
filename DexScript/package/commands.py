@@ -6,7 +6,7 @@ from base64 import b64decode
 import discord
 import requests
 
-from .utils import DIR, MEDIA_PATH, Utils
+from .utils import DIR, MEDIA_PATH, Types, Utils
 
 
 class DexCommand:
@@ -73,7 +73,7 @@ class Global(DexCommand):
     """
     Main methods for DexScript.
     """
-    
+
     async def create(self, ctx, model, identifier):
         """
         Creates a model instance.
@@ -120,6 +120,9 @@ class Global(DexCommand):
         if value is None:
             image_path = await Utils.save_file(ctx.message.attachments[0])
             new_value = f"{MEDIA_PATH}/{image_path}"
+
+        if attribute.type == Types.MODEL:
+            new_value = self.get_model(attribute, new_value)
 
         await returned_model.update(**{attribute_name: new_value})
 
@@ -221,8 +224,15 @@ class Filter(DexCommand):
         if tortoise_operator is not None:
             casing_name += f"__{tortoise_operator.name.lower()}"
 
-        await model.name.filter(**{casing_name: old_value.name}).update(
-            **{casing_name: new_value.name}
+        value_old = old_value.name
+        value_new = new_value.name
+
+        if attribute.type == Types.MODEL:
+            value_old = self.get_model(attribute, value_old)
+            value_new = self.get_model(attribute, value_new)
+
+        await model.name.filter(**{casing_name: value_old}).update(
+            **{casing_name: value_new}
         )
 
         await ctx.send(
@@ -252,7 +262,12 @@ class Filter(DexCommand):
         if tortoise_operator is not None:
             casing_name += f"__{tortoise_operator.name.lower()}"
 
-        await model.name.filter(**{casing_name: value.name}).delete()
+        new_value = value.name
+
+        if attribute.type == Types.MODEL:
+            new_value = self.get_model(attribute, new_value)
+
+        await model.name.filter(**{casing_name: new_value}).delete()
 
         await ctx.send(
             f"Deleted all `{model}` instances with a " f"`{attribute}` value of `{value}`"
