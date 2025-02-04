@@ -103,7 +103,7 @@ class DexScriptParser:
     def error(self, message, log):
         return (message, log)[config.debug]
 
-    async def execute(self, code: str):
+    async def execute(self, code: str, run_commands=True):
         split_code = [x for x in code.split("\n") if x.strip() != ""]
 
         parsed_code = [
@@ -111,6 +111,9 @@ class DexScriptParser:
             for line in split_code
             if not line.strip().startswith("--")
         ]
+
+        if not run_commands:
+            return parsed_code
 
         for line2 in parsed_code:
             if line2 == []:

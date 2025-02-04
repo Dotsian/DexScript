@@ -319,6 +319,9 @@ class Installer:
         logger.log("DexScript installation finished", "INFO")
 
     async def uninstall(self):
+        if os.path.isfile(f"{DIR}/core/dexscript.py"):
+            os.remove(f"{DIR}/core/dexscript.py")
+        
         shutil.rmtree(config.path)
 
         self.uninstall_migrate()
