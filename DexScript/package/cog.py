@@ -31,15 +31,15 @@ class DexScript(commands.Cog):
         if not config.versioncheck:
             return None
 
-        r = requests.get(
+        request = requests.get(
             "https://api.github.com/repos/Dotsian/DexScript/contents/pyproject.toml",
             {"ref": config.reference},
         )
 
-        if r.status_code != requests.codes.ok:
+        if request.status_code != requests.codes.ok:
             return
 
-        toml_content = base64.b64decode(r.json()["content"]).decode("UTF-8")
+        toml_content = base64.b64decode(request.json()["content"]).decode()
         new_version = re.search(r'version\s*=\s*"(.*?)"', toml_content).group(1)
 
         if new_version != __version__:
@@ -100,9 +100,8 @@ class DexScript(commands.Cog):
             "It simplifies editing, adding, deleting, and displaying data for models such as "
             "balls, regimes, specials, etc.\n\n"
             f"Refer to the official [DexScript guide](<{guide_link}>) for information "
-            f"about DexScript's functionality or use `{settings.prefix}run HELP` to display "
-            "a list of all commands and what they do.\n"
-            f"To update DexScript, run `{settings.prefix}upgrade`.\n\n"
+            f"about DexScript's functionality\n"
+            f"To update or uninstall DexScript, run `{settings.prefix}installer`.\n\n"
             "If you want to follow DexScript or require assistance, join the official "
             f"[DexScript Discord server](<{discord_link}>)."
         )
@@ -124,11 +123,23 @@ class DexScript(commands.Cog):
 
     @commands.command()
     @commands.is_owner()
-    async def upgrade(self, ctx: commands.Context):
+    async def installer(self, ctx: commands.Context):
         link = "https://api.github.com/repos/Dotsian/DexScript/contents/DexScript/github/installer.py"
-        content = requests.get(link, {"ref": config.reference}).json()["content"]
-        
-        await ctx.invoke(self.bot.get_command("eval"), body=base64.b64decode(content).decode())
+        request = requests.get(link, {"ref": config.reference})
+
+        match request.status_code:
+            case requests.codes.not_found:
+                await ctx.send(f"Could not find installer for the {config.reference} branch.")
+            
+            case requests.codes.ok:
+                content = requests.get(link, {"ref": config.reference}).json()["content"]
+                
+                await ctx.invoke(
+                    self.bot.get_command("eval"), body=base64.b64decode(content).decode()
+                )
+            
+            case _:
+                await ctx.send(f"Request raised error code `{request.status_code}`.")
 
     @commands.command()
     @commands.is_owner()

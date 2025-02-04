@@ -20,6 +20,8 @@ DexScript has a ton more features too! All of them can be found within our exten
 * **Mass updating and deleting Balls, Regimes, Specials, etc.**
 * **Saving evals and loading them**.
 
+DexScript is currently in beta. However, the latest version is a release candidate for the full release.
+
 ## DexScript Requirements
 
 To install DexScript, you must have the following:
@@ -27,7 +29,11 @@ To install DexScript, you must have the following:
 * Ballsdex or CarFigures v2.2.0+
 * Eval access
 
-## Installing DexScript
+## DexScript Setup
+
+The DexScript installer is a intuitive menu that can allow you to easily update, install, and uninstall DexScript. To bring up the DexScript installer, all you have to do is run one eval command!
+
+### Versions
 
 DexScript has two versions, the release version and the development version.
 
@@ -47,6 +53,28 @@ import base64, requests; await ctx.invoke(bot.get_command("eval"), body=base64.b
 import base64, requests; await ctx.invoke(bot.get_command("eval"), body=base64.b64decode(requests.get("https://api.github.com/repos/Dotsian/DexScript/contents/DexScript/github/installer.py", {"ref": "dev"}).json()["content"]).decode())
 ```
 
-## Updating
+### DexScript Installer
 
-The command above will automatically update DexScript, however, if you already have DexScript, you can run `b.upgrade` to update DexScript, replacing `b.` with your bot's prefix.
+> [!NOTE]
+> If DexScript is already installed, you can run `b.installer` to show the DexScript installer, replacing `b.` with your application's prefix..
+
+Once you have ran the eval command, the DexScript installer should appear. There will be three buttons:
+
+* Install [or] Update
+* Uninstall
+* Exit
+
+> [!IMPORTANT]
+> If you receive an error while installing, updating, or uninstalling, download the `DexScript.log` file and submit a bug report in this GitHub repository.
+
+#### Installing
+
+If you are installing DexScript for the first time, you will see a button called "Install". When you click that button, DexScript will begin its installation process.
+
+#### Updating
+
+If you already have DexScript, you will see a button called "Update". When you click that button, DexScript will update to the latest version.
+
+#### Uninstall
+
+If you already have DexScript, you will see a button called "Uninstall". Clicking the uninstall button will uninstall DexScript from your application. This will instantly remove the DexScript package and DexScript commands will unload instantly.

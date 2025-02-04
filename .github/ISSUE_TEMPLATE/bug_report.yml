@@ -14,11 +14,27 @@ body:
       options:
         - label: Did you read the error page and view the common errors?
           required: true
+  - type: dropdown
+    id: location
+    attributes:
+      label: Bug Location
+      description: Where did this bug occur? If you select "Other", please specify in the Bug Description section.
+      options:
+        - While installing.
+        - While updating.
+        - While uninstalling.
+        - When running a command.
+        - When trying to run a command.
+        - When using a text command, such as ".about" or ".installer".
+        - When trying to turn on the bot.
+        - Other (please specify in the Bug Description section)
+    validations:
+      required: true
   - type: textarea
     id: description
     attributes:
       label: Bug Description
-      description: Explain what the bug was and where it occurred.
+      description: Explain the bug and what happened before it appeared.
       placeholder: Bug explanation...
     validations:
       required: true

@@ -307,7 +307,7 @@ class Installer:
 
         logger.log("Applying bot.py migrations", "INFO")
 
-        self.migrate()
+        self.install_migrate()
 
         logger.log("Loading DexScript extension", "INFO")
 

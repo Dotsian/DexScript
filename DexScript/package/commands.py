@@ -74,7 +74,7 @@ class Global(DexCommand):
     Main methods for DexScript.
     """
 
-    async def help(self, ctx):
+    # async def help(self, ctx):
         """
         Lists all DexScript commands and provides documentation for them.
 
@@ -83,7 +83,6 @@ class Global(DexCommand):
         HELP
         """
         # getattr(Methods, command).__doc__.replace("\n", "").split("Documentation-------------")
-        pass
 
     async def create(self, ctx, model, identifier):
         """
@@ -94,7 +93,6 @@ class Global(DexCommand):
         CREATE > MODEL > IDENTIFIER
         """
         await self.create_model(model.name, identifier)
-
         await ctx.send(f"Created `{identifier}`")
 
     async def delete(self, ctx, model, identifier):
@@ -106,7 +104,6 @@ class Global(DexCommand):
         DELETE > MODEL > IDENTIFIER
         """
         await self.get_model(model, identifier.name).delete()
-
         await ctx.send(f"Deleted `{identifier}`")
 
     async def update(self, ctx, model, identifier, attribute, value=None):
@@ -211,8 +208,7 @@ class Filter(DexCommand):
     """
     Filter commands used for mass updating, deleting, and viewing models.
     """
-
-    # TODO: Add attachment support.
+    
     async def update(self, ctx, model, attribute, old_value, new_value, tortoise_operator=None):
         """
         Updates all instances of a model to the specified value where the specified attribute
