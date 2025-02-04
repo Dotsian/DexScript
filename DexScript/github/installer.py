@@ -127,7 +127,7 @@ class InstallerEmbed(discord.Embed):
 
         self.installer.interface.attachments.append(logger.file("DexScript.log"))
         
-        self.set_image(url=config.appearance["logo_error"])
+        self.set_thumbnail(url=config.appearance["logo_error"])
 
     def installed(self):
         self.title = "DexScript Installed!"
@@ -138,7 +138,7 @@ class InstallerEmbed(discord.Embed):
         self.color = discord.Color.from_str("#FFF" if DIR == "carfigures" else "#03BAFC")
         self.timestamp = datetime.now()
 
-        self.set_image(url=config.appearance["logo"])
+        self.set_thumbnail(url=config.appearance["logo"])
 
 
 class InstallerView(discord.ui.View):
@@ -155,6 +155,7 @@ class InstallerView(discord.ui.View):
         await interaction.message.edit(**self.installer.interface.fields)
 
         try:
+            raise Exception("hi")
             await self.installer.install()
         except Exception:
             logger.log(format_exc(), "ERROR")
