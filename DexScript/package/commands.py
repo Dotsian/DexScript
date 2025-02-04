@@ -31,7 +31,7 @@ class DexCommand:
             }
 
         for field, field_type in model._meta.fields_map.items():
-            if vars(model()).get(field) is not None or field in special_list["Ignore"]:
+            if field_type.null or field in special_list["Ignore"]:
                 continue
 
             if field in special_list["Identifiers"]:
