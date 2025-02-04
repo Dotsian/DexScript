@@ -38,10 +38,15 @@ class DexCommand:
 
             match field_type.__class__.__name__:
                 case "ForeignKeyFieldInstance":
-                    instance = Utils.fetch_model(field).first()
+                    if field == "cartype":
+                        field == "car_type"
+
+                    casing_field = Utils.casing(field).title()
+                    
+                    instance = Utils.fetch_model(casing_field).first()
 
                     if instance is None:
-                        raise Exception(f"Could not find default {field}")
+                        raise Exception(f"Could not find default {casing_field}")
 
                     fields[field] = instance.pk
 
