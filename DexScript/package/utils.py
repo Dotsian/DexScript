@@ -96,9 +96,7 @@ class Utils:
         Formats a string or list from snake_case into camelCase for CarFigure support.
         """
         return Utils._common_format(
-            item, func=lambda s: re.sub(
-                r"(_[a-z])", lambda m: m.group(1)[1].upper(), s.replace("_", "")
-            )
+            item, func=lambda s: re.sub( r"(_[a-z])", lambda m: m.group(1)[1].upper(), s)
         )
 
     @staticmethod
