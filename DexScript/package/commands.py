@@ -110,7 +110,7 @@ class Global(DexCommand):
         attribute_name = Utils.casing(_attr_name.lower())
         new_value = Utils.casing(value.name) if value is not None else None
 
-        returned_model = self.get_model(model, identifier.name)
+        returned_model = await self.get_model(model, identifier.name)
 
         if not hasattr(model.name(), attribute_name):
             raise Exception(
@@ -124,7 +124,7 @@ class Global(DexCommand):
             new_value = f"{MEDIA_PATH}/{image_path}"
 
         if attribute.type == Types.MODEL:
-            new_value = self.get_model(attribute, new_value)
+            new_value = await self.get_model(attribute, new_value)
 
         await returned_model.update(**{attribute_name: new_value})
 
@@ -236,8 +236,8 @@ class Filter(DexCommand):
         value_new = new_value.name
 
         if attribute.type == Types.MODEL:
-            value_old = self.get_model(attribute, value_old)
-            value_new = self.get_model(attribute, value_new)
+            value_old = await self.get_model(attribute, value_old)
+            value_new = await self.get_model(attribute, value_new)
 
         await model.name.filter(**{casing_name: value_old}).update(
             **{casing_name: value_new}
@@ -275,7 +275,7 @@ class Filter(DexCommand):
         new_value = value.name
 
         if attribute.type == Types.MODEL:
-            new_value = self.get_model(attribute, new_value)
+            new_value = await self.get_model(attribute, new_value)
 
         await model.name.filter(**{casing_name: new_value}).delete()
 
