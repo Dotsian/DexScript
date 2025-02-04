@@ -96,7 +96,20 @@ class Utils:
         Formats a string or list from snake_case into camelCase for CarFigure support.
         """
         return Utils._common_format(
-            item, func=lambda s: re.sub(r"(_[a-z])", lambda m: m.group(1)[1].upper(), s)
+            item, func=lambda s: re.sub(
+                r"(_[a-z])", lambda m: m.group(1)[1].upper(), s.replace("_", "")
+            )
+        )
+
+    @staticmethod
+    def to_pascal_case(item):
+        """
+        Formats a string or list from snake or camel case to pascal case for class support.
+        """
+        return Utils._common_format(
+            item, func=lambda s: re.sub(
+                r"(_[a-z])", lambda m: m.group(1)[1].upper(), s[:1].upper() + s[1:]
+            )
         )
     
     @staticmethod
@@ -109,14 +122,20 @@ class Utils:
         )
     
     @staticmethod
-    def casing(item):
+    def casing(item, pascal=False):
         """
-        Determines whether to use camelCase or snake_case depending on if the bot is using
-        CarFigures or Ballsdex.
+        Determines whether to use camelCase, snake_case, or pascal case depending on 
+        if the bot is using CarFigures or Ballsdex.
         """
-        return (
-            Utils.to_camel_case(item) if DIR == "carfigures" else Utils.to_snake_case(item)
-        )
+        main_casing = Utils.to_snake_case(item)
+
+        if DIR == "carfigures":
+            main_casing = Utils.to_camel_case(item)
+
+        if pascal:
+            main_casing = Utils.to_pascal_case(item)
+
+        return main_casing
 
     @staticmethod
     def autocorrect(string, correction_list, error="does not exist."):

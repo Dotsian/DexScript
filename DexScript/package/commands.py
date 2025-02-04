@@ -41,7 +41,7 @@ class DexCommand:
                     if field == "cartype":
                         field == "car_type"
 
-                    casing_field = Utils.casing(field).title()
+                    casing_field = Utils.casing(field, True)
                     
                     instance = Utils.fetch_model(casing_field).first()
 
