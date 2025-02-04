@@ -112,7 +112,7 @@ class Global(DexCommand):
 
         returned_model = self.get_model(model, identifier.name)
 
-        if not hasattr(model.name, attribute_name):
+        if not hasattr(model.name(), attribute_name):
             raise Exception(
                 f"'{attribute_name}' is not a valid {model.name.__name__} attribute\n"
                 f"Run `ATTRIBUTES > {model.name.__name__}` to see a list of "
@@ -165,7 +165,7 @@ class Global(DexCommand):
         
         attribute_name = Utils.casing(_attr_name.lower())
 
-        if not hasattr(model.name, attribute_name):
+        if not hasattr(model.name(), attribute_name):
             raise Exception(
                 f"'{attribute_name}' is not a valid {model.name.__name__} attribute\n"
                 f"Run `ATTRIBUTES > {model.name.__name__}` to see a list of "
@@ -222,7 +222,7 @@ class Filter(DexCommand):
         _attr_name = attribute.name.__name__ if attribute.type == Types.MODEL else attribute.name
         casing_name = Utils.casing(_attr_name.lower())
 
-        if not hasattr(model.name, casing_name):
+        if not hasattr(model.name(), casing_name):
             raise Exception(
                 f"'{casing_name}' is not a valid {model.name.__name__} attribute\n"
                 f"Run `ATTRIBUTES > {model.name.__name__}` to see a list of "
@@ -262,7 +262,7 @@ class Filter(DexCommand):
 
         casing_name = Utils.casing(_attr_name.lower())
 
-        if not hasattr(model.name, casing_name):
+        if not hasattr(model.name(), casing_name):
             raise Exception(
                 f"'{casing_name}' is not a valid {model.name.__name__} attribute\n"
                 f"Run `ATTRIBUTES > {model.name.__name__}` to see a list of "
