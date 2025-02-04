@@ -51,17 +51,21 @@ class InstallerConfig:
         "logo_error": "https://raw.githubusercontent.com/Dotsian/DexScript/refs/heads/dev/assets/DexScriptLogoError.png",
         "banner": "https://raw.githubusercontent.com/Dotsian/DexScript/refs/heads/dev/assets/DexScriptPromo.png"
     }
-    migrations = [
+    install_migrations = [
         (
             "||await self.add_cog(Core(self))",
             '||await self.load_extension("$DIR.packages.dexscript")\n',
-            MigrationType.APPEND
+            MigrationType.APPEND,
         ),
         (
-            '||await self.load_extension("$DIR.core.dexscript")',
-            '||await self.load_extension("$DIR.packages.dexscript")',
-            MigrationType.REPLACE
+            '||await self.load_extension("$DIR.core.dexscript")\n',
+            '||await self.load_extension("$DIR.packages.dexscript")\n',
+            MigrationType.REPLACE,
         )
+    ]
+    uninstall_migrations = [
+        '||await self.load_extension("$DIR.core.dexscript")\n'
+        '||await self.load_extension("$DIR.packages.dexscript")\n'
     ]
     path = f"{DIR}/packages/dexscript"
 
@@ -234,6 +238,46 @@ class Installer:
     def __init__(self):
         self.interface = InstallerGUI(self)
 
+    def uninstall_migrate(self):
+        with open(f"{DIR}/core/bot.py", "r") as read_file:
+            lines = read_file.readlines()
+
+        for index, line in enumerate(lines):
+            for migration in config.uninstall_migrations:
+                original = self.format_migration(migration)
+                
+                if line != original:
+                    continue
+
+                lines.pop(index)
+
+        with open(f"{DIR}/core/bot.py", "w") as write_file:
+            write_file.writelines(lines)
+
+    def install_migrate(self):
+        with open(f"{DIR}/core/bot.py", "r") as read_file:
+            lines = read_file.readlines()
+
+        for index, line in enumerate(lines):
+            for migration in config.install_migrations:
+                original = self.format_migration(migration[0])
+                new = self.format_migration(migration[1])
+
+                match migration[2]:
+                    case MigrationType.REPLACE:
+                        if line.rstrip() != original:
+                            continue
+
+                        lines[index] = new
+                    case MigrationType.APPEND:
+                        if line.rstrip() != original or new in lines:
+                            continue
+
+                        lines.insert(index + 1, new)
+
+        with open(f"{DIR}/core/bot.py", "w") as write_file:
+            write_file.writelines(lines)
+
     async def install(self):
         if os.path.isfile(f"{DIR}/core/dexscript.py"):
             os.remove(f"{DIR}/core/dexscript.py")
@@ -263,30 +307,7 @@ class Installer:
 
         logger.log("Applying bot.py migrations", "INFO")
 
-        with open(f"{DIR}/core/bot.py", "r") as read_file:
-            lines = read_file.readlines()
-
-        stripped_lines = [x.rstrip() for x in lines]
-
-        for index, line in enumerate(lines):
-            for migration in config.migrations:
-                original = self.format_migration(migration[0])
-                new = self.format_migration(migration[1])
-
-                match migration[2]:
-                    case MigrationType.REPLACE:
-                        if line.rstrip() != original:
-                            continue
-
-                        lines[index] = new
-                    case MigrationType.APPEND:
-                        if line.rstrip() != original or lines[index + 1] == new:
-                            continue
-
-                        lines.insert(stripped_lines.index(original) + 1, new)
-
-        with open(f"{DIR}/core/bot.py", "w") as write_file:
-            write_file.writelines(lines)
+        self.migrate()
 
         logger.log("Loading DexScript extension", "INFO")
 
@@ -300,30 +321,7 @@ class Installer:
     async def uninstall(self):
         shutil.rmtree(config.path)
 
-        with open(f"{DIR}/core/bot.py", "r") as read_file:
-            lines = read_file.readlines()
-
-        stripped_lines = [x.rstrip() for x in lines]
-
-        for index, line in enumerate(lines):
-            for migration in config.migrations:
-                original = self.format_migration(migration[0])
-                new = self.format_migration(migration[1])
-
-                if line.rstrip() != new:
-                    continue
-
-                match migration[2]:
-                    case MigrationType.REPLACE:
-                        lines[index] = original
-                    case MigrationType.APPEND:
-                        if line.rstrip() != new:
-                            continue
-
-                        lines.pop(stripped_lines.index(new))
-
-        with open(f"{DIR}/core/bot.py", "w") as write_file:
-            write_file.writelines(lines)
+        self.uninstall_migrate()
 
         await bot.unload_extension(config.path.replace("/", "."))  # type: ignore
 
