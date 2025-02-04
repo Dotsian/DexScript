@@ -36,7 +36,7 @@ class DexCommand:
                 fields[field] = identifier
                 continue
 
-            match field_type:
+            match field_type.__class__.__name__:
                 case "ForeignKeyFieldInstance":
                     instance = Utils.fetch_model(field).first()
 
