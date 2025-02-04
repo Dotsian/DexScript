@@ -19,7 +19,7 @@ else:
 START_CODE_BLOCK_RE = re.compile(r"^((```sql?)(?=\s)|(```))")
 FILENAME_RE = re.compile(r"^(.+)(\.\S+)$")
 
-MEDIA_PATH = "./admin_panel/media" if os.path.isdir("./admin_panel/media") else "/static/uploads"
+MEDIA_PATH = "./admin_panel/media" if os.path.isdir("./admin_panel/media") else "./static/uploads"
 
 
 class Types(Enum):
@@ -181,11 +181,15 @@ class Utils:
         return content.strip("` \n")
 
     @staticmethod
-    def is_image(path) -> bool:
-        if path.startswith("/static/uploads/"):
+    def image_path(path):
+        if path.startsiwth("/static/uploads/"):
             path.replace("/static/uploads/", "")
 
-        return os.path.isfile(f"{MEDIA_PATH}/{path}")
+        return f"{MEDIA_PATH}/{path}"
+
+    @staticmethod
+    def is_image(path) -> bool:
+        return os.path.isfile(Utils.image_path(path))
 
     @staticmethod
     def is_date(string) -> bool:

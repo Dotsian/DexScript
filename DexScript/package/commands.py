@@ -256,7 +256,7 @@ class Filter(DexCommand):
         )
 
         await ctx.send(
-            f"Updated all `{model}` instances from a "
+            f"Updated all `{model.name.__name__}` instances from a "
             f"`{attribute}` value of `{old_value}` to `{new_value}`"
         )
 
@@ -292,7 +292,8 @@ class Filter(DexCommand):
         await model.name.filter(**{casing_name: new_value}).delete()
 
         await ctx.send(
-            f"Deleted all `{model}` instances with a " f"`{attribute}` value of `{value}`"
+            f"Deleted all `{model.name.__name__}` instances with a "
+            f"`{attribute}` value of `{value}`"
         )
 
 
@@ -378,6 +379,10 @@ class Eval(DexCommand):
         await ctx.send(f"Removed `{name}` preset.")
 
     async def list(self, ctx):
+        if os.listdir("eval_presets") == []:
+            await ctx.send("You have no eval presets saved.")
+            return
+        
         await ctx.send(f"```{'\n'.join(os.listdir("eval_presets"))}```")
 
     async def run(self, ctx, name):  # TODO: Allow args to be passed through `run`.
