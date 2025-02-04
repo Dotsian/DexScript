@@ -73,17 +73,7 @@ class Global(DexCommand):
     """
     Main methods for DexScript.
     """
-
-    # async def help(self, ctx):
-        """
-        Lists all DexScript commands and provides documentation for them.
-
-        Documentation
-        -------------
-        HELP
-        """
-        # getattr(Methods, command).__doc__.replace("\n", "").split("Documentation-------------")
-
+    
     async def create(self, ctx, model, identifier):
         """
         Creates a model instance.
