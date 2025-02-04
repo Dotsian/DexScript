@@ -112,7 +112,7 @@ class Global(DexCommand):
 
         returned_model = self.get_model(model, identifier.name)
 
-        if not hasattr(returned_model, attribute_name):
+        if not hasattr(model.name, attribute_name):
             raise Exception(
                 f"'{attribute_name}' is not a valid {model.name.__name__} attribute\n"
                 f"Run `ATTRIBUTES > {model.name.__name__}` to see a list of "
@@ -165,7 +165,7 @@ class Global(DexCommand):
         
         attribute_name = Utils.casing(_attr_name.lower())
 
-        if not hasattr(returned_model, attribute_name):
+        if not hasattr(model.name, attribute_name):
             raise Exception(
                 f"'{attribute_name}' is not a valid {model.name.__name__} attribute\n"
                 f"Run `ATTRIBUTES > {model.name.__name__}` to see a list of "
