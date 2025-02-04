@@ -126,7 +126,8 @@ class Global(DexCommand):
         if not hasattr(returned_model, attribute_name):
             raise Exception(
                 f"'{attribute_name}' is not a valid {model.name.__name__} attribute\n"
-                f"Run `ATTRIBUTES > {model.name.__name__}` to see a list of all attributes for that model"
+                f"Run `ATTRIBUTES > {model.name.__name__}` to see a list of "
+                "all attributes for that model"
             )
 
         if value is None:
@@ -173,7 +174,8 @@ class Global(DexCommand):
         if not hasattr(returned_model, attribute_name):
             raise Exception(
                 f"'{attribute_name}' is not a valid {model.name.__name__} attribute\n"
-                f"Run `ATTRIBUTES > {model.name.__name__}` to see a list of all attributes for that model"
+                f"Run `ATTRIBUTES > {model.name.__name__}` to see a list of "
+                "all attributes for that model"
             )
 
         new_attribute = getattr(returned_model, attribute_name)
@@ -226,7 +228,8 @@ class Filter(DexCommand):
         if not hasattr(model.name, casing_name):
             raise Exception(
                 f"'{casing_name}' is not a valid {model.name.__name__} attribute\n"
-                f"Run `ATTRIBUTES > {model.name.__name__}` to see a list of all attributes for that model"
+                f"Run `ATTRIBUTES > {model.name.__name__}` to see a list of "
+                "all attributes for that model"
             )
 
         if tortoise_operator is not None:
@@ -256,7 +259,8 @@ class Filter(DexCommand):
         if not hasattr(model.name, casing_name):
             raise Exception(
                 f"'{casing_name}' is not a valid {model.name.__name__} attribute\n"
-                f"Run `ATTRIBUTES > {model.name.__name__}` to see a list of all attributes for that model"
+                f"Run `ATTRIBUTES > {model.name.__name__}` to see a list of "
+                "all attributes for that model"
             )
 
         if tortoise_operator is not None:

@@ -64,7 +64,7 @@ class InstallerConfig:
         )
     ]
     uninstall_migrations = [
-        '||await self.load_extension("$DIR.core.dexscript")\n'
+        '||await self.load_extension("$DIR.core.dexscript")\n',
         '||await self.load_extension("$DIR.packages.dexscript")\n'
     ]
     path = f"{DIR}/packages/dexscript"
