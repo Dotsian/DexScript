@@ -16,6 +16,13 @@ class DexCommand:
     def __loaded__(self):
         pass
 
+    def attribute_error(self, model, attribute):
+        raise Exception(
+            f"'{attribute}' is not a valid {model.name.__name__} attribute\n"
+            f"Run `ATTRIBUTES > {model.name.__name__}` to see a list of "
+            "all attributes for that model"
+        )
+
     async def create_model(self, model, identifier, fields_only=False):
         fields = {}
 
@@ -123,15 +130,11 @@ class Global(DexCommand):
         returned_model = await self.get_model(model, identifier.name)
 
         if not hasattr(model.name(), attribute_name):
-            raise Exception(
-                f"'{attribute_name}' is not a valid {model.name.__name__} attribute\n"
-                f"Run `ATTRIBUTES > {model.name.__name__}` to see a list of "
-                "all attributes for that model"
-            )
+            self.attribute_error(model, attribute_name)
 
         if value is None:
             image_path = await Utils.save_file(ctx.message.attachments[0])
-            new_value = f"{MEDIA_PATH}/{image_path}"
+            new_value = Utils.image_path(image_path)
 
         if attribute.type == Types.MODEL:
             new_value = await self.get_model(attribute, new_value)
@@ -166,7 +169,7 @@ class Global(DexCommand):
                     if fields.get("files") is None:
                         fields["files"] = []
 
-                    fields["files"].append(discord.File(value[1:]))
+                    fields["files"].append(discord.File(Utils.image_path(value)))
 
             fields["content"] += "```"
 
@@ -178,11 +181,7 @@ class Global(DexCommand):
         attribute_name = Utils.casing(_attr_name.lower())
 
         if not hasattr(model.name(), attribute_name):
-            raise Exception(
-                f"'{attribute_name}' is not a valid {model.name.__name__} attribute\n"
-                f"Run `ATTRIBUTES > {model.name.__name__}` to see a list of "
-                "all attributes for that model"
-            )
+            self.attribute_error(model, attribute_name)
 
         new_attribute = getattr(returned_model, attribute_name)
 
@@ -235,11 +234,7 @@ class Filter(DexCommand):
         casing_name = Utils.casing(_attr_name.lower())
 
         if not hasattr(model.name(), casing_name):
-            raise Exception(
-                f"'{casing_name}' is not a valid {model.name.__name__} attribute\n"
-                f"Run `ATTRIBUTES > {model.name.__name__}` to see a list of "
-                "all attributes for that model"
-            )
+            self.attribute_error(model, casing_name)
 
         if tortoise_operator is not None:
             casing_name += f"__{tortoise_operator.name.lower()}"
@@ -275,11 +270,7 @@ class Filter(DexCommand):
         casing_name = Utils.casing(_attr_name.lower())
 
         if not hasattr(model.name(), casing_name):
-            raise Exception(
-                f"'{casing_name}' is not a valid {model.name.__name__} attribute\n"
-                f"Run `ATTRIBUTES > {model.name.__name__}` to see a list of "
-                "all attributes for that model"
-            )
+            self.attribute_error(model, casing_name)
 
         if tortoise_operator is not None:
             casing_name += f"__{tortoise_operator.name.lower()}"

@@ -179,10 +179,10 @@ class Utils:
             return START_CODE_BLOCK_RE.sub("", content)[:-3]
 
         return content.strip("` \n")
-
+    
     @staticmethod
-    def image_path(path):
-        if path.startsiwth("/static/uploads/"):
+    def image_path(path) -> bool:
+        if path.startswith("/static/uploads/"):
             path.replace("/static/uploads/", "")
 
         return f"{MEDIA_PATH}/{path}"
