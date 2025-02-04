@@ -178,6 +178,9 @@ class Global(DexCommand):
             await ctx.send(f"```{new_attribute}```", file=discord.File(new_attribute[1:]))
             return
 
+        if attribute.type == Types.MODEL:
+            new_attribute = await new_attribute.values_list(attribute.extra_data[0], flat=True)
+
         await ctx.send(f"```{new_attribute}```")
 
     async def attributes(self, ctx, model):
