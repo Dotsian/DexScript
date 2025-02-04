@@ -165,7 +165,7 @@ class Utils:
         if MEDIA_PATH == "./admin_panel/media":
             return path.relative_to("./admin_panel/media/")
 
-        return path.relative_to("/static/uploads")
+        return path.relative_to("static/uploads")
 
     @staticmethod
     def extract_str_attr(object):
