@@ -16,7 +16,7 @@ class DexCommand:
     def __loaded__(self):
         pass
 
-    async def create_model(self, model, identifier):
+    async def create_model(self, model, identifier, fields_only=False):
         fields = {}
 
         special_list = {
@@ -58,6 +58,9 @@ class DexCommand:
 
                 case _:
                     fields[field] = 1
+    
+        if fields_only:
+            return fields
 
         await model.create(**fields)
 
