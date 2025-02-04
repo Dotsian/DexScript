@@ -10,7 +10,7 @@
 
 DexScript is a set of commands for Ballsdex and CarFigures created by DotZZ that expands on the standalone admin commands and substitutes for the admin panel. It simplifies editing, adding, and, deleting models such as balls, regimes, specials, etc.
 
-Let's say you wanted to update a ball's rarity to 2. You could run `UPDATE > BALL > Mongolia > RARITY > 2.0`.
+Let's say you wanted to update a ball's rarity to 2. You could run `UPDATE > Ball > Mongolia > RARITY > 2.0`.
 
 ![Updating rarity showcase](assets/screenshots/showcase1.png)
 
@@ -69,11 +69,11 @@ Once you have ran the eval command, the DexScript installer should appear. There
 
 #### Installing
 
-If you are installing DexScript for the first time, you will see a button called "Install". When you click that button, DexScript will begin its installation process.
+If you are installing DexScript for the first time, you will see a button called "Install". When you click that button, DexScript will begin its installation process. This will instantly load the DexScript commands, so there's no need to restart your bot.
 
 #### Updating
 
-If you already have DexScript, you will see a button called "Update". When you click that button, DexScript will update to the latest version.
+If you already have DexScript, you will see a button called "Update". When you click that button, DexScript will update to the latest version. This will instantly update DexScript, which means you don't have to restart your bot.
 
 #### Uninstall
 
