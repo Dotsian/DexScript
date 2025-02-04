@@ -14,12 +14,20 @@ from base64 import b64decode
 from dataclasses import dataclass, field as datafield
 from datetime import datetime
 from enum import Enum
+from io import StringIO
 from traceback import format_exc
 
 import discord
 import requests
+from discord.ext import commands
 
 DIR = "ballsdex" if os.path.isdir("ballsdex") else "carfigures"
+
+if DIR == "ballsdex":
+    from ballsdex.settings import settings
+else:
+    from carfigures.settings import settings
+
 UPDATING = os.path.isdir(f"{DIR}/packages/dexscript")
 
 
@@ -36,6 +44,11 @@ class InstallerConfig:
 
     github = ["Dotsian/DexScript", "dev"]
     files = ["__init__.py", "cog.py", "commands.py", "parser.py", "utils.py"]
+    appearance = {
+        "logo": "https://raw.githubusercontent.com/Dotsian/DexScript/refs/heads/dev/assets/DexScriptLogo.png",
+        "logo_error": "", # TODO: Add error logo
+        "banner": "https://raw.githubusercontent.com/Dotsian/DexScript/refs/heads/dev/assets/DexScriptPromo.png"
+    }
     migrations = [
         (
             "||await self.add_cog(Core(self))",
@@ -59,17 +72,29 @@ class Logger:
         current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         self.output.append(f"{current_time} [{self.name}] {level} - {content}")
 
+    def file(self, name: str):
+        return discord.File(StringIO("\n".join(self.output)), filename=name)
+
 
 config = InstallerConfig()
 logger = Logger("DEXSCRIPT-INSTALLER")
 
 
 class InstallerEmbed(discord.Embed):
-    def __init__(self, installer):
+    def __init__(self, installer, embed_type="setup"):
         super().__init__()
 
         self.installer = installer
 
+        match embed_type:
+            case "setup":
+                self.setup()
+            case "error":
+                self.error()
+            case "installed":
+                self.installed()
+
+    def setup(self):
         self.title = "DexScript Installation"
         self.description = "Welcome to the DexScript installer!"
         self.color = discord.Color.from_str("#FFF" if DIR == "carfigures" else "#03BAFC")
@@ -85,14 +110,34 @@ class InstallerEmbed(discord.Embed):
                 f"while this DexScript instance is on version {current_version}."
             )
 
-        self.set_image(
-            url="https://raw.githubusercontent.com/Dotsian/DexScript/refs/heads/dev/assets/DexScriptPromo.png"
-        )
+        self.set_image(url=config.appearance["banner"])
 
-    def error(self, log):
+    def error(self):
         self.title = "DexScript ERROR"
-        self.description = "An error occured in DexScript's installation setup."
+        self.description = (
+            "An error occured within DexScript's installation setup.\n"
+            "Please submit a bug report and attach the file provided."
+        )
         self.color = discord.Color.red()
+        self.timestamp = datetime.now()
+
+        if logger.log != []:
+            self.description += f"\n```{logger.log[-1]}```"
+
+        self.installer.interface.attachments = [logger.file("DexScript.log")]
+        
+        self.set_image(url=config.appearance["logo_error"])
+
+    def installed(self):
+        self.title = "DexScript Installed!"
+        self.description = (
+            "DexScript has been succesfully installed to your bot.\n"
+            f"Run the `{settings.prefix}about` command to view details about DexScript."
+        )
+        self.color = discord.Color.from_str("#FFF" if DIR == "carfigures" else "#03BAFC")
+        self.timestamp = datetime.now()
+
+        self.set_image(url=config.appearance["logo"])
 
 
 class InstallerView(discord.ui.View):
@@ -110,9 +155,16 @@ class InstallerView(discord.ui.View):
 
         try:
             await self.installer.install()
-        except Exception as error:  # TODO: Add error handling
+        except Exception:
             logger.log(format_exc(), "ERROR")
-            self.
+
+            self.install_button.disabled = True
+            self.uninstall_button.disabled = True
+            self.quit_button.disabled = True
+
+            self.installer.interface.embed = InstallerEmbed(self.installer, "error")
+        else:
+            self.installer.interface.embed = InstallerEmbed(self.installer, "installed")
 
         await interaction.message.edit(**self.installer.interface.fields)
         await interaction.response.defer()
@@ -144,9 +196,16 @@ class InstallerGUI:
         self.embed = InstallerEmbed(installer)
         self.view = InstallerView(installer)
 
+        self.attachments = []
+
     @property
     def fields(self):
-        return {"embed": self.embed, "view": self.view}
+        fields = {"embed": self.embed, "view": self.view}
+
+        if self.attachments != []:
+            fields["attachments"] = self.attachments
+
+        return fields
 
     async def reload(self):
         if not self.loaded:
@@ -220,9 +279,9 @@ class Installer:
         logger.log("Loading DexScript extension", "INFO")
 
         try:
-            await bot.load_extension(config.path)
+            await bot.load_extension(config.path)  # type: ignore
         except commands.ExtensionAlreadyLoaded:
-            await bot.reload_extension(config.path)
+            await bot.reload_extension(config.path)  # type: ignore
 
         logger.log("DexScript installation finished", "INFO")
 

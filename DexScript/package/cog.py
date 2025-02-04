@@ -115,7 +115,9 @@ class DexScript(commands.Cog):
 
         version_check = "OUTDATED" if self.check_version() is not None else "LATEST"
 
-        embed.set_thumbnail(url="https://i.imgur.com/uKfx0qO.png")
+        embed.set_thumbnail(
+            url="https://raw.githubusercontent.com/Dotsian/DexScript/refs/heads/dev/assets/DexScriptLogo.png"
+        )
         embed.set_footer(text=f"DexScript {__version__} ({version_check})")
 
         await ctx.send(embed=embed)
