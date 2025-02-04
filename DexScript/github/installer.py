@@ -125,7 +125,7 @@ class InstallerEmbed(discord.Embed):
         if logger.log != []:
             self.description += f"\n```{logger.log[-1]}```"
 
-        self.installer.interface.attachments = [logger.file("DexScript.log")]
+        self.installer.interface.attachments.append(logger.file("DexScript.log"))
         
         self.set_image(url=config.appearance["logo_error"])
 
