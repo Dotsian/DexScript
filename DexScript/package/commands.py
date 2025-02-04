@@ -82,7 +82,7 @@ class Global(DexCommand):
         -------------
         CREATE > MODEL > IDENTIFIER
         """
-        await self.create_model(model.name, identifier)
+        await self.create_model(model.name, identifier.name)
         await ctx.send(f"Created `{identifier}`")
 
     async def delete(self, ctx, model, identifier):
@@ -126,7 +126,9 @@ class Global(DexCommand):
         if attribute.type == Types.MODEL:
             new_value = await self.get_model(attribute, new_value)
 
-        await returned_model.update(**{attribute_name: new_value})
+        setattr(returned_model, attribute_name, new_value)
+
+        await returned_model.save(update_fields=[attribute_name])
 
         await ctx.send(f"Updated `{identifier}'s` {attribute} to `{new_value}`")
 
