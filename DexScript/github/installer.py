@@ -122,8 +122,8 @@ class InstallerEmbed(discord.Embed):
         self.color = discord.Color.red()
         self.timestamp = datetime.now()
 
-        if logger.log != []:
-            self.description += f"\n```{logger.log[-1]}```"
+        if logger.output != []:
+            self.description += f"\n```{logger.output[-1]}```"
 
         self.installer.interface.attachments.append(logger.file("DexScript.log"))
         
@@ -165,8 +165,10 @@ class InstallerView(discord.ui.View):
             self.quit_button.disabled = True
 
             self.installer.interface.embed = InstallerEmbed(self.installer, "error")
+            self.installer.interface.view = None
         else:
             self.installer.interface.embed = InstallerEmbed(self.installer, "installed")
+            self.installer.interface.view = None
 
         await interaction.message.edit(**self.installer.interface.fields)
         await interaction.response.defer()
@@ -202,7 +204,10 @@ class InstallerGUI:
 
     @property
     def fields(self):
-        fields = {"embed": self.embed, "view": self.view}
+        fields = {"embed": self.embed}
+
+        if self.view is not None:
+            fields["view"] = self.view
 
         if self.attachments != []:
             fields["attachments"] = self.attachments
