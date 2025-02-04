@@ -125,7 +125,7 @@ class InstallerEmbed(discord.Embed):
         if logger.output != []:
             self.description += f"\n```{logger.output[-1]}```"
 
-        self.installer.interface.attachments.append(logger.file("DexScript.log"))
+        self.installer.interface.attachments = [logger.file("DexScript.log")]
         
         self.set_thumbnail(url=config.appearance["logo_error"])
 
@@ -155,7 +155,6 @@ class InstallerView(discord.ui.View):
         await interaction.message.edit(**self.installer.interface.fields)
 
         try:
-            raise Exception("hi")
             await self.installer.install()
         except Exception:
             logger.log(format_exc(), "ERROR")
@@ -204,10 +203,7 @@ class InstallerGUI:
 
     @property
     def fields(self):
-        fields = {"embed": self.embed}
-
-        if self.view is not None:
-            fields["view"] = self.view
+        fields = {"embed": self.embed, "view": self.view}
 
         if self.attachments != []:
             fields["attachments"] = self.attachments
