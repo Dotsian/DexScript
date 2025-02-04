@@ -10,6 +10,7 @@
 
 import os
 import re
+import shutil
 from base64 import b64decode
 from dataclasses import dataclass
 from dataclasses import field as datafield
@@ -94,6 +95,8 @@ class InstallerEmbed(discord.Embed):
                 self.error()
             case "installed":
                 self.installed()
+            case "uninstalled":
+                self.uninstalled()
 
     def setup(self):
         self.title = "DexScript Installation"
@@ -140,6 +143,14 @@ class InstallerEmbed(discord.Embed):
 
         self.set_thumbnail(url=config.appearance["logo"])
 
+    def uninstalled(self):
+        self.title = "DexScript Uninstalled!"
+        self.description = "DexScript has been succesfully uninstalled from your bot."
+        self.color = discord.Color.from_str("#FFF" if DIR == "carfigures" else "#03BAFC")
+        self.timestamp = datetime.now()
+
+        self.set_thumbnail(url=config.appearance["logo"])
+
 
 class InstallerView(discord.ui.View):
     def __init__(self, installer):
@@ -159,15 +170,11 @@ class InstallerView(discord.ui.View):
         except Exception:
             logger.log(format_exc(), "ERROR")
 
-            self.install_button.disabled = True
-            self.uninstall_button.disabled = True
-            self.quit_button.disabled = True
-
             self.installer.interface.embed = InstallerEmbed(self.installer, "error")
-            self.installer.interface.view = None
         else:
             self.installer.interface.embed = InstallerEmbed(self.installer, "installed")
-            self.installer.interface.view = None
+        
+        self.installer.interface.view = None
 
         await interaction.message.edit(**self.installer.interface.fields)
         await interaction.response.defer()
@@ -176,7 +183,10 @@ class InstallerView(discord.ui.View):
         style=discord.ButtonStyle.primary, label="Uninstall", disabled=not UPDATING
     )
     async def uninstall_button(self, interaction: discord.Interaction, _: discord.ui.Button):
-        # TODO: Add uninstallation
+        await self.installer.uninstall()
+
+        self.installer.interface.embed = InstallerEmbed(self.installer, "uninstalled")
+        self.installer.interface.view = None
         
         await interaction.message.edit(**self.installer.interface.fields)
         await interaction.response.defer()
@@ -269,7 +279,6 @@ class Installer:
                             continue
 
                         lines[index] = new
-                        break
                     case MigrationType.APPEND:
                         if line.rstrip() != original or lines[index + 1] == new:
                             continue
@@ -287,6 +296,36 @@ class Installer:
             await bot.reload_extension(config.path.replace("/", "."))  # type: ignore
 
         logger.log("DexScript installation finished", "INFO")
+
+    async def uninstall(self):
+        shutil.rmtree(config.path)
+
+        with open(f"{DIR}/core/bot.py", "r") as read_file:
+            lines = read_file.readlines()
+
+        stripped_lines = [x.rstrip() for x in lines]
+
+        for index, line in enumerate(lines):
+            for migration in config.migrations:
+                original = self.format_migration(migration[0])
+                new = self.format_migration(migration[1])
+
+                if line.rstrip() != new:
+                    continue
+
+                match migration[2]:
+                    case MigrationType.REPLACE:
+                        lines[index] = original
+                    case MigrationType.APPEND:
+                        if line.rstrip() != new:
+                            continue
+
+                        lines.pop(stripped_lines.index(new))
+
+        with open(f"{DIR}/core/bot.py", "w") as write_file:
+            write_file.writelines(lines)
+
+        await bot.unload_extension(config.path.replace("/", "."))  # type: ignore
 
     @staticmethod
     def format_migration(line):

@@ -172,7 +172,7 @@ class Global(DexCommand):
 
         if not hasattr(returned_model, attribute_name):
             raise Exception(
-                f"'{new_attribute}' is not a valid {model} attribute\n"
+                f"'{attribute_name}' is not a valid {model} attribute\n"
                 f"Run `ATTRIBUTES > {model}` to see a list of all attributes for that model"
             )
 
