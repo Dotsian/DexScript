@@ -181,7 +181,7 @@ class Utils:
     def image_path(path) -> bool:
         full_path = path.replace('/static/uploads/', '')
 
-        if MEDIA_PATH == "./static/uploads" and full_path[1] == ".":
+        if MEDIA_PATH == "./static/uploads" and full_path[0] == ".":
             full_path = full_path[1:]
 
         return f"{MEDIA_PATH}/{full_path}"
