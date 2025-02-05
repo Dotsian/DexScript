@@ -138,11 +138,11 @@ class Global(DexCommand):
 
         if attribute.type == Types.MODEL:
             attribute_name = Utils.to_snake_case(_attr_name.lower()) + "_id"
-            
+
             attribute_model = await self.get_model(attribute, value.name)
             new_value = attribute_model.pk
 
-            text = f"Updated `{identifier}'s` {attribute_model.__name__} to `{value.name}`"
+            text = f"Updated `{identifier}'s` {attribute_model.__class__.__name__} to `{value.name}`"
 
         setattr(returned_model, attribute_name, new_value)
 
