@@ -142,7 +142,10 @@ class Global(DexCommand):
             attribute_model = await self.get_model(attribute, value.name)
             new_value = attribute_model.pk
 
-            text = f"Updated `{identifier}'s` {attribute_model.__class__.__name__} to `{value.name}`"
+            text = (
+                f"Updated `{identifier}'s` {attribute_model.__class__.__name__} "
+                f"to `{value.name}`"
+            )
 
         setattr(returned_model, attribute_name, new_value)
 
