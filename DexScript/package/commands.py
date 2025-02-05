@@ -136,7 +136,7 @@ class Global(DexCommand):
 
         if attribute.type == Types.MODEL:
             attribute_name = Utils.to_snake_case(_attr_name.lower()) + "_id"
-            new_value = await self.get_model(attribute, value.name).pk
+            new_value = (await self.get_model(attribute, value.name)).pk
 
         setattr(returned_model, attribute_name, new_value)
 
