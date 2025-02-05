@@ -135,7 +135,7 @@ class Global(DexCommand):
             new_value = Utils.image_path(str(image_path))
 
         if attribute.type == Types.MODEL:
-            new_value = await self.get_model(attribute, new_value)
+            new_value = await self.get_model(attribute, value.name)
 
         setattr(returned_model, attribute_name, new_value)
 
