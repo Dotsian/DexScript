@@ -1,10 +1,8 @@
 import asyncio
 import os
 import shutil
-from base64 import b64decode
 
 import discord
-import requests
 
 from .utils import DIR, Types, Utils
 
@@ -307,19 +305,22 @@ class Eval(DexCommand):
         NAME_LIMIT = 100
 
         if len(name.name) > NAME_LIMIT:
-            raise Exception(f"`{name}` is above the {NAME_LIMIT} character limit ({len(name)} > {NAME_LIMIT})")
+            raise Exception(
+                f"`{name}` is above the {NAME_LIMIT} character limit "
+                f"({len(name)} > {NAME_LIMIT})"
+            )
 
         if os.path.isfile(f"eval_presets/{name}.py"):
             raise Exception(f"`{name}` aleady exists.")
 
-        await ctx.send("Please paste the eval command below...")
+        await ctx.send("Please send the eval command below...")
 
         try:
             message = await self.bot.wait_for(
                 "message", timeout=20, check=lambda m: m.author == ctx.message.author
             )
         except asyncio.TimeoutError:
-            await ctx.send("Preset saving has timed out.")
+            await ctx.send("Eval preset saving has timed out.")
             return
         with open(f"eval_presets/{name}.py", "w") as file:
             file.write(Utils.remove_code_markdown(message.content))
