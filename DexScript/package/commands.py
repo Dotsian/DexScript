@@ -134,7 +134,7 @@ class Global(DexCommand):
 
         if value is None:
             image_path = await Utils.save_file(ctx.message.attachments[0])
-            new_value = Utils.image_path(str(image_path.absolute()))
+            new_value = Utils.image_path(f"{image_path.parent}/{image_path.name}")
 
         if attribute.type == Types.MODEL:
             new_value = await self.get_model(attribute, new_value)
