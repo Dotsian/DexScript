@@ -75,6 +75,6 @@ If you are installing DexScript for the first time, you will see a button called
 
 If you already have DexScript, you will see a button called "Update". When you click that button, DexScript will update to the latest version. This will instantly update DexScript, which means you don't have to restart your bot.
 
-#### Uninstall
+#### Uninstalling
 
 If you already have DexScript, you will see a button called "Uninstall". Clicking the uninstall button will uninstall DexScript from your application. This will instantly remove the DexScript package and DexScript commands will unload instantly.

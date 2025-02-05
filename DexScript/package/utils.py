@@ -179,7 +179,7 @@ class Utils:
     
     @staticmethod
     def image_path(path) -> bool:
-        return f"{MEDIA_PATH}/{path}"
+        return f"{MEDIA_PATH}/{path.replace('/static/uploads/', '')}"
 
     @staticmethod
     def is_image(path) -> bool:
