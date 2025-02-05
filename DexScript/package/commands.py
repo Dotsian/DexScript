@@ -134,15 +134,20 @@ class Global(DexCommand):
             image_path = await Utils.save_file(ctx.message.attachments[0])
             new_value = Utils.image_path(str(image_path))
 
+        text = f"Updated `{identifier}'s` {attribute} to `{new_value}`"
+
         if attribute.type == Types.MODEL:
             attribute_name = Utils.to_snake_case(_attr_name.lower()) + "_id"
-            new_value = (await self.get_model(attribute, value.name)).pk
+            
+            attribute_model = await self.get_model(attribute, value.name)
+            new_value = attribute_model.pk
+
+            text = f"Updated `{identifier}'s` {attribute_model.__name__} to `{value.name}`"
 
         setattr(returned_model, attribute_name, new_value)
 
         await returned_model.save(update_fields=[attribute_name])
-
-        await ctx.send(f"Updated `{identifier}'s` {attribute} to `{new_value}`")
+        await ctx.send(text)
 
     async def view(self, ctx, model, identifier, attribute=None):
         """
