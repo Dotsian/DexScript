@@ -134,9 +134,7 @@ class Global(DexCommand):
 
         if value is None:
             image_path = await Utils.save_file(ctx.message.attachments[0])
-            new_value = Utils.image_path(
-                f"{image_path.parent}/{image_path.name.replace('./', '')}"
-            )
+            new_value = Utils.image_path(str(image_path))
 
         if attribute.type == Types.MODEL:
             new_value = await self.get_model(attribute, new_value)
@@ -292,41 +290,11 @@ class Filter(DexCommand):
 
 class Eval(DexCommand):
     """
-    Commands for executing evals and managing eval presets.
+    Commands for managing eval presets.
     """
 
     def __loaded__(self):
         os.makedirs("eval_presets", exist_ok=True)
-
-    async def exec_git(self, ctx, link):
-        """
-        Executes an eval command based on a GitHub file link.
-
-        Documentation
-        -------------
-        EVAL > EXEC_GIT > LINK
-        """
-        link = link.name.split("/")
-        start = f"{link[0]}/{link[1]}"
-
-        link.pop(0)
-        link.pop(0)
-
-        api = f"https://api.github.com/repos/{start}/contents/{'/'.join(link)}"
-
-        request = requests.get(api)
-
-        if request.status_code != requests.codes.ok:
-            raise Exception(f"Request Error Code {request.status_code}")
-
-        content = b64decode(request.json()["content"])
-
-        try:
-            await ctx.invoke(self.bot.get_command("eval"), body=content.decode("UTF-8"))
-        except Exception as error:
-            raise Exception(error)
-        else:
-            await ctx.message.add_reaction("✅")
 
     async def save(self, ctx, name):
         """
@@ -336,8 +304,10 @@ class Eval(DexCommand):
         -------------
         EVAL > SAVE > NAME
         """
-        if len(name.name) > 25:
-            raise Exception(f"`{name}` is above the 25 character limit ({len(name)} > 25)")
+        NAME_LIMIT = 100
+
+        if len(name.name) > NAME_LIMIT:
+            raise Exception(f"`{name}` is above the {NAME_LIMIT} character limit ({len(name)} > {NAME_LIMIT})")
 
         if os.path.isfile(f"eval_presets/{name}.py"):
             raise Exception(f"`{name}` aleady exists.")
@@ -346,7 +316,7 @@ class Eval(DexCommand):
 
         try:
             message = await self.bot.wait_for(
-                "message", timeout=15, check=lambda m: m.author == ctx.message.author
+                "message", timeout=20, check=lambda m: m.author == ctx.message.author
             )
         except asyncio.TimeoutError:
             await ctx.send("Preset saving has timed out.")

@@ -162,10 +162,7 @@ class Utils:
 
         await attachment.save(path)
 
-        if MEDIA_PATH == "./admin_panel/media":
-            return path.relative_to("./admin_panel/media/")
-
-        return path.relative_to("static/uploads")
+        return path.relative_to(MEDIA_PATH)
 
     @staticmethod
     def extract_str_attr(object):
@@ -182,7 +179,7 @@ class Utils:
     
     @staticmethod
     def image_path(path) -> bool:
-        return f"{MEDIA_PATH}/{path.replace('static/uploads/', '')}"
+        return f"{MEDIA_PATH}/{path}"
 
     @staticmethod
     def is_image(path) -> bool:
