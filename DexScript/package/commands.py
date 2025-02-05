@@ -122,7 +122,7 @@ class Global(DexCommand):
         """
         _attr_name = attribute.name.__name__ if attribute.type == Types.MODEL else attribute.name
 
-        attribute_name = Utils.casing(_attr_name.lower())
+        attribute_name = Utils.casing(_attr_name.lower(), attribute.type == Types.MODEL)
         new_value = Utils.casing(value.name) if value is not None else None
 
         returned_model = await self.get_model(model, identifier.name)
