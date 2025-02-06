@@ -1,87 +1,41 @@
 import asyncio
 import os
 import shutil
+from dataclasses import dataclass
+from dataclasses import field as datafield
 
 import discord
 
 from .utils import DIR, Types, Utils
 
 
+@dataclass
+class Shared:
+    """
+    Values that will be retained throughout the entire code execution.
+    """
+
+    attachments: list = datafield(default_factory=list)
+
+
 class DexCommand:
-    def __init__(self, bot):
+    """
+    Default class for all dex commands.
+    """
+
+    def __init__(self, bot, shared):
         self.bot = bot
+        self.shared = shared
 
     def __loaded__(self):
         pass
 
     def attribute_error(self, model, attribute):
         raise Exception(
-            f"'{attribute}' is not a valid {model.name.__name__} attribute\n"
-            f"Run `ATTRIBUTES > {model.name.__name__}` to see a list of "
+            f"'{attribute}' is not a valid {model.name} attribute\n"
+            f"Run `ATTRIBUTES > {model.name}` to see a list of "
             "all attributes for that model"
         )
-
-    async def create_model(self, model, identifier, fields_only=False):
-        fields = {}
-
-        special_list = {
-            "Identifiers": ["country", "catch_names", "name"],
-            "Ignore": ["id", "short_name"]
-        }
-
-        if DIR == "carfigures":
-            special_list = {
-                "Identifiers": ["fullName", "catchNames", "name"],
-                "Ignore": ["id", "shortName"]
-            }
-
-        for field, field_type in model._meta.fields_map.items():
-            if field_type.null or field in special_list["Ignore"]:
-                continue
-
-            if field in special_list["Identifiers"]:
-                fields[field] = identifier
-                continue
-
-            match field_type.__class__.__name__:
-                case "ForeignKeyFieldInstance":
-                    if field == "cartype":
-                        field = "car_type"
-
-                    casing_field = Utils.casing(field, True)
-                    
-                    instance = await Utils.fetch_model(casing_field).first()
-
-                    if instance is None:
-                        raise Exception(f"Could not find default {casing_field}")
-
-                    fields[field] = instance.pk
-
-                case "BigIntField":
-                    fields[field] = 100**8
-
-                case "BackwardFKRelation" | "JSONField":
-                    continue
-
-                case _:
-                    fields[field] = 1
-    
-        if fields_only:
-            return fields
-
-        await model.create(**fields)
-
-    async def get_model(self, model, identifier):
-        correction_list = await model.name.all().values_list(model.extra_data[0], flat=True)
-
-        try:
-            returned_model = await model.name.filter(
-                **{model.extra_data[0]: Utils.autocorrect(identifier, correction_list)}
-            )
-        except AttributeError:
-            raise Exception(f"'{model}' is not a valid model.")
-
-        return returned_model[0]
 
 
 class Global(DexCommand):
@@ -97,7 +51,7 @@ class Global(DexCommand):
         -------------
         CREATE > MODEL > IDENTIFIER
         """
-        await self.create_model(model.name, identifier.name)
+        await Utils.create_model(model, identifier)
         await ctx.send(f"Created `{identifier}`")
 
     async def delete(self, ctx, model, identifier):
@@ -108,7 +62,7 @@ class Global(DexCommand):
         -------------
         DELETE > MODEL > IDENTIFIER
         """
-        await self.get_model(model, identifier.name).delete()
+        await Utils.get_model(model, identifier).delete()
         await ctx.send(f"Deleted `{identifier}`")
 
     async def update(self, ctx, model, identifier, attribute, value=None):
@@ -120,18 +74,18 @@ class Global(DexCommand):
         -------------
         UPDATE > MODEL > IDENTIFIER > ATTRIBUTE > VALUE(?)
         """
-        _attr_name = attribute.name.__name__ if attribute.type == Types.MODEL else attribute.name
-
-        attribute_name = Utils.casing(_attr_name.lower())
+        attribute_name = Utils.casing(attribute.name.lower())
         new_value = Utils.casing(value.name) if value is not None else None
 
-        returned_model = await self.get_model(model, identifier.name)
+        returned_model = await Utils.get_model(model, identifier)
 
-        if not hasattr(model.name(), attribute_name):
+        if model.value is not None and not hasattr(model.value(), attribute_name):
             self.attribute_error(model, attribute_name)
 
-        if value is None:
-            image_path = await Utils.save_file(ctx.message.attachments[0])
+        model_field = Utils.get_field(model.value, attribute_name)
+
+        if value is None and self.shared.attachments != [] and model_field.:
+            image_path = await Utils.save_file(self.shared.attachments[0])
             new_value = Utils.image_path(str(image_path))
 
         text = f"Updated `{identifier}'s` {attribute} to `{new_value}`"
@@ -139,7 +93,7 @@ class Global(DexCommand):
         if attribute.type == Types.MODEL:
             attribute_name = Utils.to_snake_case(_attr_name.lower()) + "_id"
 
-            attribute_model = await self.get_model(attribute, value.name)
+            attribute_model = await Utils.get_model(attribute, value.name)
             new_value = attribute_model.pk
 
             text = (
@@ -161,7 +115,7 @@ class Global(DexCommand):
         -------------
         VIEW > MODEL > IDENTIFIER > ATTRIBUTE(?)
         """
-        returned_model = await self.get_model(model, identifier.name)
+        returned_model = await Utils.get_model(model, identifier.name)
 
         if attribute is None:
             fields = {"content": "```"}
@@ -209,17 +163,15 @@ class Global(DexCommand):
         -------------
         ATTRIBUTES > MODEL
         """
-        model_name = model.name if isinstance(model.name, str) else model.name.__name__
+        fields = [f"{model.name.upper()} ATTRIBUTES:\n\n"]
 
-        parameters = f"{model_name.upper()} ATTRIBUTES:\n\n"
-
-        for field in vars(model.name()):  # type: ignore
+        for field in vars(model.value()):  # type: ignore
             if field[:1] == "_":
                 continue
 
-            parameters += f"- {Utils.to_snake_case(field).replace(' ', '_').upper()}\n"
+            fields.append(f"- {Utils.to_snake_case(field).replace(' ', '_').upper()}\n")
 
-        await ctx.send(f"```{parameters}```")
+        await Utils.message_list(ctx, fields)
 
 
 class Filter(DexCommand):
@@ -250,8 +202,8 @@ class Filter(DexCommand):
         value_new = new_value.name
 
         if attribute.type == Types.MODEL:
-            value_old = await self.get_model(attribute, value_old)
-            value_new = await self.get_model(attribute, value_new)
+            value_old = await Utils.get_model(attribute, value_old)
+            value_new = await Utils.get_model(attribute, value_new)
 
         await model.name.filter(**{casing_name: value_old}).update(
             **{casing_name: value_new}
@@ -285,7 +237,7 @@ class Filter(DexCommand):
         new_value = value.name
 
         if attribute.type == Types.MODEL:
-            new_value = await self.get_model(attribute, new_value)
+            new_value = await Utils.get_model(attribute, new_value)
 
         await model.name.filter(**{casing_name: new_value}).delete()
 
@@ -293,6 +245,37 @@ class Filter(DexCommand):
             f"Deleted all `{model.name.__name__}` instances with a "
             f"`{attribute}` value of `{value}`"
         )
+
+    async def view(self, ctx, model, attribute, value, tortoise_operator=None):
+        """
+        Displays all instances of a model where the specified attribute meets the condition
+        defined by the optional `TORTOISE_OPERATOR` argument
+        (e.g., greater than, equal to, etc.).
+
+        Documentation
+        -------------
+        FILTER > VIEW > MODEL > ATTRIBUTE > VALUE > TORTOISE_OPERATOR(?)
+        """
+        _attr_name = attribute.name.__name__ if attribute.type == Types.MODEL else attribute.name
+
+        casing_name = Utils.casing(_attr_name.lower())
+
+        if not hasattr(model.name(), casing_name):
+            self.attribute_error(model, casing_name)
+
+        if tortoise_operator is not None:
+            casing_name += f"__{tortoise_operator.name.lower()}"
+
+        new_value = value.name
+
+        if attribute.type == Types.MODEL:
+            new_value = await Utils.get_model(attribute, new_value)
+
+        instances = await model.name.filter(**{casing_name: new_value}).values_list(
+            model.extra_data[0], flat=True
+        )
+
+        await Utils.message_list(ctx, instances)
 
 
 class Eval(DexCommand):
@@ -326,7 +309,7 @@ class Eval(DexCommand):
 
         try:
             message = await self.bot.wait_for(
-                "message", timeout=20, check=lambda m: m.author == ctx.message.author
+                "message", check=lambda m: m.author == ctx.message.author, timeout=20
             )
         except asyncio.TimeoutError:
             await ctx.send("Eval preset saving has timed out.")
@@ -355,8 +338,8 @@ class Eval(DexCommand):
         if os.listdir("eval_presets") == []:
             await ctx.send("You have no eval presets saved.")
             return
-        
-        await ctx.send(f"```{'\n'.join(os.listdir("eval_presets"))}```")
+
+        await Utils.message_list(ctx, os.listdir("eval_presets"))
 
     async def run(self, ctx, name):  # TODO: Allow args to be passed through `run`.
         """
@@ -435,7 +418,7 @@ class File(DexCommand):
         """
         path = file_path.name if file_path is not None else None
 
-        await ctx.send(f"```{'\n'.join(os.listdir(path))}```")
+        await Utils.message_list(ctx, os.listdir(path))
 
     async def delete(self, ctx, file_path):
         """

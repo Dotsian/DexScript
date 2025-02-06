@@ -13,8 +13,10 @@ from .utils import DIR, Types, Utils, config
 
 @dataclass
 class Value:
-    name: Any
+    name: str
     type: Types = Types.DEFAULT
+    value: Any = None
+
     extra_data: list = datafield(default_factory=list)
 
     def __str__(self):
@@ -79,14 +81,15 @@ class DexScriptParser:
 
                 string_key = Utils.extract_str_attr(model)
 
-                value.name = model
+                value.name = model.__name__
+                value.value = model
                 value.extra_data.append(string_key)
 
             case Types.BOOLEAN:
-                value.name = lower == "true"
+                value.value = lower == "true"
 
             case Types.DATETIME:
-                value.name = parse_date(value.name)
+                value.value = parse_date(line)
 
         return value
 
@@ -94,6 +97,8 @@ class DexScriptParser:
         return (message, log)[config.debug]
 
     async def execute(self, code: str, run_commands=True):
+        shared_instance = commands.Shared(self.ctx.message.attachments)
+
         split_code = [x for x in code.split("\n") if x.strip() != ""]
 
         parsed_code = [
@@ -125,7 +130,7 @@ class DexScriptParser:
             line2.pop(0)
 
             class_loaded = commands.Global if method[0] == commands.Global else method[0]
-            class_loaded = class_loaded(self.bot)
+            class_loaded = class_loaded(self.bot, shared_instance)
             class_loaded.__loaded__()
 
             method_call = getattr(class_loaded, method[1].name.lower())
