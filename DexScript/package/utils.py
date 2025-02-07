@@ -1,3 +1,4 @@
+import asyncio
 import contextlib
 import inspect
 import os
@@ -275,7 +276,7 @@ class Utils:
                 continue
 
             if field in special_list["Identifiers"]:
-                fields[field] = identifier
+                fields[field] = str(identifier)
                 continue
 
             match field_type.__class__.__name__:
@@ -328,6 +329,18 @@ class Utils:
             raise Exception(f"'{model}' is not a valid model.")
 
         return returned_model[0]
+    
+    @staticmethod
+    def fetch_fields(model, field_filter=None):
+        fetched_list = []
+
+        for field, field_type in model._meta.fields_map.items():
+            if field_filter is not None and not field_filter(field, field_type):
+                continue
+            
+            fetched_list.append(field)
+
+        return fetched_list
 
     @staticmethod
     def get_field(model, field):

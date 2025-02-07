@@ -19,8 +19,12 @@ class Value:
 
     extra_data: list = datafield(default_factory=list)
 
+    @property
+    def case(self):
+        return Utils.casing(self.name)
+
     def __str__(self):
-        return str(self.name)
+        return self.name
 
 
 class DexScriptParser:

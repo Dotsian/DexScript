@@ -31,6 +31,9 @@ class DexCommand:
         pass
 
     def attribute_error(self, model, attribute):
+        if model.value is None or hasattr(model.value(), attribute):
+            return
+        
         raise Exception(
             f"'{attribute}' is not a valid {model.name} attribute\n"
             f"Run `ATTRIBUTES > {model.name}` to see a list of "
@@ -51,7 +54,7 @@ class Global(DexCommand):
         -------------
         CREATE > MODEL > IDENTIFIER
         """
-        await Utils.create_model(model, identifier)
+        await Utils.create_model(model.value, identifier)
         await ctx.send(f"Created `{identifier}`")
 
     async def delete(self, ctx, model, identifier):
@@ -74,37 +77,37 @@ class Global(DexCommand):
         -------------
         UPDATE > MODEL > IDENTIFIER > ATTRIBUTE > VALUE(?)
         """
-        attribute_name = Utils.casing(attribute.name.lower())
-        new_value = Utils.casing(value.name) if value is not None else None
+        attribute_name = attribute.case.lower()
+        new_value = None
+
+        if value is not None:
+            new_value = value.casing
 
         returned_model = await Utils.get_model(model, identifier)
-
-        if model.value is not None and not hasattr(model.value(), attribute_name):
-            self.attribute_error(model, attribute_name)
+        self.attribute_error(model, attribute_name)
 
         model_field = Utils.get_field(model.value, attribute_name)
 
-        if value is None and self.shared.attachments != [] and model_field.:
-            image_path = await Utils.save_file(self.shared.attachments[0])
+        image_fields = Utils.fetch_fields(
+            model.value,
+            lambda _, field_type: (
+                field_type.__class__.__name__ == "CharField" and field_type.max_length == 200
+            ),
+        )
+
+        if value is None and self.shared.attachments and model_field in image_fields:
+            image_path = await Utils.save_file(self.shared.attachments.pop(0))
             new_value = Utils.image_path(str(image_path))
 
-        text = f"Updated `{identifier}'s` {attribute} to `{new_value}`"
-
         if attribute.type == Types.MODEL:
-            attribute_name = Utils.to_snake_case(_attr_name.lower()) + "_id"
-
+            attribute_name = Utils.to_snake_case(attribute.name.lower()) + "_id"
             attribute_model = await Utils.get_model(attribute, value.name)
             new_value = attribute_model.pk
 
-            text = (
-                f"Updated `{identifier}'s` {attribute_model.__class__.__name__} "
-                f"to `{value.name}`"
-            )
-
         setattr(returned_model, attribute_name, new_value)
-
         await returned_model.save(update_fields=[attribute_name])
-        await ctx.send(text)
+
+        await ctx.send(f"Updated `{identifier}'s` {attribute} to `{value.name}`")
 
     async def view(self, ctx, model, identifier, attribute=None):
         """
@@ -127,22 +130,14 @@ class Global(DexCommand):
                 fields["content"] += f"{Utils.to_snake_case(key)}: {value}\n"
 
                 if isinstance(value, str) and Utils.is_image(value):
-                    if fields.get("files") is None:
-                        fields["files"] = []
-
-                    fields["files"].append(discord.File(Utils.image_path(value)))
+                    fields.setdefault("files", []).append(discord.File(Utils.image_path(value)))
 
             fields["content"] += "```"
-
             await ctx.send(**fields)
             return
 
-        _attr_name = attribute.name.__name__ if attribute.type == Types.MODEL else attribute.name
-        
-        attribute_name = Utils.casing(_attr_name.lower())
-
-        if not hasattr(model.name(), attribute_name):
-            self.attribute_error(model, attribute_name)
+        attribute_name = attribute.case.lower()
+        self.attribute_error(model, attribute_name)
 
         new_attribute = getattr(returned_model, attribute_name)
 
@@ -163,13 +158,14 @@ class Global(DexCommand):
         -------------
         ATTRIBUTES > MODEL
         """
-        fields = [f"{model.name.upper()} ATTRIBUTES:\n\n"]
+        fields = [
+            f"- {Utils.to_snake_case(x).upper()}"
+            for x in Utils.fetch_fields(
+                model.value, lambda _, field_type: field_type != "BackwardFKRelation"
+            )
+        ]
 
-        for field in vars(model.value()):  # type: ignore
-            if field[:1] == "_":
-                continue
-
-            fields.append(f"- {Utils.to_snake_case(field).replace(' ', '_').upper()}\n")
+        fields.insert(0, f"{model.name.upper()} ATTRIBUTES:\n")
 
         await Utils.message_list(ctx, fields)
 
@@ -189,29 +185,23 @@ class Filter(DexCommand):
         -------------
         FILTER > UPDATE > MODEL > ATTRIBUTE > OLD_VALUE > NEW_VALUE > TORTOISE_OPERATOR(?)
         """
-        _attr_name = attribute.name.__name__ if attribute.type == Types.MODEL else attribute.name
-        casing_name = Utils.casing(_attr_name.lower())
-
-        if not hasattr(model.name(), casing_name):
-            self.attribute_error(model, casing_name)
+        casing_name = attribute.case.lower()
+        self.attribute_error(model, casing_name)
 
         if tortoise_operator is not None:
             casing_name += f"__{tortoise_operator.name.lower()}"
 
-        value_old = old_value.name
-        value_new = new_value.name
+        value_old, value_new = old_value.value, new_value.value
 
         if attribute.type == Types.MODEL:
             value_old = await Utils.get_model(attribute, value_old)
             value_new = await Utils.get_model(attribute, value_new)
 
-        await model.name.filter(**{casing_name: value_old}).update(
-            **{casing_name: value_new}
-        )
+        await model.value.filter(**{casing_name: value_old}).update(**{casing_name: value_new})
 
         await ctx.send(
-            f"Updated all `{model.name.__name__}` instances from a "
-            f"`{attribute}` value of `{old_value}` to `{new_value}`"
+            f"Updated all `{model.name}` instances from a `{attribute}` "
+            f"value of `{old_value}` to `{new_value}`"
         )
 
     async def delete(self, ctx, model, attribute, value, tortoise_operator=None):
@@ -224,17 +214,13 @@ class Filter(DexCommand):
         -------------
         FILTER > DELETE > MODEL > ATTRIBUTE > VALUE > TORTOISE_OPERATOR(?)
         """
-        _attr_name = attribute.name.__name__ if attribute.type == Types.MODEL else attribute.name
-
-        casing_name = Utils.casing(_attr_name.lower())
-
-        if not hasattr(model.name(), casing_name):
-            self.attribute_error(model, casing_name)
+        casing_name = attribute.case.lower()
+        self.attribute_error(model, casing_name)
 
         if tortoise_operator is not None:
             casing_name += f"__{tortoise_operator.name.lower()}"
 
-        new_value = value.name
+        new_value = value.value
 
         if attribute.type == Types.MODEL:
             new_value = await Utils.get_model(attribute, new_value)
@@ -242,8 +228,7 @@ class Filter(DexCommand):
         await model.name.filter(**{casing_name: new_value}).delete()
 
         await ctx.send(
-            f"Deleted all `{model.name.__name__}` instances with a "
-            f"`{attribute}` value of `{value}`"
+            f"Deleted all `{model.name.__name__}` instances with a `{attribute}` value of `{value}`"
         )
 
     async def view(self, ctx, model, attribute, value, tortoise_operator=None):
@@ -256,17 +241,13 @@ class Filter(DexCommand):
         -------------
         FILTER > VIEW > MODEL > ATTRIBUTE > VALUE > TORTOISE_OPERATOR(?)
         """
-        _attr_name = attribute.name.__name__ if attribute.type == Types.MODEL else attribute.name
-
-        casing_name = Utils.casing(_attr_name.lower())
-
-        if not hasattr(model.name(), casing_name):
-            self.attribute_error(model, casing_name)
+        casing_name = attribute.case.lower()
+        self.attribute_error(model, casing_name)
 
         if tortoise_operator is not None:
             casing_name += f"__{tortoise_operator.name.lower()}"
 
-        new_value = value.name
+        new_value = value.value
 
         if attribute.type == Types.MODEL:
             new_value = await Utils.get_model(attribute, new_value)
@@ -298,22 +279,24 @@ class Eval(DexCommand):
 
         if len(name.name) > NAME_LIMIT:
             raise Exception(
-                f"`{name}` is above the {NAME_LIMIT} character limit "
-                f"({len(name)} > {NAME_LIMIT})"
+                f"`{name}` exceeds the {NAME_LIMIT}-character limit ({len(name)} > {NAME_LIMIT})"
             )
 
         if os.path.isfile(f"eval_presets/{name}.py"):
-            raise Exception(f"`{name}` aleady exists.")
+            raise Exception(f"`{name}` already exists.")
 
         await ctx.send("Please send the eval command below...")
 
         try:
             message = await self.bot.wait_for(
-                "message", check=lambda m: m.author == ctx.message.author, timeout=20
+                "message",
+                check=lambda m: m.author == ctx.message.author,
+                timeout=20,
             )
         except asyncio.TimeoutError:
             await ctx.send("Eval preset saving has timed out.")
             return
+
         with open(f"eval_presets/{name}.py", "w") as file:
             file.write(Utils.remove_code_markdown(message.content))
 
