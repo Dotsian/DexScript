@@ -6,7 +6,7 @@ from dataclasses import field as datafield
 
 import discord
 
-from .utils import DIR, Types, Utils
+from .utils import Types, Utils
 
 
 @dataclass
@@ -228,7 +228,8 @@ class Filter(DexCommand):
         await model.name.filter(**{casing_name: new_value}).delete()
 
         await ctx.send(
-            f"Deleted all `{model.name.__name__}` instances with a `{attribute}` value of `{value}`"
+            f"Deleted all `{model.name.__name__}` instances with a `{attribute}` "
+            f"value of `{value}`"
         )
 
     async def view(self, ctx, model, attribute, value, tortoise_operator=None):
