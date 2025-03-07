@@ -11,7 +11,6 @@ from .utils import Utils, config
 
 from ballsdex.settings import settings
 
-
 __version__ = "0.5"
 
 

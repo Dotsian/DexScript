@@ -1,9 +1,3 @@
-from os import path
-
-
-# |-----------------------------------------------------------------------------------------|#
-
-
 def repair_bot_file():
     """
     Repairs the `bot.py` file and removes extra newlines caused by an old DexScript installer.
