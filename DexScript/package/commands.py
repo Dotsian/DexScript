@@ -147,18 +147,18 @@ class Global(DexCommand):
 
         await ctx.send(f"```{new_attribute}```")
 
-    async def attributes(self, ctx, model):
+    async def attributes(self, ctx, model, required=False):
         """
         Lists all changeable attributes of a model.
 
         Documentation
         -------------
-        ATTRIBUTES > MODEL
+        ATTRIBUTES > MODEL > REQUIRED(?)
         """
         fields = [
             f"- {x.upper()}"
             for x in Utils.fetch_fields(
-                model.value, lambda _, field_type: field_type != "BackwardFKRelation"
+                model.value, required, lambda _, field_type: field_type != "BackwardFKRelation"
             )
         ]
 
@@ -426,7 +426,7 @@ class Template(DexCommand):
     """
 
     # TODO: Softcode model creation template.
-    async def create(self, ctx, model, argument=None):
+    async def create(self, ctx, model, argument="..."):
         """
         Sends the `create` template for a model.
 

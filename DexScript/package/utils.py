@@ -18,6 +18,13 @@ FILENAME_RE = re.compile(r"^(.+)(\.\S+)$")
 
 MEDIA_PATH = "./admin_panel/media" if os.path.isdir("./admin_panel/media") else "./static/uploads"
 
+MODELS = [
+    "Ball",
+    "Regime",
+    "Economy",
+    "Special",
+]
+
 
 class Types(Enum):
     DEFAULT = 0
@@ -170,19 +177,16 @@ class Utils:
 
     @staticmethod
     def fetch_model(model):
-        return globals().get(model)
+        return globals().get(Utils.pascal_case(model))
 
     @staticmethod
     def models(names=False, key=None):
-        model_list = [
-            "Ball",
-            "Regime",
-            "Economy",
-            "Special",
-        ]
+        model_list = MODELS
 
         if not names:
-            model_list = [globals().get(x) for x in model_list if globals().get(x) is not None]
+            model_list = [
+                Utils.fetch_model(x) for x in model_list if Utils.fetch_model(x) is not None
+            ]
 
         if key is not None:
             model_list = [key(x) for x in model_list]
@@ -267,11 +271,26 @@ class Utils:
         return returned_model[0]
 
     @staticmethod
-    def fetch_fields(model, field_filter=None):
+    def fetch_fields(model, null=False, field_filter=None):
+        """
+        Returns a list of a model's fields.
+
+        Parameters
+        ----------
+        model: Model
+            The model you want to fetch fields from.
+        null: bool
+            Whether it should return fields that are null.
+        field_filter: Callable | None
+            If this callable returns False, that specific field won't be included.
+        """
         fetched_list = []
 
         for field, field_type in model._meta.fields_map.items():
             if field_filter is not None and not field_filter(field, field_type):
+                continue
+
+            if null and not field_type.null:
                 continue
 
             fetched_list.append(field)

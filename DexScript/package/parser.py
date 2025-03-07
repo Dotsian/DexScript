@@ -69,10 +69,7 @@ class DexScriptParser:
                 model = Utils.fetch_model(line)
 
                 if model is None:
-                    raise Exception(
-                        f"'{line}' is not a valid model\n"
-                        f"Make sure you check your capitalization (e.g. Ball, Regime, Special)"
-                    )
+                    raise Exception(f"'{line}' is not a valid model")
 
                 string_key = Utils.extract_str_attr(model)
 
