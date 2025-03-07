@@ -23,14 +23,9 @@ import discord
 import requests
 from discord.ext import commands
 
-DIR = "ballsdex" if os.path.isdir("ballsdex") else "carfigures"
+from ballsdex.settings import settings
 
-if DIR == "ballsdex":
-    from ballsdex.settings import settings
-else:
-    from carfigures.settings import settings
-
-UPDATING = os.path.isdir(f"{DIR}/packages/dexscript")
+UPDATING = os.path.isdir("ballsdex/packages/dexscript")
 
 
 class MigrationType(Enum):
@@ -54,20 +49,20 @@ class InstallerConfig:
     install_migrations = [
         (
             "||await self.add_cog(Core(self))",
-            '||await self.load_extension("$DIR.packages.dexscript")\n',
+            '||await self.load_extension("ballsdex.packages.dexscript")\n',
             MigrationType.APPEND,
         ),
         (
-            '||await self.load_extension("$DIR.core.dexscript")\n',
-            '||await self.load_extension("$DIR.packages.dexscript")\n',
+            '||await self.load_extension("ballsdex.core.dexscript")\n',
+            '||await self.load_extension("ballsdex.packages.dexscript")\n',
             MigrationType.REPLACE,
         )
     ]
     uninstall_migrations = [
-        '||await self.load_extension("$DIR.core.dexscript")\n',
-        '||await self.load_extension("$DIR.packages.dexscript")\n'
+        '||await self.load_extension("ballsdex.core.dexscript")\n',
+        '||await self.load_extension("ballsdex.packages.dexscript")\n'
     ]
-    path = f"{DIR}/packages/dexscript"
+    path = "ballsdex/packages/dexscript"
 
 @dataclass
 class Logger:
@@ -105,7 +100,7 @@ class InstallerEmbed(discord.Embed):
     def setup(self):
         self.title = "DexScript Installation"
         self.description = "Welcome to the DexScript installer!"
-        self.color = discord.Color.from_str("#FFF" if DIR == "carfigures" else "#03BAFC")
+        self.color = discord.Color.from_str("#03BAFC")
         self.timestamp = datetime.now()
 
         latest_version = self.installer.latest_version
@@ -142,7 +137,7 @@ class InstallerEmbed(discord.Embed):
             "DexScript has been succesfully installed to your bot.\n"
             f"Run the `{settings.prefix}about` command to view details about DexScript."
         )
-        self.color = discord.Color.from_str("#FFF" if DIR == "carfigures" else "#03BAFC")
+        self.color = discord.Color.from_str("#03BAFC")
         self.timestamp = datetime.now()
 
         self.set_thumbnail(url=config.appearance["logo"])
@@ -150,7 +145,7 @@ class InstallerEmbed(discord.Embed):
     def uninstalled(self):
         self.title = "DexScript Uninstalled!"
         self.description = "DexScript has been succesfully uninstalled from your bot."
-        self.color = discord.Color.from_str("#FFF" if DIR == "carfigures" else "#03BAFC")
+        self.color = discord.Color.from_str("#03BAFC")
         self.timestamp = datetime.now()
 
         self.set_thumbnail(url=config.appearance["logo"])
@@ -239,7 +234,7 @@ class Installer:
         self.interface = InstallerGUI(self)
 
     def uninstall_migrate(self):
-        with open(f"{DIR}/core/bot.py", "r") as read_file:
+        with open("ballsdex/core/bot.py", "r") as read_file:
             lines = read_file.readlines()
 
         for index, line in enumerate(lines):
@@ -251,11 +246,11 @@ class Installer:
 
                 lines.pop(index)
 
-        with open(f"{DIR}/core/bot.py", "w") as write_file:
+        with open("ballsdex/core/bot.py", "w") as write_file:
             write_file.writelines(lines)
 
     def install_migrate(self):
-        with open(f"{DIR}/core/bot.py", "r") as read_file:
+        with open("ballsdex/core/bot.py", "r") as read_file:
             lines = read_file.readlines()
 
         for index, line in enumerate(lines):
@@ -275,12 +270,12 @@ class Installer:
 
                         lines.insert(index + 1, new)
 
-        with open(f"{DIR}/core/bot.py", "w") as write_file:
+        with open("ballsdex/core/bot.py", "w") as write_file:
             write_file.writelines(lines)
 
     async def install(self):
-        if os.path.isfile(f"{DIR}/core/dexscript.py"):
-            os.remove(f"{DIR}/core/dexscript.py")
+        if os.path.isfile("ballsdex/core/dexscript.py"):
+            os.remove("ballsdex/core/dexscript.py")
 
         link = f"https://api.github.com/repos/{config.github[0]}/contents/"
 
@@ -319,8 +314,8 @@ class Installer:
         logger.log("DexScript installation finished", "INFO")
 
     async def uninstall(self):
-        if os.path.isfile(f"{DIR}/core/dexscript.py"):
-            os.remove(f"{DIR}/core/dexscript.py")
+        if os.path.isfile("ballsdex/core/dexscript.py"):
+            os.remove("ballsdex/core/dexscript.py")
         
         shutil.rmtree(config.path)
 
@@ -331,7 +326,7 @@ class Installer:
     @staticmethod
     def format_migration(line):
         return (
-            line.replace("    ", "").replace("|", "    ").replace("/n", "\n").replace("$DIR", DIR)
+            line.replace("    ", "").replace("|", "    ").replace("/n", "\n")
         )
 
     @property

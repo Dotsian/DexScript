@@ -8,7 +8,7 @@
 
 ## What is DexScript?
 
-DexScript is a set of commands for Ballsdex and CarFigures created by DotZZ that expands on the standalone admin commands and substitutes for the admin panel. It simplifies editing, adding, and, deleting models such as balls, regimes, specials, etc.
+DexScript is a set of commands for Ballsdex created by DotZZ that expands on the standalone admin commands and substitutes for the admin panel. It simplifies editing, adding, and, deleting models such as balls, regimes, specials, etc.
 
 Let's say you wanted to update a ball's rarity to 2. You could run `UPDATE > Ball > Mongolia > RARITY > 2.0`.
 
@@ -26,7 +26,7 @@ DexScript is currently in beta. However, the latest version is a release candida
 
 To install DexScript, you must have the following:
 
-* Ballsdex or CarFigures v2.2.0+
+* Ballsdex
 * Eval access
 
 ## DexScript Setup

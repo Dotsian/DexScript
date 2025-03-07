@@ -1,7 +1,5 @@
 from os import path
 
-DIR = "ballsdex" if path.isdir("ballsdex") else "carfigures"
-
 
 # |-----------------------------------------------------------------------------------------|#
 
@@ -12,11 +10,11 @@ def repair_bot_file():
     """
     new_lines = []
 
-    with open(f"{DIR}/core/bot.py", "r") as file:
+    with open("ballsdex/core/bot.py", "r") as file:
         if "import asyncio\n\n" not in file.read():
             return
 
-    with open(f"{DIR}/core/bot.py", "r") as file:
+    with open("ballsdex/core/bot.py", "r") as file:
         last_was_newline = False
 
         for line in file.readlines():
@@ -29,7 +27,7 @@ def repair_bot_file():
 
             new_lines.append(line)
 
-    with open(f"{DIR}/core/bot.py", "w") as file:
+    with open("ballsdex/core/bot.py", "w") as file:
         file.writelines(new_lines)
 
 

@@ -77,11 +77,8 @@ class Global(DexCommand):
         -------------
         UPDATE > MODEL > IDENTIFIER > ATTRIBUTE > VALUE(?)
         """
-        attribute_name = attribute.case.lower()
-        new_value = None
-
-        if value is not None:
-            new_value = value.casing
+        attribute_name = attribute.name.lower()
+        new_value = None if value is None else value.value
 
         returned_model = await Utils.get_model(model, identifier)
         self.attribute_error(model, attribute_name)
@@ -100,7 +97,7 @@ class Global(DexCommand):
             new_value = Utils.image_path(str(image_path))
 
         if attribute.type == Types.MODEL:
-            attribute_name = Utils.to_snake_case(attribute.name.lower()) + "_id"
+            attribute_name = f"{attribute.name.lower()}_id"
             attribute_model = await Utils.get_model(attribute, value.name)
             new_value = attribute_model.pk
 
@@ -118,7 +115,7 @@ class Global(DexCommand):
         -------------
         VIEW > MODEL > IDENTIFIER > ATTRIBUTE(?)
         """
-        returned_model = await Utils.get_model(model, identifier.name)
+        returned_model = await Utils.get_model(model, identifier)
 
         if attribute is None:
             fields = {"content": "```"}
@@ -127,7 +124,7 @@ class Global(DexCommand):
                 if key.startswith("_"):
                     continue
 
-                fields["content"] += f"{Utils.to_snake_case(key)}: {value}\n"
+                fields["content"] += f"{key}: {value}\n"
 
                 if isinstance(value, str) and Utils.is_image(value):
                     fields.setdefault("files", []).append(discord.File(Utils.image_path(value)))
@@ -136,7 +133,7 @@ class Global(DexCommand):
             await ctx.send(**fields)
             return
 
-        attribute_name = attribute.case.lower()
+        attribute_name = attribute.name.lower()
         self.attribute_error(model, attribute_name)
 
         new_attribute = getattr(returned_model, attribute_name)
@@ -159,7 +156,7 @@ class Global(DexCommand):
         ATTRIBUTES > MODEL
         """
         fields = [
-            f"- {Utils.to_snake_case(x).upper()}"
+            f"- {x.upper()}"
             for x in Utils.fetch_fields(
                 model.value, lambda _, field_type: field_type != "BackwardFKRelation"
             )
@@ -185,7 +182,7 @@ class Filter(DexCommand):
         -------------
         FILTER > UPDATE > MODEL > ATTRIBUTE > OLD_VALUE > NEW_VALUE > TORTOISE_OPERATOR(?)
         """
-        casing_name = attribute.case.lower()
+        casing_name = attribute.name.lower()
         self.attribute_error(model, casing_name)
 
         if tortoise_operator is not None:
@@ -214,7 +211,7 @@ class Filter(DexCommand):
         -------------
         FILTER > DELETE > MODEL > ATTRIBUTE > VALUE > TORTOISE_OPERATOR(?)
         """
-        casing_name = attribute.case.lower()
+        casing_name = attribute.name.lower()
         self.attribute_error(model, casing_name)
 
         if tortoise_operator is not None:
@@ -228,7 +225,7 @@ class Filter(DexCommand):
         await model.name.filter(**{casing_name: new_value}).delete()
 
         await ctx.send(
-            f"Deleted all `{model.name.__name__}` instances with a `{attribute}` "
+            f"Deleted all `{model.name}` instances with a `{attribute}` "
             f"value of `{value}`"
         )
 
@@ -242,7 +239,7 @@ class Filter(DexCommand):
         -------------
         FILTER > VIEW > MODEL > ATTRIBUTE > VALUE > TORTOISE_OPERATOR(?)
         """
-        casing_name = attribute.case.lower()
+        casing_name = attribute.name.lower()
         self.attribute_error(model, casing_name)
 
         if tortoise_operator is not None:
@@ -422,3 +419,33 @@ class File(DexCommand):
             os.remove(file_path.name)
 
         await ctx.send(f"Deleted `{file_path}` {file_type}")
+
+class Template(DexCommand):
+    """
+    Template commands used to assist with DexScript commands.
+    """
+
+    # TODO: Softcode model creation template.
+    async def create(self, ctx, model, argument=None):
+        """
+        Sends the `create` template for a model.
+
+        Documentation
+        -------------
+        TEMPLATE > CREATE > BALL > ARGUMENT(?)
+        """
+        match model.name.lower():
+            case "ball":
+                template_commands = [
+                    f"CREATE > BALL > {argument}",
+                    f"UPDATE > BALL > {argument} > REGIME > ...",
+                    f"UPDATE > BALL > {argument} > HEALTH > ...",
+                    f"UPDATE > BALL > {argument} > ATTACK > ...",
+                    f"UPDATE > BALL > {argument} > RARITY > ...",
+                    f"UPDATE > BALL > {argument} > EMOJI_ID > ...",
+                    f"UPDATE > BALL > {argument} > CREDITS > ...",
+                    f"UPDATE > BALL > {argument} > CAPACITY_NAME > ...",
+                    f"UPDATE > BALL > {argument} > CAPACITY_DESCRIPTION > ..."
+                ]
+
+                await ctx.send(f"```sql\n{'\n'.join(template_commands)}\n```")

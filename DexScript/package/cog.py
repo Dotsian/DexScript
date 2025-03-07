@@ -7,12 +7,9 @@ import requests
 from discord.ext import commands
 
 from .parser import DexScriptParser
-from .utils import DIR, Utils, config
+from .utils import Utils, config
 
-if DIR == "ballsdex":
-    from ballsdex.settings import settings
-else:
-    from carfigures.settings import settings
+from ballsdex.settings import settings
 
 
 __version__ = "0.5"
@@ -95,7 +92,7 @@ class DexScript(commands.Cog):
         discord_link = "https://discord.gg/EhCxuNQfzt"
 
         description = (
-            "DexScript is a set of commands for Ballsdex and CarFigures created by DotZZ "
+            "DexScript is a set of commands for Ballsdex created by DotZZ "
             "that expands on the standalone admin commands and substitutes for the admin panel. "
             "It simplifies editing, adding, deleting, and displaying data for models such as "
             "balls, regimes, specials, etc.\n\n"

@@ -8,7 +8,7 @@ from typing import Any
 from dateutil.parser import parse as parse_date
 
 from . import commands
-from .utils import DIR, Types, Utils, config
+from .utils import Types, Utils, config
 
 
 @dataclass
@@ -18,10 +18,6 @@ class Value:
     value: Any = None
 
     extra_data: list = datafield(default_factory=list)
-
-    @property
-    def case(self):
-        return Utils.casing(self.name)
 
     def __str__(self):
         return self.name
@@ -73,20 +69,16 @@ class DexScriptParser:
                 model = Utils.fetch_model(line)
 
                 if model is None:
-                    examples = "Ball, Regime, Special"
-
-                    if DIR == "carfigures":
-                        examples = "Car, CarType, Event"
-
                     raise Exception(
                         f"'{line}' is not a valid model\n"
-                        f"Make sure you check your capitalization (e.g. {examples})"
+                        f"Make sure you check your capitalization (e.g. Ball, Regime, Special)"
                     )
 
                 string_key = Utils.extract_str_attr(model)
 
                 value.name = model.__name__
                 value.value = model
+                
                 value.extra_data.append(string_key)
 
             case Types.BOOLEAN:

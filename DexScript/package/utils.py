@@ -12,12 +12,7 @@ from pathlib import Path
 import discord
 from dateutil.parser import parse as parse_date
 
-DIR = "ballsdex" if os.path.isdir("ballsdex") else "carfigures"
-
-if DIR == "ballsdex":
-    from ballsdex.core.models import Ball, Economy, Regime, Special  # noqa: F401, I001
-else:
-    from carfigures.core.models import Car, CarType, Country, Event, FontsPack  # noqa: F401, I001
+from ballsdex.core.models import Ball, Economy, Regime, Special  # noqa: F401, I001
 
 START_CODE_BLOCK_RE = re.compile(r"^((```sql?)(?=\s)|(```))")
 FILENAME_RE = re.compile(r"^(.+)(\.\S+)$")
@@ -82,49 +77,12 @@ class Utils:
         return [func(x) for x in string_or_list]
 
     @staticmethod
-    def to_camel_case(item):
-        """
-        Formats a string or list from snake_case into camelCase for CarFigure support.
-        """
-        return Utils._common_format(
-            item, func=lambda s: re.sub( r"(_[a-z])", lambda m: m.group(1)[1].upper(), s)
-        )
-
-    @staticmethod
-    def to_pascal_case(item):
-        """
-        Formats a string or list from snake or camel case to pascal case for class support.
-        """
+    def pascal_case(string) -> str:
         return Utils._common_format(
             item, func=lambda s: re.sub(
                 r"(_[a-z])", lambda m: m.group(1)[1].upper(), s[:1].upper() + s[1:]
             )
         )
-    
-    @staticmethod
-    def to_snake_case(item):
-        """
-        Formats a string or list from camelCase into snake_case for CarFigure support.
-        """
-        return Utils._common_format(
-            item, func=lambda s: re.sub(r"(?<!^)(?=[A-Z])", "_", s).lower()
-        )
-    
-    @staticmethod
-    def casing(item, pascal=False):
-        """
-        Determines whether to use camelCase, snake_case, or pascal case depending on 
-        if the bot is using CarFigures or Ballsdex.
-        """
-        main_casing = Utils.to_snake_case(item)
-
-        if DIR == "carfigures":
-            main_casing = Utils.to_camel_case(item)
-
-        if pascal:
-            main_casing = Utils.to_pascal_case(item)
-
-        return main_casing
 
     @staticmethod
     async def message_list(ctx, messages: list[str]):
@@ -217,32 +175,20 @@ class Utils:
 
     @staticmethod
     def models(names=False, key=None):
-        model_list = {
-            "ballsdex": [
-                "Ball",
-                "Regime",
-                "Economy",
-                "Special",
-            ],
-            "carfigures": [
-                "Car",
-                "CarType",
-                "Country",
-                "Event",
-                "FontsPack",
-                "Exclusive",
-            ],
-        }
-
-        return_list = model_list[DIR]
+        model_list = [
+            "Ball",
+            "Regime",
+            "Economy",
+            "Special",
+        ]
 
         if not names:
-            return_list = [globals().get(x) for x in return_list if globals().get(x) is not None]
+            model_list = [globals().get(x) for x in model_list if globals().get(x) is not None]
 
         if key is not None:
-            return_list = [key(x) for x in return_list]
+            model_list = [key(x) for x in model_list]
 
-        return return_list
+        return model_list
 
     @staticmethod
     async def create_model(model, identifier, fields_only=False):
@@ -265,12 +211,6 @@ class Utils:
             "Ignore": ["id", "short_name"]
         }
 
-        if DIR == "carfigures":
-            special_list = {
-                "Identifiers": ["fullName", "catchNames", "name"],
-                "Ignore": ["id", "shortName"]
-            }
-
         for field, field_type in model._meta.fields_map.items():
             if field_type.null or field in special_list["Ignore"]:
                 continue
@@ -281,10 +221,7 @@ class Utils:
 
             match field_type.__class__.__name__:
                 case "ForeignKeyFieldInstance":
-                    if field == "cartype":
-                        field = "car_type"
-
-                    casing_field = Utils.casing(field, True)
+                    casing_field = Utils.pascal_case(field)
                     
                     instance = await Utils.fetch_model(casing_field).first()
 
