@@ -147,21 +147,30 @@ class Global(DexCommand):
 
         await ctx.send(f"```{new_attribute}```")
 
-    async def attributes(self, ctx, model, required=False):
+    async def attributes(self, ctx, model, filter=None):
         """
         Lists all changeable attributes of a model.
 
         Documentation
         -------------
-        ATTRIBUTES > MODEL > REQUIRED(?)
+        ATTRIBUTES > MODEL > FILTER(?)
         """
-        fields = [
-            f"- {x.upper()}"
-            for x in Utils.fetch_fields(
-                model.value, required, lambda _, field_type: field_type != "BackwardFKRelation"
-            )
-        ]
+        def filter_function(_, field_type):
+            if field_type == "BackwardFKRelation":
+                return False
+            
+            if filter is None:
+                return True
+            
+            match filter.value.lower():
+                case "null":
+                    return field_type.null
+                case "valid":
+                    return not field_type.null
+            
+            return True
 
+        fields = [f"- {x.upper()}" for x in Utils.fetch_fields(model.value, filter_function)]
         fields.insert(0, f"{model.name.upper()} ATTRIBUTES:\n")
 
         await Utils.message_list(ctx, fields)
@@ -432,7 +441,7 @@ class Template(DexCommand):
 
         Documentation
         -------------
-        TEMPLATE > CREATE > BALL > ARGUMENT(?)
+        TEMPLATE > CREATE > MODEL > ARGUMENT(?)
         """
         match model.name.lower():
             case "ball":
