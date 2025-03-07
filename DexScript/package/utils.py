@@ -79,7 +79,7 @@ class Utils:
     @staticmethod
     def pascal_case(string) -> str:
         return Utils._common_format(
-            item,
+            string,
             func=lambda s: re.sub(
                 r"(_[a-z])", lambda m: m.group(1)[1].upper(), s[:1].upper() + s[1:]
             ),
