@@ -47,6 +47,8 @@ class DexScriptParser:
 
     def create_value(self, line):
         value = Value(line)
+        value.value = line
+        
         lower = line.lower()
 
         type_dict = {
