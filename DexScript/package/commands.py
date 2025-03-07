@@ -98,7 +98,7 @@ class Global(DexCommand):
 
         if attribute.type == Types.MODEL:
             attribute_name = f"{attribute.name.lower()}_id"
-            attribute_model = await Utils.get_model(attribute, value.name)
+            attribute_model = await Utils.get_model(attribute, value)
             new_value = attribute_model.pk
 
         setattr(returned_model, attribute_name, new_value)
@@ -222,7 +222,7 @@ class Filter(DexCommand):
         if attribute.type == Types.MODEL:
             new_value = await Utils.get_model(attribute, new_value)
 
-        await model.name.filter(**{casing_name: new_value}).delete()
+        await model.value.filter(**{casing_name: new_value}).delete()
 
         await ctx.send(
             f"Deleted all `{model.name}` instances with a `{attribute}` " f"value of `{value}`"
@@ -249,7 +249,7 @@ class Filter(DexCommand):
         if attribute.type == Types.MODEL:
             new_value = await Utils.get_model(attribute, new_value)
 
-        instances = await model.name.filter(**{casing_name: new_value}).values_list(
+        instances = await model.value.filter(**{casing_name: new_value}).values_list(
             model.extra_data[0], flat=True
         )
 

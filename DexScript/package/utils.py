@@ -86,7 +86,7 @@ class Utils:
     @staticmethod
     def pascal_case(string) -> str:
         return Utils._common_format(
-            string,
+            string.lower(),
             func=lambda s: re.sub(
                 r"(_[a-z])", lambda m: m.group(1)[1].upper(), s[:1].upper() + s[1:]
             ),
@@ -115,7 +115,7 @@ class Utils:
             )
 
         for message in messages:
-            if page_length + len(messages) >= 750:
+            if page_length >= 750:
                 page_length = 0
                 pages.append([])
 
