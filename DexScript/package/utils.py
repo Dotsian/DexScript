@@ -10,9 +10,8 @@ from io import StringIO
 from pathlib import Path
 
 import discord
-from dateutil.parser import parse as parse_date
-
 from ballsdex.core.models import Ball, Economy, Regime, Special  # noqa: F401, I001
+from dateutil.parser import parse as parse_date
 
 START_CODE_BLOCK_RE = re.compile(r"^((```sql?)(?=\s)|(```))")
 FILENAME_RE = re.compile(r"^(.+)(\.\S+)$")
@@ -27,6 +26,7 @@ class Types(Enum):
     BOOLEAN = 3
     MODEL = 4
     DATETIME = 5
+
 
 @dataclass
 class Settings:
@@ -50,7 +50,7 @@ class Utils:
 
     @staticmethod
     def image_path(path) -> bool:
-        full_path = path.replace('/static/uploads/', '')
+        full_path = path.replace("/static/uploads/", "")
 
         if MEDIA_PATH == "./static/uploads" and full_path[0] == ".":
             full_path = full_path[1:]
@@ -73,21 +73,22 @@ class Utils:
     def _common_format(string_or_list: str | list[str], func):
         if isinstance(string_or_list, str):
             return func(string_or_list)
-        
+
         return [func(x) for x in string_or_list]
 
     @staticmethod
     def pascal_case(string) -> str:
         return Utils._common_format(
-            item, func=lambda s: re.sub(
+            item,
+            func=lambda s: re.sub(
                 r"(_[a-z])", lambda m: m.group(1)[1].upper(), s[:1].upper() + s[1:]
-            )
+            ),
         )
 
     @staticmethod
     async def message_list(ctx, messages: list[str]):
         """
-        Creates an interactive message limit that allows you to display a list of messages 
+        Creates an interactive message limit that allows you to display a list of messages
         without suprassing the Discord message character limit.
 
         Parameters
@@ -101,11 +102,11 @@ class Utils:
         page_length = 0
 
         def check(message):
-            return (
-                message.author.id == ctx.message.author.id and 
-                message.content.lower() in ("more", "file")
+            return message.author.id == ctx.message.author.id and message.content.lower() in (
+                "more",
+                "file",
             )
-        
+
         for message in messages:
             if page_length + len(messages) >= 750:
                 page_length = 0
@@ -138,16 +139,14 @@ class Utils:
                     await message.delete()
 
                 break
-            
+
             with contextlib.suppress(discord.HTTPException):
                 await ctx.channel.delete_messages((message, response))
 
             if response.content.lower() == "more":
                 continue
 
-            await ctx.send(
-                file=discord.File(StringIO("\n".join(messages)), filename="output.txt")
-            )
+            await ctx.send(file=discord.File(StringIO("\n".join(messages)), filename="output.txt"))
 
             break
 
@@ -208,7 +207,7 @@ class Utils:
 
         special_list = {
             "Identifiers": ["country", "catch_names", "name"],
-            "Ignore": ["id", "short_name"]
+            "Ignore": ["id", "short_name"],
         }
 
         for field, field_type in model._meta.fields_map.items():
@@ -222,7 +221,7 @@ class Utils:
             match field_type.__class__.__name__:
                 case "ForeignKeyFieldInstance":
                     casing_field = Utils.pascal_case(field)
-                    
+
                     instance = await Utils.fetch_model(casing_field).first()
 
                     if instance is None:
@@ -238,7 +237,7 @@ class Utils:
 
                 case _:
                     fields[field] = 1
-    
+
         if fields_only:
             return fields
 
@@ -266,7 +265,7 @@ class Utils:
             raise Exception(f"'{model}' is not a valid model.")
 
         return returned_model[0]
-    
+
     @staticmethod
     def fetch_fields(model, field_filter=None):
         fetched_list = []
@@ -274,7 +273,7 @@ class Utils:
         for field, field_type in model._meta.fields_map.items():
             if field_filter is not None and not field_filter(field, field_type):
                 continue
-            
+
             fetched_list.append(field)
 
         return fetched_list
@@ -306,7 +305,7 @@ class Utils:
 
     @staticmethod
     def extract_str_attr(object):
-        expression = r"return\s+self\.(\w+)" # TODO: Add `return str()`
+        expression = r"return\s+self\.(\w+)"  # TODO: Add `return str()`
 
         return re.search(expression, inspect.getsource(object.__str__)).group(1)
 
@@ -316,4 +315,3 @@ class Utils:
             return START_CODE_BLOCK_RE.sub("", content)[:-3]
 
         return content.strip("` \n")
-

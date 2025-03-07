@@ -21,9 +21,8 @@ from traceback import format_exc
 
 import discord
 import requests
-from discord.ext import commands
-
 from ballsdex.settings import settings
+from discord.ext import commands
 
 UPDATING = os.path.isdir("ballsdex/packages/dexscript")
 
@@ -44,7 +43,7 @@ class InstallerConfig:
     appearance = {
         "logo": "https://raw.githubusercontent.com/Dotsian/DexScript/refs/heads/dev/assets/DexScriptLogo.png",
         "logo_error": "https://raw.githubusercontent.com/Dotsian/DexScript/refs/heads/dev/assets/DexScriptLogoError.png",
-        "banner": "https://raw.githubusercontent.com/Dotsian/DexScript/refs/heads/dev/assets/DexScriptPromo.png"
+        "banner": "https://raw.githubusercontent.com/Dotsian/DexScript/refs/heads/dev/assets/DexScriptPromo.png",
     }
     install_migrations = [
         (
@@ -56,13 +55,14 @@ class InstallerConfig:
             '||await self.load_extension("ballsdex.core.dexscript")\n',
             '||await self.load_extension("ballsdex.packages.dexscript")\n',
             MigrationType.REPLACE,
-        )
+        ),
     ]
     uninstall_migrations = [
         '||await self.load_extension("ballsdex.core.dexscript")\n',
-        '||await self.load_extension("ballsdex.packages.dexscript")\n'
+        '||await self.load_extension("ballsdex.packages.dexscript")\n',
     ]
     path = "ballsdex/packages/dexscript"
+
 
 @dataclass
 class Logger:
@@ -128,7 +128,7 @@ class InstallerEmbed(discord.Embed):
             self.description += f"\n```{logger.output[-1]}```"
 
         self.installer.interface.attachments = [logger.file("DexScript.log")]
-        
+
         self.set_thumbnail(url=config.appearance["logo_error"])
 
     def installed(self):
@@ -172,21 +172,19 @@ class InstallerView(discord.ui.View):
             self.installer.interface.embed = InstallerEmbed(self.installer, "error")
         else:
             self.installer.interface.embed = InstallerEmbed(self.installer, "installed")
-        
+
         self.installer.interface.view = None
 
         await interaction.message.edit(**self.installer.interface.fields)
         await interaction.response.defer()
 
-    @discord.ui.button(
-        style=discord.ButtonStyle.primary, label="Uninstall", disabled=not UPDATING
-    )
+    @discord.ui.button(style=discord.ButtonStyle.primary, label="Uninstall", disabled=not UPDATING)
     async def uninstall_button(self, interaction: discord.Interaction, _: discord.ui.Button):
         await self.installer.uninstall()
 
         self.installer.interface.embed = InstallerEmbed(self.installer, "uninstalled")
         self.installer.interface.view = None
-        
+
         await interaction.message.edit(**self.installer.interface.fields)
         await interaction.response.defer()
 
@@ -240,7 +238,7 @@ class Installer:
         for index, line in enumerate(lines):
             for migration in config.uninstall_migrations:
                 original = self.format_migration(migration)
-                
+
                 if line != original:
                     continue
 
@@ -316,7 +314,7 @@ class Installer:
     async def uninstall(self):
         if os.path.isfile("ballsdex/core/dexscript.py"):
             os.remove("ballsdex/core/dexscript.py")
-        
+
         shutil.rmtree(config.path)
 
         self.uninstall_migrate()
@@ -325,9 +323,7 @@ class Installer:
 
     @staticmethod
     def format_migration(line):
-        return (
-            line.replace("    ", "").replace("|", "    ").replace("/n", "\n")
-        )
+        return line.replace("    ", "").replace("|", "    ").replace("/n", "\n")
 
     @property
     def latest_version(self):

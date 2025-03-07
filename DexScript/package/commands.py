@@ -33,7 +33,7 @@ class DexCommand:
     def attribute_error(self, model, attribute):
         if model.value is None or hasattr(model.value(), attribute):
             return
-        
+
         raise Exception(
             f"'{attribute}' is not a valid {model.name} attribute\n"
             f"Run `ATTRIBUTES > {model.name}` to see a list of "
@@ -171,7 +171,7 @@ class Filter(DexCommand):
     """
     Filter commands used for mass updating, deleting, and viewing models.
     """
-    
+
     async def update(self, ctx, model, attribute, old_value, new_value, tortoise_operator=None):
         """
         Updates all instances of a model to the specified value where the specified attribute
@@ -225,8 +225,7 @@ class Filter(DexCommand):
         await model.name.filter(**{casing_name: new_value}).delete()
 
         await ctx.send(
-            f"Deleted all `{model.name}` instances with a `{attribute}` "
-            f"value of `{value}`"
+            f"Deleted all `{model.name}` instances with a `{attribute}` " f"value of `{value}`"
         )
 
     async def view(self, ctx, model, attribute, value, tortoise_operator=None):
@@ -420,6 +419,7 @@ class File(DexCommand):
 
         await ctx.send(f"Deleted `{file_path}` {file_type}")
 
+
 class Template(DexCommand):
     """
     Template commands used to assist with DexScript commands.
@@ -445,7 +445,7 @@ class Template(DexCommand):
                     f"UPDATE > BALL > {argument} > EMOJI_ID > ...",
                     f"UPDATE > BALL > {argument} > CREDITS > ...",
                     f"UPDATE > BALL > {argument} > CAPACITY_NAME > ...",
-                    f"UPDATE > BALL > {argument} > CAPACITY_DESCRIPTION > ..."
+                    f"UPDATE > BALL > {argument} > CAPACITY_DESCRIPTION > ...",
                 ]
 
                 await ctx.send(f"```sql\n{'\n'.join(template_commands)}\n```")

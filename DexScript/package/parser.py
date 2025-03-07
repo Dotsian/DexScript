@@ -78,7 +78,7 @@ class DexScriptParser:
 
                 value.name = model.__name__
                 value.value = model
-                
+
                 value.extra_data.append(string_key)
 
             case Types.BOOLEAN:
