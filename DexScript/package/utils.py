@@ -17,7 +17,8 @@ from dateutil.parser import parse as parse_date
 START_CODE_BLOCK_RE = re.compile(r"^((```sql?)(?=\s)|(```))")
 FILENAME_RE = re.compile(r"^(.+)(\.\S+)$")
 
-MEDIA_PATH = "./admin_panel/media" if os.path.isdir("./admin_panel/media") else "./static/uploads"
+STATIC = os.path.isdir("static")
+MEDIA_PATH = "./static/uploads" if STATIC else "./admin_panel/media"
 
 MODELS = [
     "Ball",
@@ -68,7 +69,7 @@ class Utils:
         """
         full_path = path.replace("/static/uploads/", "")
 
-        if MEDIA_PATH == "./static/uploads" and full_path[0] == ".":
+        if STATIC and full_path[0] == ".":
             full_path = full_path[1:]
 
         return f"{MEDIA_PATH}/{full_path}"
@@ -133,9 +134,11 @@ class Utils:
         page_length = 0
 
         def check(message):
-            return message.author.id == ctx.message.author.id and message.content.lower() in (
-                "more",
-                "file",
+            valid_choice = message.content.lower() in ("more", "file")
+
+            return (
+                message.author == ctx.message.author and
+                message.channel == ctx.channel and valid_choice
             )
 
         for message in messages:

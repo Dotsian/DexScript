@@ -94,7 +94,7 @@ class Global(DexCommand):
 
         if value is None and self.shared.attachments and model_field in image_fields:
             image_path = await Utils.save_file(self.shared.attachments.pop(0))
-            new_value = Utils.image_path(str(image_path))
+            new_value = f"/{image_path}"
 
         if attribute.type == Types.MODEL:
             attribute_name = f"{attribute.name.lower()}_id"
