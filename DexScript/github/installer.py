@@ -231,6 +231,25 @@ class Installer:
     def __init__(self):
         self.interface = InstallerGUI(self)
 
+    def add_package(self, package: str) -> bool:
+        with open("config.yml", "r") as file:
+            lines = file.readlines()
+
+        item = f"  - {package}\n"
+
+        if "packages:\n" not in lines or item in lines:
+            return False
+
+        for i, line in enumerate(lines):
+            if line.rstrip().startswith("packages:"):
+                lines.insert(i + 1, item)
+                break
+
+        with open("config.yml", "w") as file:
+            file.writelines(lines)
+
+        return True
+
     def uninstall_migrate(self):
         with open("ballsdex/core/bot.py", "r") as read_file:
             lines = read_file.readlines()
@@ -300,7 +319,8 @@ class Installer:
 
         logger.log("Applying bot.py migrations", "INFO")
 
-        self.install_migrate()
+        if self.add_package(config.path.replace("/", ".")) is False:
+            self.install_migrate()
 
         logger.log("Loading DexScript extension", "INFO")
 
