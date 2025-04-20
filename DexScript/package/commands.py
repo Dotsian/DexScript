@@ -55,7 +55,7 @@ class Global(DexCommand):
         CREATE > MODEL > IDENTIFIER
         """
         await Utils.create_model(model.value, identifier)
-        await ctx.send(f"Created `{identifier}`")
+        await ctx.send(f"Created `{identifier}` {model.name.lower()}")
 
     async def delete(self, ctx, model, identifier):
         """
@@ -68,8 +68,8 @@ class Global(DexCommand):
         model = await Utils.get_model(model, identifier)
 
         await model.delete()
-        
-        await ctx.send(f"Deleted `{identifier}`")
+
+        await ctx.send(f"Deleted `{identifier}` {model.name.lower()}")
 
     async def update(self, ctx, model, identifier, attribute, value=None):
         """

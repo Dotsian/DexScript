@@ -8,7 +8,10 @@ We do not collect, store, or access any data from your application. DexScript on
 
 ## File Modifications
 
-During the DexScript installation process, DexScript will modify your `ballsdex/core/bot.py` file.
+During the DexScript installation process, DexScript will modify the following based on the Ballsdex version:
+
+- **2.22.0-** - `ballsdex/core/bot.py`.
+- **2.22.0+** - `config.yml`
 
 DexScript will add a single line of code to allow the DexScript extension to load when your application starts. This modification is solely for the purpose of running DexScript. You can view the code added by checking the `DexScript/github/installer.py` file in the official DexScript GitHub repository.
 

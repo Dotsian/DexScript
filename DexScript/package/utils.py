@@ -267,8 +267,10 @@ class Utils:
             "Ignore": ["id", "short_name"],
         }
 
+        model_ids = Utils.models(True, lambda s: f"{str.lower(s)}_id")
+
         for field, field_type in model._meta.fields_map.items():
-            if field_type.null or field in special_list["Ignore"]:
+            if field_type.null or field in special_list["Ignore"] or field in model_ids:
                 continue
 
             if field in special_list["Identifiers"]:
@@ -284,7 +286,7 @@ class Utils:
                     if instance is None:
                         raise Exception(f"Could not find default {casing_field}")
 
-                    fields[field] = instance.pk
+                    fields[f"{field}_id"] = instance.pk
 
                 case "BigIntField":
                     fields[field] = 100**8
