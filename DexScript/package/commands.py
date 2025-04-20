@@ -65,7 +65,10 @@ class Global(DexCommand):
         -------------
         DELETE > MODEL > IDENTIFIER
         """
-        await Utils.get_model(model, identifier).delete()
+        model = await Utils.get_model(model, identifier)
+
+        await model.delete()
+        
         await ctx.send(f"Deleted `{identifier}`")
 
     async def update(self, ctx, model, identifier, attribute, value=None):
