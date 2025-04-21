@@ -86,8 +86,6 @@ class Global(DexCommand):
         returned_model = await Utils.get_model(model, identifier)
         self.attribute_error(model, attribute_name)
 
-        model_field = Utils.get_field(model.value, attribute_name)
-
         image_fields = Utils.fetch_fields(
             model.value,
             lambda _, field_type: (
@@ -95,7 +93,7 @@ class Global(DexCommand):
             ),
         )
 
-        if value is None and self.shared.attachments and model_field in image_fields:
+        if value is None and self.shared.attachments and attribute_name in image_fields:
             image_path = await Utils.save_file(self.shared.attachments.pop(0))
             new_value = f"/{image_path}"
 
@@ -141,8 +139,8 @@ class Global(DexCommand):
 
         new_attribute = getattr(returned_model, attribute_name)
 
-        if isinstance(new_attribute, str) and os.path.isfile(new_attribute[1:]):
-            await ctx.send(f"```{new_attribute}```", file=discord.File(new_attribute[1:]))
+        if isinstance(new_attribute, str) and Utils.is_image(new_attribute):
+            await ctx.send(f"```{new_attribute}```", file=discord.File(Utils.image_path(new_attribute)))
             return
 
         if attribute.type == Types.MODEL:
