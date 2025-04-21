@@ -325,7 +325,9 @@ class Installer:
 
         logger.log("Applying bot.py migrations", "INFO")
 
-        if not self.add_package(config.path.replace("/", ".")):
+        if self.add_package(config.path.replace("/", ".")):
+            self.uninstall_migrate()
+        else:
             self.install_migrate()
 
         logger.log("Loading DexScript extension", "INFO")
