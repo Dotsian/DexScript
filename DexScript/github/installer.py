@@ -238,8 +238,11 @@ class Installer:
 
         item = f"  - {package}\n"
 
-        if "packages:\n" not in lines or item in lines:
+        if "packages:\n" not in lines:
             return False
+        
+        if item in lines:
+            return True
 
         for i, line in enumerate(lines):
             if line.rstrip().startswith("packages:"):
@@ -324,8 +327,6 @@ class Installer:
 
         if not self.add_package(config.path.replace("/", ".")):
             self.install_migrate()
-        else:
-            self.uninstall_migrate()
 
         logger.log("Loading DexScript extension", "INFO")
 
