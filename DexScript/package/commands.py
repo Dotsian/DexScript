@@ -303,7 +303,7 @@ class Eval(DexCommand):
         try:
             message = await self.bot.wait_for(
                 "message",
-                check=lambda m: m.author == ctx.author and m.channel = ctx.channel,
+                check=lambda m: m.author == ctx.author and m.channel == ctx.channel,
                 timeout=20,
             )
         except asyncio.TimeoutError:
