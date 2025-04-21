@@ -237,7 +237,7 @@ class Filter(DexCommand):
         await model.value.filter(**{casing_name: new_value}).delete()
 
         await ctx.send(
-            f"Deleted all `{model.name}` instances with a `{attribute}` " f"value of `{value}`"
+            f"Deleted all `{model.name}` instances with a `{attribute}` value of `{value}`"
         )
 
     async def view(self, ctx, model, attribute, value, tortoise_operator=None):
@@ -264,6 +264,12 @@ class Filter(DexCommand):
         instances = await model.value.filter(**{casing_name: new_value}).values_list(
             model.extra_data[0], flat=True
         )
+
+        if instances == []:
+            await ctx.send(
+                f"No {model.name}s found with a `{attribute}` value of `{value}`"
+            )
+            return
 
         await Utils.message_list(ctx, instances)
 
@@ -299,7 +305,7 @@ class Eval(DexCommand):
         try:
             message = await self.bot.wait_for(
                 "message",
-                check=lambda m: m.author == ctx.message.author,
+                check=lambda m: m.author == ctx.author and m.channel = ctx.channel,
                 timeout=20,
             )
         except asyncio.TimeoutError:
