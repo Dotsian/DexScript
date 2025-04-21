@@ -142,7 +142,9 @@ class Global(DexCommand):
         new_attribute = getattr(returned_model, attribute_name)
 
         if isinstance(new_attribute, str) and Utils.is_image(new_attribute):
-            await ctx.send(f"```{new_attribute}```", file=discord.File(Utils.image_path(new_attribute)))
+            await ctx.send(
+                f"```{new_attribute}```", file=discord.File(Utils.image_path(new_attribute))
+            )
             return
 
         if attribute.type == Types.MODEL:
