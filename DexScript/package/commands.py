@@ -105,7 +105,9 @@ class Global(DexCommand):
         setattr(returned_model, attribute_name, new_value)
         await returned_model.save(update_fields=[attribute_name])
 
-        await ctx.send(f"Updated `{identifier}'s` {attribute} to `{value.name}`")
+        suffix = "" if value is None else f" to `{value.name}`" 
+
+        await ctx.send(f"Updated `{identifier}'s` {attribute}{suffix}")
 
     async def view(self, ctx, model, identifier, attribute=None):
         """
