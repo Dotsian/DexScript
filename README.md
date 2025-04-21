@@ -1,35 +1,80 @@
-<a name="logo"/>
-<div align="center">
-<img src="https://i.imgur.com/uKfx0qO.png" alt="DexScript logo" width="200" height="200"></img>
-</div>
-
 # DexScript - BETA
 
-DexScript is a set of commands created by DotZZ. The commands simplify editing, adding, and deleting models such as balls, regimes, specials, etc.
+![DexScript Banner](assets/DexScriptPromo.png)
 
-## Supported forks
+[![Ruff](https://github.com/Dotsian/DexScript/actions/workflows/ruff.yml/badge.svg)](https://github.com/Dotsian/DexScript/actions/workflows/ruff.yml)
+[![Issues](https://img.shields.io/github/issues/Dotsian/DexScript)](https://github.com/Dotsian/DexScript/issues)
+[![discord.py](https://img.shields.io/badge/discord-py-blue.svg)](https://github.com/Rapptz/discord.py)
 
-DexScript can be used for BallsDex and CarFigures instances; each has its own respective guide on how to use DexScript with it.
+## What is DexScript?
 
-## Installation
+DexScript is a set of commands for Ballsdex created by DotZZ that expands on the standalone admin commands and substitutes for the admin panel. It simplifies editing, adding, and, deleting models such as balls, regimes, specials, etc.
 
-To install DexScript, follow the guide below and read it carefully. If you need assistance, join the official [DexScript Discord Server](https://discord.gg/pkKvMdP74Z).
+Let's say you wanted to update a ball's rarity to 2. You could run `UPDATE > Ball > Mongolia > RARITY > 2.0`.
 
-The guide is in the [wiki](https://github.com/Dotsian/DexScript/wiki/Installing,-Updating,-and-Uninstalling) and you should read the first one that is for installing. If you ever want to uninstall it you can always follow the guide that is in below the install part.
+![Updating rarity showcase](assets/screenshots/showcase1.png)
 
-## Updating
+DexScript has a ton more features too! All of them can be found within our extensive documentation. Here's a simple list of the most popular features.
 
-You've probably been using this for a while and if a new version is released you can always go find the code for updating in the wiki.
+* **Creating, updating, and deleting Balls, Regimes, Specials, etc.**
+* **Mass updating and deleting Balls, Regimes, Specials, etc.**
+* **Saving evals and loading them**.
 
-## Beta preview
+DexScript is currently in beta. However, the latest version is a release candidate for the full release.
 
-Yes, you can test beta things, and if you are wondering how to do that, follow the guide in the [wiki](https://github.com/Dotsian/DexScript/wiki/Installing,-Updating,-and-Uninstalling) below the uninstall one. If there are any bugs please report them at [bug report](https://github.com/Dotsian/DexScript/issues/new/choose).
+## DexScript Requirements
 
-## Information
+To install DexScript, you must have the following:
 
-> ``Made by dot_zz``
-> ``Version 0.4.3.2``
-> ``MIT License``
-> ``Made on September 14, 2024``
-> ``Last updated on January 1, 2025``
-> [``DexScript Discord server``](https://discord.gg/pkKvMdP74Z)
+* Ballsdex
+* Eval access
+
+## DexScript Setup
+
+The DexScript installer is a intuitive menu that can allow you to easily update, install, and uninstall DexScript. To bring up the DexScript installer, all you have to do is run one eval command!
+
+### Versions
+
+DexScript has two versions, the release version and the development version.
+
+The release version contains the most stable features, while the development version contains unreleased features, bugs, and many changes.
+
+To install DexScript, run the following eval command:
+
+#### Release Version
+
+```py
+import base64, requests; await ctx.invoke(bot.get_command("eval"), body=base64.b64decode(requests.get("https://api.github.com/repos/Dotsian/DexScript/contents/installer.py").json()["content"]).decode())
+```
+
+#### Development Version
+
+```py
+import base64, requests; await ctx.invoke(bot.get_command("eval"), body=base64.b64decode(requests.get("https://api.github.com/repos/Dotsian/DexScript/contents/DexScript/github/installer.py", {"ref": "dev"}).json()["content"]).decode())
+```
+
+### DexScript Installer
+
+> [!NOTE]
+> If DexScript is already installed, you can run `b.installer` to show the DexScript installer, replacing `b.` with your application's prefix..
+
+Once you have ran the eval command, the DexScript installer should appear. There will be three buttons:
+
+* Install [or] Update
+* Uninstall
+* Exit
+
+> [!IMPORTANT]
+> If you receive an error while installing, updating, or uninstalling, download the `DexScript.log` file and submit a bug report in this GitHub repository.
+
+#### Installing
+
+If you are installing DexScript for the first time, you will see a button called "Install". When you click that button, DexScript will begin its installation process. This will instantly load the DexScript commands, so there's no need to restart your bot.
+
+#### Updating
+
+If you already have DexScript, you will see a button called "Update". When you click that button, DexScript will update to the latest version. This will instantly update DexScript, which means you don't have to restart your bot.
+
+#### Uninstalling
+
+If you already have DexScript, you will see a button called "Uninstall". Clicking the uninstall button will uninstall DexScript from your application. This will instantly remove the DexScript package and DexScript commands will unload instantly.
