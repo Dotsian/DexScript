@@ -294,7 +294,7 @@ class Installer:
     async def install(self):
         if os.path.isfile("ballsdex/core/dexscript.py"):
             os.remove("ballsdex/core/dexscript.py")
-            
+
             await bot.remove_cog("DexScript")  # type: ignore
 
         link = f"https://api.github.com/repos/{config.github[0]}/contents/"
@@ -324,6 +324,8 @@ class Installer:
 
         if not self.add_package(config.path.replace("/", ".")):
             self.install_migrate()
+        else:
+            self.uninstall_migrate()
 
         logger.log("Loading DexScript extension", "INFO")
 
