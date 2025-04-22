@@ -6,7 +6,7 @@ from dataclasses import field as datafield
 
 import discord
 
-from .utils import Types, Utils
+from .utils import Types, Utils, STATIC
 
 
 @dataclass
@@ -95,7 +95,7 @@ class Global(DexCommand):
 
         if value is None and self.shared.attachments and attribute_name in image_fields:
             image_path = await Utils.save_file(self.shared.attachments.pop(0))
-            new_value = f"/{image_path}"
+            new_value = f"/static/uploads/{image_path}" if STATIC else f"/{image_path}"
 
         if attribute.type == Types.MODEL:
             attribute_name = f"{attribute.name.lower()}_id"
