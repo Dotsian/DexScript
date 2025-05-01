@@ -10,7 +10,7 @@
 
 DexScript is a set of commands for Ballsdex created by DotZZ that expands on the standalone admin commands and substitutes for the admin panel. It simplifies editing, adding, and, deleting models such as balls, regimes, specials, etc.
 
-Let's say you wanted to update a ball's rarity to 2. You could run `UPDATE > Ball > Mongolia > RARITY > 2.0`.
+Let's say you wanted to update a ball's rarity to 2. You could run `UPDATE > BALL > Mongolia > RARITY > 2.0`.
 
 ![Updating rarity showcase](assets/screenshots/showcase1.png)
 

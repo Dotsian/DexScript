@@ -6,7 +6,7 @@ from dataclasses import field as datafield
 
 import discord
 
-from .utils import Types, Utils, STATIC
+from .utils import STATIC, Types, Utils
 
 
 @dataclass
@@ -65,9 +65,9 @@ class Global(DexCommand):
         -------------
         DELETE > MODEL > IDENTIFIER
         """
-        model = await Utils.get_model(model, identifier)
-
-        await model.delete()
+        fetched_model = await Utils.get_model(model, identifier)
+        
+        await fetched_model.delete()
 
         await ctx.send(f"Deleted `{identifier}` {model.name.lower()}")
 
