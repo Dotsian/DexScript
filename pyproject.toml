@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "dexscript"
-version = "0.5"
+version = "0.6"
 description = ""
 authors = ["dotzz <official.dotzz@gmail.com>"]
 license = "MIT"

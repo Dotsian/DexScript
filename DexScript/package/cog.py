@@ -12,10 +12,12 @@ from .utils import Utils, config
 
 __version__ = "0.5"
 
+ASSET_PATH = "https://raw.githubusercontent.com/Dotsian/DexScript/refs/heads/main/assets"
+
 
 class DexScript(commands.Cog):
     """
-    DexScript commands
+    DexScript commands.
     """
 
     def __init__(self, bot):
@@ -41,7 +43,7 @@ class DexScript(commands.Cog):
             return (
                 f"Your DexScript version ({__version__}) is outdated. "
                 f"Please update to version ({new_version}) "
-                f"by running `{settings.prefix}upgrade`"
+                f"by running `{settings.prefix}installer`"
             )
 
         return None
@@ -55,7 +57,7 @@ class DexScript(commands.Cog):
         Parameters
         ----------
         code: str
-          The code you want to execute.
+            The code you want to execute.
         """
         body = Utils.remove_code_markdown(code)
 
@@ -102,7 +104,7 @@ class DexScript(commands.Cog):
         )
 
         embed = discord.Embed(
-            title="DexScript - BETA",
+            title="DexScript",
             description=description,
             color=discord.Color.from_str("#03BAFC"),
         )
@@ -110,7 +112,7 @@ class DexScript(commands.Cog):
         version_check = "OUTDATED" if self.check_version() is not None else "LATEST"
 
         embed.set_thumbnail(
-            url="https://raw.githubusercontent.com/Dotsian/DexScript/refs/heads/dev/assets/DexScriptLogo.png"
+            url=f"{ASSET_PATH}/DexScriptLogo.png"
         )
         embed.set_footer(text=f"DexScript {__version__} ({version_check})")
 
@@ -119,9 +121,13 @@ class DexScript(commands.Cog):
     @commands.command()
     @commands.is_owner()
     async def installer(self, ctx: commands.Context):
+        """
+        Displays the DexScript installer.
+        """
         link = (
             "https://api.github.com/repos/Dotsian/DexScript/contents/DexScript/github/installer.py"
         )
+
         request = requests.get(link, {"ref": config.reference})
 
         match request.status_code:
@@ -147,9 +153,9 @@ class DexScript(commands.Cog):
         Parameters
         ----------
         setting: str
-          The setting you want to toggle.
+            The setting you want to toggle.
         value: str | None
-          The value you want to set the setting to.
+            The value you want to set the setting to.
         """
         setting = setting.lower()
 

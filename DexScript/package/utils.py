@@ -11,17 +11,19 @@ from pathlib import Path
 from typing import Any, Callable
 
 import discord
-from ballsdex.core.models import Ball, Economy, Regime, Special  # noqa: F401, I001
+from ballsdex.core.models import Ball, BallInstance, Economy, Regime, Special  # noqa: F401, I001
 from dateutil.parser import parse as parse_date
 
 START_CODE_BLOCK_RE = re.compile(r"^((```sql?)(?=\s)|(```))")
 FILENAME_RE = re.compile(r"^(.+)(\.\S+)$")
+STR_RE = re.compile(r"return\s+self\.(\w+)") # TODO: Add `return str()`
 
 STATIC = os.path.isdir("static")
 MEDIA_PATH = "./static/uploads" if STATIC else "./admin_panel/media"
 
 MODELS = [
     "Ball",
+    "BallInstance",
     "Regime",
     "Economy",
     "Special",
@@ -386,7 +388,7 @@ class Utils:
         return autocorrection[0]
 
     @staticmethod
-    def extract_str_attr(object: Any):
+    def extract_str_attr(object: Any) -> str:
         """
         Extracts the attribute used in the `__str__` method of a class.
 
@@ -395,9 +397,12 @@ class Utils:
         object: Any
             The class you want to fetch the `__str__` attribute from.
         """
-        expression = r"return\s+self\.(\w+)"  # TODO: Add `return str()`
+        extracted = STR_RE.search(inspect.getsource(object.__str__)).group(1)
 
-        return re.search(expression, inspect.getsource(object.__str__)).group(1)
+        if extracted == "to_string":
+            return "pk"
+
+        return extracted
 
     @staticmethod
     def remove_code_markdown(content: str) -> str:

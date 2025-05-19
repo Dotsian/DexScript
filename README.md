@@ -1,4 +1,4 @@
-# DexScript - BETA
+# DexScript
 
 ![DexScript Banner](assets/DexScriptPromo.png)
 
@@ -19,8 +19,6 @@ DexScript has a ton more features too! All of them can be found within our exten
 * **Creating, updating, and deleting Balls, Regimes, Specials, etc.**
 * **Mass updating and deleting Balls, Regimes, Specials, etc.**
 * **Saving evals and loading them**.
-
-DexScript is currently in beta. However, the latest version is a release candidate for the full release.
 
 ## DexScript Requirements
 

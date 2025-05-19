@@ -10,6 +10,8 @@ from dateutil.parser import parse as parse_date
 from . import commands
 from .utils import Types, Utils, config
 
+PARSER_RE = re.compile(r"[^>]+")
+
 
 @dataclass
 class Value:
@@ -97,7 +99,7 @@ class DexScriptParser:
         split_code = [x for x in code.split("\n") if x.strip() != ""]
 
         parsed_code = [
-            [self.create_value(s.strip()) for s in re.findall(r"[^>]+", line)]
+            [self.create_value(s.strip()) for s in PARSER_RE.findall(line)]
             for line in split_code
             if not line.strip().startswith("--")
         ]

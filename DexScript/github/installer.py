@@ -6,6 +6,7 @@
 #  An explanation of the code will be provided below. #
 #                                                     #
 #      THIS CODE IS RAN VIA THE `EVAL` COMMAND.       #
+# # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
 
 import os
@@ -25,11 +26,7 @@ from ballsdex.settings import settings
 from discord.ext import commands
 
 UPDATING = os.path.isdir("ballsdex/packages/dexscript")
-
-
-class MigrationType(Enum):
-    APPEND = 1
-    REPLACE = 2
+ASSET_PATH = "https://raw.githubusercontent.com/Dotsian/DexScript/refs/heads/main/assets"
 
 
 @dataclass
@@ -41,22 +38,10 @@ class InstallerConfig:
     github = ["Dotsian/DexScript", "dev"]
     files = ["__init__.py", "cog.py", "commands.py", "parser.py", "utils.py"]
     appearance = {
-        "logo": "https://raw.githubusercontent.com/Dotsian/DexScript/refs/heads/dev/assets/DexScriptLogo.png",
-        "logo_error": "https://raw.githubusercontent.com/Dotsian/DexScript/refs/heads/dev/assets/DexScriptLogoError.png",
-        "banner": "https://raw.githubusercontent.com/Dotsian/DexScript/refs/heads/dev/assets/DexScriptPromo.png",
+        "logo": f"{ASSET_PATH}/DexScriptLogo.png",
+        "logo_error": f"{ASSET_PATH}/DexScriptLogoError.png",
+        "banner": f"{ASSET_PATH}/DexScriptPromo.png",
     }
-    install_migrations = [
-        (
-            "||await self.add_cog(Core(self))",
-            '||await self.load_extension("ballsdex.packages.dexscript")\n',
-            MigrationType.APPEND,
-        ),
-        (
-            '||await self.load_extension("ballsdex.core.dexscript")\n',
-            '||await self.load_extension("ballsdex.packages.dexscript")\n',
-            MigrationType.REPLACE,
-        ),
-    ]
     uninstall_migrations = [
         '||await self.load_extension("ballsdex.core.dexscript")\n',
         '||await self.load_extension("ballsdex.packages.dexscript")\n',
@@ -270,30 +255,6 @@ class Installer:
         with open("ballsdex/core/bot.py", "w") as write_file:
             write_file.writelines(lines)
 
-    def install_migrate(self):
-        with open("ballsdex/core/bot.py", "r") as read_file:
-            lines = read_file.readlines()
-
-        for index, line in enumerate(lines):
-            for migration in config.install_migrations:
-                original = self.format_migration(migration[0])
-                new = self.format_migration(migration[1])
-
-                match migration[2]:
-                    case MigrationType.REPLACE:
-                        if line.rstrip() != original:
-                            continue
-
-                        lines[index] = new
-                    case MigrationType.APPEND:
-                        if line.rstrip() != original or new in lines:
-                            continue
-
-                        lines.insert(index + 1, new)
-
-        with open("ballsdex/core/bot.py", "w") as write_file:
-            write_file.writelines(lines)
-
     async def install(self):
         if os.path.isfile("ballsdex/core/dexscript.py"):
             os.remove("ballsdex/core/dexscript.py")
@@ -325,10 +286,7 @@ class Installer:
 
         logger.log("Applying bot.py migrations", "INFO")
 
-        if self.add_package(config.path.replace("/", ".")):
-            self.uninstall_migrate()
-        else:
-            self.install_migrate()
+        self.add_package(config.path.replace("/", "."))
 
         logger.log("Loading DexScript extension", "INFO")
 
