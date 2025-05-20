@@ -42,6 +42,7 @@ class Types(Enum):
     BOOLEAN = 3
     MODEL = 4
     DATETIME = 5
+    HEX = 6
 
 
 @dataclass

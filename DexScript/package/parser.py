@@ -60,6 +60,7 @@ class DexScriptParser:
             Types.MODEL: pascal in Utils.models(True),
             Types.DATETIME: Utils.is_date(lower) and lower.count("-") >= 2,
             Types.BOOLEAN: lower in ["true", "false"],
+            Types.HEX: lower.startswith("#"),
         }
 
         for key, operation in type_dict.items():
@@ -88,6 +89,9 @@ class DexScriptParser:
 
             case Types.DATETIME:
                 value.value = parse_date(line)
+
+            case Types.HEX:
+                value.value = int(line[1:], 16)
 
         return value
 
