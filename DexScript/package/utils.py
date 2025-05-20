@@ -350,6 +350,9 @@ class Utils:
         """
         correction_list = await model.value.all().values_list(model.extra_data[0], flat=True)
 
+        if not all([isinstance(x, str) for x in correction_list]):
+            correction_list = [str(x) for x in correction_list]
+
         try:
             returned_model = await model.value.filter(
                 **{model.extra_data[0]: Utils.autocorrect(str(identifier), correction_list)}
