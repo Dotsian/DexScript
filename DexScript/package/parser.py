@@ -99,7 +99,7 @@ class DexScriptParser:
                 value.value = hex_str
 
             case Types.ARRAY:
-                value.value = [x.strip() for x in line[1:-1].split("|")]
+                value.value = [self.create_value(x.strip()) for x in line[1:-1].split("|")]
 
         return value
 
