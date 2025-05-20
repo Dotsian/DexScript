@@ -8,7 +8,7 @@ from typing import Any
 from dateutil.parser import parse as parse_date
 
 from . import commands
-from .utils import Types, Utils, config
+from .utils import Types, Utils, config, pascal_case
 
 PARSER_RE = re.compile(r"[^>]+")
 
@@ -52,11 +52,12 @@ class DexScriptParser:
         value.value = line
         
         lower = line.lower()
+        pascal = pascal_case(line)
 
         type_dict = {
             Types.METHOD: lower in self.global_methods,
             Types.CLASS: lower in [x[0].lower() for x in self.command_classes],
-            Types.MODEL: lower in Utils.models(True, key=str.lower),
+            Types.MODEL: pascal in Utils.models(True),
             Types.DATETIME: Utils.is_date(lower) and lower.count("-") >= 2,
             Types.BOOLEAN: lower in ["true", "false"],
         }
@@ -70,7 +71,7 @@ class DexScriptParser:
 
         match value.type:
             case Types.MODEL:
-                model = Utils.fetch_model(line)
+                model = Utils.fetch_model(pascal)
 
                 if model is None:
                     raise Exception(f"'{line}' is not a valid model")

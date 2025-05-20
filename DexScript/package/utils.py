@@ -19,7 +19,7 @@ from dateutil.parser import parse as parse_date
 
 START_CODE_BLOCK_RE = re.compile(r"^((```sql?)(?=\s)|(```))")
 FILENAME_RE = re.compile(r"^(.+)(\.\S+)$")
-PASCAL_RE = re.compile(r"(_[a-z])")
+PASCAL_RE = re.compile(r"((-|_)[a-z])")
 STR_RE = re.compile(r"return\s+self\.(\w+)")
 
 STATIC = os.path.isdir("static")
