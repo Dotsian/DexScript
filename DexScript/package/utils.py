@@ -3,6 +3,7 @@ import contextlib
 import inspect
 import os
 import re
+import requests
 from dataclasses import dataclass
 from difflib import get_close_matches
 from enum import Enum
@@ -16,6 +17,7 @@ from dateutil.parser import parse as parse_date
 
 START_CODE_BLOCK_RE = re.compile(r"^((```sql?)(?=\s)|(```))")
 FILENAME_RE = re.compile(r"^(.+)(\.\S+)$")
+PASCAL_RE = re.compile(r"(_[a-z])")
 STR_RE = re.compile(r"return\s+self\.(\w+)") # TODO: Add `return str()`
 
 STATIC = os.path.isdir("static")
@@ -58,6 +60,25 @@ class Utils:
     """
     Utility functions for DexScript.
     """
+
+    @staticmethod
+    def from_link(link: str) -> (str, bytes):
+        """
+        Returns a image link's content and filename.
+
+        Parameters
+        ----------
+        link: str
+            The image link you want to load the data from.
+        """
+        data = requests.get(link, stream=True)
+
+        if not data.ok:
+            raise Exception(f"Failed to request '{link}'")
+
+        filename = os.path.basename(link).split("?")[0]
+
+        return (filename, data.content)
 
     @staticmethod
     def image_path(path: str) -> bool:
@@ -115,8 +136,9 @@ class Utils:
             The string you want to convert.
         """
         string = string.lower()
-        return re.sub(
-            r"(_[a-z])", lambda m: m.group(1)[1].upper(), string[:1].upper() + string[1:]
+
+        return PASCAL_RE.sub(
+            lambda m: m.group(1)[1].upper(), string[:1].upper() + string[1:]
         )
 
     @staticmethod
@@ -187,17 +209,20 @@ class Utils:
             break
 
     @staticmethod
-    async def save_file(attachment: discord.Attachment) -> Path:
+    async def save_file(attachment: discord.Attachment | tuple[str, bytes]) -> Path:
         """
-        Saves a `discord.Attachment` object into a directory.
+        Saves a `discord.Attachment` or a `tuple` object into a directory.
 
         Parameters
         ----------
-        attachment: discord.Attachment
+        attachment: discord.Attachment | tuple[str, bytes]
             The attachment you want to save.
         """
-        path = Path(f"{MEDIA_PATH}/{attachment.filename}")
-        match = FILENAME_RE.match(attachment.filename)
+        is_attachment = isinstance(attachment, discord.Attachment)
+        filename = attachment.filename if is_attachment else attachment[0]
+
+        path = Path(f"{MEDIA_PATH}/{filename}")
+        match = FILENAME_RE.match(filename)
 
         if not match:
             raise TypeError("The file you uploaded lacks an extension.")
@@ -208,7 +233,11 @@ class Utils:
             path = Path(f"{MEDIA_PATH}/{match.group(1)}-{i}{match.group(2)}")
             i = i + 1
 
-        await attachment.save(path)
+        if isinstance(attachment, discord.Attachment):
+            await attachment.save(path)
+        else:
+            with open(path, "wb") as write_file:
+                write_file.write(attachment[1])
 
         return path.relative_to(MEDIA_PATH)
 

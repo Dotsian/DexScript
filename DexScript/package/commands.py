@@ -73,7 +73,7 @@ class Global(DexCommand):
 
     async def update(self, ctx, model, identifier, attribute, value=None):
         """
-        Updates a model instance's attribute. If value is None, it will check
+        Updates a model instance's attribute. If value is None, it will check 
         for any attachments.
 
         Documentation
@@ -93,13 +93,22 @@ class Global(DexCommand):
             ),
         )
 
-        if value is None and self.shared.attachments and attribute_name in image_fields:
-            image_path = await Utils.save_file(self.shared.attachments.pop(0))
-            new_value = f"/static/uploads/{image_path}" if STATIC else f"/{image_path}"
+        if attribute_name in image_fields:
+            file = None
+
+            if Value is not None and new_value.startswith("https://"):
+                file = Utils.from_link(new_value)
+            else:
+                file = self.shared.attachments.pop(0)
+
+            image_path = await Utils.save_file(file)
+
+            new_value = f"/static/uploads/{image_path}" if STATIC else image_path
 
         if attribute.type == Types.MODEL:
             attribute_name = f"{attribute.name.lower()}_id"
             attribute_model = await Utils.get_model(attribute, value)
+
             new_value = attribute_model.pk
 
         setattr(returned_model, attribute_name, new_value)
@@ -111,7 +120,7 @@ class Global(DexCommand):
 
     async def view(self, ctx, model, identifier, attribute=None):
         """
-        Displays an attribute of a model instance. If `ATTRIBUTE` is left blank,
+        Displays an attribute of a model instance. If `ATTRIBUTE` is left blank, 
         it will display every attribute of that model instance.
 
         Documentation
@@ -188,8 +197,8 @@ class Filter(DexCommand):
 
     async def update(self, ctx, model, attribute, old_value, new_value, tortoise_operator=None):
         """
-        Updates all instances of a model to the specified value where the specified attribute
-        meets the condition  defined by the optional `TORTOISE_OPERATOR` argument
+        Updates all instances of a model to the specified value where the specified attribute 
+        meets the condition defined by the optional `TORTOISE_OPERATOR` argument 
         (e.g., greater than, equal to, etc.).
 
         Documentation
@@ -217,8 +226,8 @@ class Filter(DexCommand):
 
     async def delete(self, ctx, model, attribute, value, tortoise_operator=None):
         """
-        Deletes all instances of a model where the specified attribute meets the condition
-        defined by the optional `TORTOISE_OPERATOR` argument
+        Deletes all instances of a model where the specified attribute meets the condition 
+        defined by the optional `TORTOISE_OPERATOR` argument 
         (e.g., greater than, equal to, etc.).
 
         Documentation
@@ -244,8 +253,8 @@ class Filter(DexCommand):
 
     async def view(self, ctx, model, attribute, value, tortoise_operator=None):
         """
-        Displays all instances of a model where the specified attribute meets the condition
-        defined by the optional `TORTOISE_OPERATOR` argument
+        Displays all instances of a model where the specified attribute meets the condition 
+        defined by the optional `TORTOISE_OPERATOR` argument 
         (e.g., greater than, equal to, etc.).
 
         Documentation
@@ -335,6 +344,13 @@ class Eval(DexCommand):
         await ctx.send(f"Removed `{name}` preset.")
 
     async def list(self, ctx):
+        """
+        Lists all eval presets.
+
+        Documentation
+        -------------
+        EVAL > LIST
+        """
         if os.listdir("eval_presets") == []:
             await ctx.send("You have no eval presets saved.")
             return
@@ -466,6 +482,8 @@ class Template(DexCommand):
                     f"UPDATE > BALL > {argument} > CREDITS > ...",
                     f"UPDATE > BALL > {argument} > CAPACITY_NAME > ...",
                     f"UPDATE > BALL > {argument} > CAPACITY_DESCRIPTION > ...",
+                    f"UPDATE > BALL > {argument} > WILD_CARD > ...",
+                    f"UPDATE > BALL > {argument} > COLLECTION_CARD > ..."
                 ]
 
                 await ctx.send(f"```sql\n{'\n'.join(template_commands)}\n```")
