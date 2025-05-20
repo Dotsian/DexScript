@@ -91,7 +91,10 @@ class DexScriptParser:
                 value.value = parse_date(line)
 
             case Types.HEX:
-                value.value = int(line[1:], 16)
+                hex_int = int(line[1:], 16)
+
+                value.name = hex_int
+                value.value = hex_int
 
         return value
 
