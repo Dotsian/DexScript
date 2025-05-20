@@ -382,7 +382,7 @@ class File(DexCommand):
 
         files = []
 
-        for path in file_paths.values:
+        for path in file_paths.value:
             files.append(discord.File(path.name))
 
         await ctx.send(files=files)
