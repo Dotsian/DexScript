@@ -245,7 +245,7 @@ class Utils:
         return path.relative_to(MEDIA_PATH)
 
     @staticmethod
-    def fetch_model(model: str):
+    def fetch_model(model: str, force_pascal: bool = True):
         """
         Fetches a model's class based on the model name provided.
 
@@ -253,8 +253,10 @@ class Utils:
         ----------
         model: str
             The name of the model you want to fetch.
+        force_pascal: bool
+            Whether you want to force pascal casing on the model name.
         """
-        return globals().get(Utils.pascal_case(model))
+        return globals().get(Utils.pascal_case(model) if force_pascal else model)
 
     @staticmethod
     def models(names=False, key: Callable | None = None):

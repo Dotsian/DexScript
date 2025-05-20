@@ -71,10 +71,10 @@ class DexScriptParser:
 
         match value.type:
             case Types.MODEL:
-                model = Utils.fetch_model(pascal)
+                model = Utils.fetch_model(pascal, False)
 
                 if model is None:
-                    raise Exception(f"'{line}' is not a valid model")
+                    raise Exception(f"'{pascal}' is not a valid model")
 
                 string_key = Utils.extract_str_attr(model)
 
