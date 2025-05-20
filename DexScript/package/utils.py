@@ -43,6 +43,7 @@ class Types(Enum):
     MODEL = 4
     DATETIME = 5
     HEX = 6
+    ARRAY = 7
 
 
 @dataclass

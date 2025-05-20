@@ -6,6 +6,7 @@ from dataclasses import field as datafield
 
 import discord
 
+from .api import DexCommand
 from .utils import STATIC, Types, Utils
 
 
@@ -16,29 +17,6 @@ class Shared:
     """
 
     attachments: list = datafield(default_factory=list)
-
-
-class DexCommand:
-    """
-    Default class for all dex commands.
-    """
-
-    def __init__(self, bot, shared):
-        self.bot = bot
-        self.shared = shared
-
-    def __loaded__(self):
-        pass
-
-    def attribute_error(self, model, attribute):
-        if model.value is None or hasattr(model.value(), attribute):
-            return
-
-        raise Exception(
-            f"'{attribute}' is not a valid {model.name} attribute\n"
-            f"Run `ATTRIBUTES > {model.name}` to see a list of "
-            "all attributes for that model"
-        )
 
 
 class Global(DexCommand):
@@ -57,19 +35,27 @@ class Global(DexCommand):
         await Utils.create_model(model.value, identifier)
         await ctx.send(f"Created `{identifier}` {model.name.lower()}")
 
-    async def delete(self, ctx, model, identifier):
+    async def delete(self, ctx, model, identifiers):
         """
-        Deletes a model instance.
+        Deletes one or multiple model instances.
 
         Documentation
         -------------
-        DELETE > MODEL > IDENTIFIER
+        DELETE > MODEL > IDENTIFIER(S)
         """
-        fetched_model = await Utils.get_model(model, identifier)
-        
-        await fetched_model.delete()
+        async def delete_model(identifier):
+            fetched_model = await Utils.get_model(model, identifier)
 
-        await ctx.send(f"Deleted `{identifier}` {model.name.lower()}")
+            await fetched_model.delete()
+
+            await ctx.send(f"Deleted `{identifier}` {model.name.lower()}")
+
+        if identifiers.type != Types.ARRAY:
+            await delete_model(identifiers)
+            return
+
+        for identifier in identifiers.value:
+            await delete_model(identifier)
 
     async def update(self, ctx, model, identifier, attribute, value=None):
         """
@@ -382,15 +368,24 @@ class File(DexCommand):
     Commands for managing and modifying the bot's internal filesystem.
     """
 
-    async def read(self, ctx, file_path):
+    async def read(self, ctx, file_paths):
         """
-        Sends a file based on the specified file path.
+        Sends one or more files based on the specified file paths.
 
         Documentation
         -------------
-        FILE > READ > FILE_PATH
+        FILE > READ > FILE_PATH(S)
         """
-        await ctx.send(file=discord.File(file_path.name))
+        if file_paths.type != Types.ARRAY:
+            await ctx.send(file=discord.File(file_paths.name))
+            return
+
+        files = []
+
+        for path in file_paths.values:
+            files.append(discord.File(path.name))
+
+        await ctx.send(files=files)
 
     async def write(self, ctx, file_path):
         """

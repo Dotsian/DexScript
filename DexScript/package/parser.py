@@ -8,6 +8,7 @@ from typing import Any
 from dateutil.parser import parse as parse_date
 
 from . import commands
+from .api import DexCommand
 from .utils import Types, Utils, config
 
 PARSER_RE = re.compile(r"[^>]+")
@@ -39,7 +40,7 @@ class DexScriptParser:
             commands,
             lambda o: (
                 inspect.isclass(o)
-                and issubclass(o, commands.DexCommand)
+                and issubclass(o, DexCommand)
                 and not issubclass(o, commands.Global)
                 and o.__name__ != "DexCommand"
             ),
@@ -61,6 +62,7 @@ class DexScriptParser:
             Types.DATETIME: Utils.is_date(lower) and lower.count("-") >= 2,
             Types.BOOLEAN: lower in ["true", "false"],
             Types.HEX: lower.startswith("#"),
+            Types.ARRAY: lower.startswith("[") and lower.endswith("]")
         }
 
         for key, operation in type_dict.items():
@@ -95,6 +97,9 @@ class DexScriptParser:
 
                 value.name = hex_str
                 value.value = hex_str
+
+            case Types.ARRAY:
+                value.value = [x.strip() for x in line[1:-1].split("|")]
 
         return value
 
