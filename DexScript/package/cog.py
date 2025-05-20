@@ -120,22 +120,27 @@ class DexScript(commands.Cog):
 
     @commands.command()
     @commands.is_owner()
-    async def installer(self, ctx: commands.Context):
+    async def installer(self, ctx: commands.Context, reference: str = "main"):
         """
         Displays the DexScript installer.
+
+        Parameters
+        ----------
+        reference: str
+            The DexScript branch you want to run the installer on.
         """
         link = (
             "https://api.github.com/repos/Dotsian/DexScript/contents/DexScript/github/installer.py"
         )
 
-        request = requests.get(link, {"ref": config.reference})
+        request = requests.get(link, {"ref": reference})
 
         match request.status_code:
             case requests.codes.not_found:
-                await ctx.send(f"Could not find installer for the {config.reference} branch.")
+                await ctx.send(f"Could not find installer for the {reference} branch.")
 
             case requests.codes.ok:
-                content = requests.get(link, {"ref": config.reference}).json()["content"]
+                content = requests.get(link, {"ref": reference}).json()["content"]
 
                 await ctx.invoke(
                     self.bot.get_command("eval"), body=base64.b64decode(content).decode()
