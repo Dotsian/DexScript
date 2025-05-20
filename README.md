@@ -54,7 +54,7 @@ To install DexScript, run the following eval command:
 ### DexScript Installer
 
 > [!NOTE]
-> If DexScript is already installed, you can run `b.installer` to show the DexScript installer, replacing `b.` with your application's prefix..
+> If DexScript is already installed, you can run `b.installer` to show the DexScript installer, replacing `b.` with your application's prefix.
 
 Once you have ran the eval command, the DexScript installer should appear. There will be three buttons:
 
