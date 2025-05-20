@@ -8,7 +8,7 @@ from typing import Any
 from dateutil.parser import parse as parse_date
 
 from . import commands
-from .utils import Types, Utils, config, pascal_case
+from .utils import Types, Utils, config
 
 PARSER_RE = re.compile(r"[^>]+")
 
@@ -52,7 +52,7 @@ class DexScriptParser:
         value.value = line
         
         lower = line.lower()
-        pascal = pascal_case(line)
+        pascal = Utils.pascal_case(line)
 
         type_dict = {
             Types.METHOD: lower in self.global_methods,
