@@ -38,7 +38,7 @@ class InstallerConfig:
     Configuration class for the installer.
     """
 
-    github = ["Dotsian/DexScript", "dev"]
+    github = ["Dotsian/DexScript", "main"]
     files = ["__init__.py", "cog.py", "commands.py", "parser.py", "utils.py"]
     appearance = {
         "logo": "https://raw.githubusercontent.com/Dotsian/DexScript/refs/heads/dev/assets/DexScriptLogo.png",
