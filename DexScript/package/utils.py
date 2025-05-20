@@ -2,8 +2,8 @@ import asyncio
 import contextlib
 import inspect
 import os
-import re
 import requests
+import re
 from dataclasses import dataclass
 from difflib import get_close_matches
 from enum import Enum
@@ -12,13 +12,15 @@ from pathlib import Path
 from typing import Any, Callable
 
 import discord
-from ballsdex.core.models import Ball, BallInstance, Economy, Regime, Special  # noqa: F401, I001
+from ballsdex.core.models import (
+    Ball, BallInstance, Economy, Player, Regime, Special  # noqa: F401, I001
+)
 from dateutil.parser import parse as parse_date
 
 START_CODE_BLOCK_RE = re.compile(r"^((```sql?)(?=\s)|(```))")
 FILENAME_RE = re.compile(r"^(.+)(\.\S+)$")
 PASCAL_RE = re.compile(r"(_[a-z])")
-STR_RE = re.compile(r"return\s+self\.(\w+)") # TODO: Add `return str()`
+STR_RE = re.compile(r"return\s+self\.(\w+)")
 
 STATIC = os.path.isdir("static")
 MEDIA_PATH = "./static/uploads" if STATIC else "./admin_panel/media"
@@ -26,8 +28,9 @@ MEDIA_PATH = "./static/uploads" if STATIC else "./admin_panel/media"
 MODELS = [
     "Ball",
     "BallInstance",
-    "Regime",
     "Economy",
+    "Player",
+    "Regime",
     "Special",
 ]
 
@@ -426,7 +429,8 @@ class Utils:
         object: Any
             The class you want to fetch the `__str__` attribute from.
         """
-        extracted = STR_RE.search(inspect.getsource(object.__str__)).group(1)
+        source = inspect.getsource(object.__str__).replace("str(", "")
+        extracted = STR_RE.search(source).group(1)
 
         if extracted == "to_string":
             return "pk"

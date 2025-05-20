@@ -16,7 +16,6 @@ from base64 import b64decode
 from dataclasses import dataclass
 from dataclasses import field as datafield
 from datetime import datetime
-from enum import Enum
 from io import StringIO
 from traceback import format_exc
 
