@@ -438,7 +438,7 @@ class Utils:
         extracted = STR_RE.search(source).group(1)
 
         if extracted == "to_string":
-            return "pk"
+            return "id"
 
         return extracted
 
