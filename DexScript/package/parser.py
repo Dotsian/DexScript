@@ -8,7 +8,6 @@ from typing import Any
 from dateutil.parser import parse as parse_date
 
 from . import commands
-from .api import DexCommand
 from .utils import Types, Utils, config
 
 PARSER_RE = re.compile(r"[^>]+")
@@ -34,13 +33,12 @@ class DexScriptParser:
     def __init__(self, ctx, bot):
         self.ctx = ctx
         self.bot = bot
-        # self.attachments = ctx.message.attachments
 
         self.command_classes = inspect.getmembers(
             commands,
             lambda o: (
                 inspect.isclass(o)
-                and issubclass(o, DexCommand)
+                and issubclass(o, commands.DexCommand)
                 and not issubclass(o, commands.Global)
                 and o.__name__ != "DexCommand"
             ),

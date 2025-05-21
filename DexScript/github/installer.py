@@ -109,7 +109,12 @@ class InstallerEmbed(discord.Embed):
         self.timestamp = datetime.now()
 
         if logger.output != []:
-            self.description += f"\n```{logger.output[-1]}```"
+            output = logger.output[-1]
+
+            if len(output) >= 750:
+                output = logger.output[-1][:750] + "..."
+
+            self.description += f"\n```{output}```"
 
         self.installer.interface.attachments = [logger.file("DexScript.log")]
 
@@ -216,6 +221,12 @@ class Installer:
     def __init__(self):
         self.interface = InstallerGUI(self)
 
+    def has_package_config(self) -> bool:
+        with open("config.yml", "r") as file:
+            lines = file.readlines()
+
+        return "packages:\n" not in lines
+
     def add_package(self, package: str) -> bool:
         with open("config.yml", "r") as file:
             lines = file.readlines()
@@ -255,6 +266,9 @@ class Installer:
             write_file.writelines(lines)
 
     async def install(self):
+        if not has_package_config():
+            raise Exception("Your Ballsdex version is no longer compatible with DexScript")
+
         if os.path.isfile("ballsdex/core/dexscript.py"):
             os.remove("ballsdex/core/dexscript.py")
 
