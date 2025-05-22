@@ -266,7 +266,7 @@ class Installer:
             write_file.writelines(lines)
 
     async def install(self):
-        if not has_package_config():
+        if not self.has_package_config():
             raise Exception("Your Ballsdex version is no longer compatible with DexScript")
 
         if os.path.isfile("ballsdex/core/dexscript.py"):
