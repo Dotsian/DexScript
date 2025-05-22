@@ -225,7 +225,7 @@ class Installer:
         with open("config.yml", "r") as file:
             lines = file.readlines()
 
-        return "packages:\n" not in lines
+        return "packages:\n" in lines
 
     def add_package(self, package: str) -> bool:
         with open("config.yml", "r") as file:
