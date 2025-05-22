@@ -534,9 +534,9 @@ class Template(DexCommand):
 
                 await ctx.send(f"```sql\n{'\n'.join(template_commands)}\n```")
 
-class Utils(DexCommand):
-    """
-    Utility commands for DexScript
-    """
-
-    async def blacklist
+# class Utils(DexCommand):
+#     """
+#     Utility commands for DexScript
+#     """
+# 
+#    async def blacklist
