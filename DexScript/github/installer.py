@@ -35,7 +35,7 @@ class InstallerConfig:
     """
 
     github = ["Dotsian/DexScript", "dev"]
-    files = ["__init__.py", "api.py", "cog.py", "commands.py", "parser.py", "utils.py"]
+    files = ["__init__.py", "cog.py", "commands.py", "parser.py", "utils.py"]
     appearance = {
         "logo": f"{ASSET_PATH}/DexScriptLogo.png",
         "logo_error": f"{ASSET_PATH}/DexScriptLogoError.png",
