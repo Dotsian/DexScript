@@ -1,5 +1,4 @@
 import inspect
-import re
 import traceback
 from dataclasses import dataclass
 from dataclasses import field as datafield
@@ -9,8 +8,6 @@ from dateutil.parser import parse as parse_date
 
 from . import commands
 from .utils import Types, Utils, config
-
-PARSER_RE = re.compile(r"[^>]+")
 
 
 @dataclass
