@@ -534,9 +534,23 @@ class Template(DexCommand):
 
                 await ctx.send(f"```sql\n{'\n'.join(template_commands)}\n```")
 
-# class Utils(DexCommand):
-#     """
-#     Utility commands for DexScript
-#     """
-# 
-#    async def blacklist
+class Utils(DexCommand):
+    """
+    Utility commands for DexScript.
+    """
+ 
+    async def emoji(self, ctx, name):
+        """
+        Creates an application emoji based on the provided image and name.
+
+        Documentation
+        -------------
+        UTILS > EMOJI > NAME
+        """
+        image = await ctx.message.attachments[0].read()
+
+        emoji = await self.bot.create_application_emoji(
+            name=name.replace(" ", "").replace('"', ""), image=image
+        )
+
+        await ctx.send(f"Created emoji: {emoji} `({emoji.id})`")
