@@ -122,16 +122,14 @@ class DexScriptParser:
         persist = False
 
         for character in input_string:
-            is_string = character in ['"', "'"]
-            
-            if character == "{" or is_string:
+            if character == "{":
                 persist = True
-                buffer += "" if is_string else character
+                buffer += character
                 continue
                 
-            if character == "}" or is_string and persist:
+            if character == "}" and persist:
                 persist = False
-                buffer += "" if is_string else character
+                buffer += character
                 continue
                 
             if character == ">" and not persist:
