@@ -534,7 +534,7 @@ class Template(DexCommand):
 
                 await ctx.send(f"```sql\n{'\n'.join(template_commands)}\n```")
 
-class Utils(DexCommand):
+class DexUtils(DexCommand):
     """
     Utility commands for DexScript.
     """
