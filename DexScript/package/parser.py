@@ -153,6 +153,7 @@ class DexScriptParser:
         shared_instance = commands.Shared(self.ctx.message.attachments)
 
         split_code = [x for x in code.split("\n") if x.strip() != ""]
+        parsed_code = []
 
         for line in split_code:
             if line.strip().startswith("--"):
