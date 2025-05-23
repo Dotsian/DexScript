@@ -77,15 +77,17 @@ class Global(DexCommand):
     Main methods for DexScript.
     """
 
-    async def create(self, ctx, model, identifier):
+    async def create(self, ctx, model, identifier, values=None):
         """
         Creates a model instance.
 
         Documentation
         -------------
-        CREATE > MODEL > IDENTIFIER
+        CREATE > MODEL > IDENTIFIER > VALUES(?)
         """
-        await Utils.create_model(model.value, identifier)
+        type_error(values, "values", [Types.DICT])
+        
+        await Utils.create_model(model.value, identifier, values)
         await ctx.send(f"Created `{identifier}` {model.name.lower()}")
 
     async def delete(self, ctx, model, identifiers):
@@ -396,7 +398,7 @@ class Eval(DexCommand):
 
         await Utils.message_list(ctx, os.listdir("eval_presets"))
 
-    async def run(self, ctx, name):  # TODO: Allow args to be passed through `run`.
+    async def run(self, ctx, name):
         """
         Runs an eval preset.
 

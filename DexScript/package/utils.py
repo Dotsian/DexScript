@@ -44,6 +44,7 @@ class Types(Enum):
     DATETIME = 5
     HEX = 6
     ARRAY = 7
+    DICT = 8
 
 
 @dataclass
@@ -285,7 +286,7 @@ class Utils:
         return model_list
 
     @staticmethod
-    async def create_model(model, identifier, fields_only=False):
+    async def create_model(model, identifier, values=None, fields_only=False):
         """
         Creates a model instance while providing default values for all.
 
@@ -295,6 +296,8 @@ class Utils:
             The tortoise model you want to use.
         identifier: str
             The name of the model instance.
+        values: dict | None
+            Default values that will be added to the model.
         fields_only: bool
             Whether you want to return the fields created only or not (debugging).
         """
@@ -334,6 +337,9 @@ class Utils:
 
                 case _:
                     fields[field] = 1
+
+        for key, item in values.items():
+            fields[key] = item
 
         if fields_only:
             return fields

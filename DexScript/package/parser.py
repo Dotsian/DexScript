@@ -60,7 +60,8 @@ class DexScriptParser:
             Types.DATETIME: Utils.is_date(lower) and lower.count("-") >= 2,
             Types.BOOLEAN: lower in ["true", "false"],
             Types.HEX: lower.startswith("#"),
-            Types.ARRAY: lower.startswith("[") and lower.endswith("]")
+            Types.ARRAY: lower.startswith("[") and lower.endswith("]"),
+            Types.DICT: lower.startsiwth("{") and lower.endswith("}")
         }
 
         for key, operation in type_dict.items():
@@ -98,8 +99,54 @@ class DexScriptParser:
 
             case Types.ARRAY:
                 value.value = [self.create_value(x.strip()) for x in line[1:-1].split("|")]
+            
+            case Types.DICT:
+                value_dict = {}
+                new_line = line[1:-1]
+
+                for item in new_line.split("|"):
+                    keyitems = item.strip().split(">")
+
+                    value = self.create_value(keyitems[1].strip())
+    
+                    value_dict[keyitems[0].strip()] = value
+
+                value.value = value_dict
 
         return value
+
+    def parse_split(self, input_string):
+        result = []
+        buffer = ""
+        
+        persist = False
+
+        for character in input_string:
+            is_string = character in ['"', "'"]
+            
+            if character == "{" or is_string:
+                persist = True
+                buffer += "" if is_string else character
+                continue
+                
+            if character == "}" or is_string and persist:
+                persist = False
+                buffer += "" if is_string else character
+                continue
+                
+            if character == ">" and not persist:
+                if buffer.strip():
+                    result.append(buffer.strip())
+                
+                buffer = ""
+                continue
+            
+            buffer += character
+
+        if buffer.strip():
+            result.append(buffer.strip())
+
+        return result
 
     def error(self, message, log):
         return (message, log)[config.debug]
@@ -109,11 +156,11 @@ class DexScriptParser:
 
         split_code = [x for x in code.split("\n") if x.strip() != ""]
 
-        parsed_code = [
-            [self.create_value(s.strip()) for s in PARSER_RE.findall(line)]
-            for line in split_code
-            if not line.strip().startswith("--")
-        ]
+        for line in split_code:
+            if line.strip().startswith("--"):
+                continue
+            
+            parsed_code.append([self.create_value(x.strip()) for x in parse_split(line)])
 
         if not run_commands:
             return parsed_code
