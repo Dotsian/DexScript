@@ -159,7 +159,7 @@ class DexScriptParser:
             if line.strip().startswith("--"):
                 continue
             
-            parsed_code.append([self.create_value(x.strip()) for x in parse_split(line)])
+            parsed_code.append([self.create_value(x.strip()) for x in self.parse_split(line)])
 
         if not run_commands:
             return parsed_code
