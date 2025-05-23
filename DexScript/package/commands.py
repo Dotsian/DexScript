@@ -550,7 +550,7 @@ class Dexutils(DexCommand):
         image = await ctx.message.attachments[0].read()
 
         emoji = await self.bot.create_application_emoji(
-            name=name.replace(" ", "").replace('"', ""), image=image
+            name=name.value.replace(" ", "").replace('"', ""), image=image
         )
 
         await ctx.send(f"Created emoji: {emoji} `({emoji.id})`")
