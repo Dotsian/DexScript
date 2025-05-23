@@ -534,7 +534,7 @@ class Template(DexCommand):
 
                 await ctx.send(f"```sql\n{'\n'.join(template_commands)}\n```")
 
-class DexUtils(DexCommand):
+class Dexutils(DexCommand):
     """
     Utility commands for DexScript.
     """
@@ -545,7 +545,7 @@ class DexUtils(DexCommand):
 
         Documentation
         -------------
-        UTILS > EMOJI > NAME
+        DEXUTILS > EMOJI > NAME
         """
         image = await ctx.message.attachments[0].read()
 
