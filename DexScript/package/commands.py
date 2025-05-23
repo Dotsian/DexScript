@@ -133,7 +133,7 @@ class Global(DexCommand):
         if attribute_name in image_fields:
             file = None
 
-            if Value is not None and new_value.startswith("https://"):
+            if value is not None and new_value.startswith("https://"):
                 file = Utils.from_link(new_value)
             else:
                 file = self.shared.attachments.pop(0)
