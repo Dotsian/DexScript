@@ -61,7 +61,7 @@ class DexScriptParser:
             Types.BOOLEAN: lower in ["true", "false"],
             Types.HEX: lower.startswith("#"),
             Types.ARRAY: lower.startswith("[") and lower.endswith("]"),
-            Types.DICT: lower.startsiwth("{") and lower.endswith("}")
+            Types.DICT: lower.startswith("{") and lower.endswith("}")
         }
 
         for key, operation in type_dict.items():
