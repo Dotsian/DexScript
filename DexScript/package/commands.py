@@ -535,7 +535,7 @@ class Template(DexCommand):
         template_commands = [f"CREATE > {model.name.upper()} > {argument}"]
 
         if include_args is not None:
-            args += include_args
+            args += [x.name.upper() for x in include_args.value]
 
         for arg in args:
             template_commands.append(structure.replace("$value", arg))
