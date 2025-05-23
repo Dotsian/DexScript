@@ -16,7 +16,7 @@ PARSER_RE = re.compile(r"[^>]+")
 @dataclass
 class Value:
     name: str
-    type: Types = Types.DEFAULT
+    type: Types = Types.STRING
     value: Any = None
 
     extra_data: list = datafield(default_factory=list)

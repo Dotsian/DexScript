@@ -53,7 +53,7 @@ class DexCommand:
             "all attributes for that model"
         )
 
-    def type_error(self, value, allowed_types: list[Types]):
+    def type_error(self, value, name: str, allowed_types: list[Types]):
         """
         Raises an error if the type of a `Value` is not allowed.
 
@@ -61,13 +61,15 @@ class DexCommand:
         ----------
         value: Value
             The value that has the original type.
+        name: str
+            The name of the value.
         allowed_types: list[Types]
             A list of types that are allowed.
         """
         if value.type in allowed_types:
             return
 
-        raise Exception(f"'{value.type}' is an invalid type.")
+        raise Exception(f"'{value.type}' is an invalid type for '{name}'.")
 
 
 class Global(DexCommand):
@@ -207,7 +209,7 @@ class Global(DexCommand):
         ATTRIBUTES > MODEL > FILTER(?)
         """
         def filter_function(_, field_type):
-            if field_type == "BackwardFKRelation":
+            if field_type.__class__.__name__ == "BackwardFKRelation":
                 return False
             
             if filter is None:
@@ -507,38 +509,44 @@ class Template(DexCommand):
     Template commands used to assist with DexScript commands.
     """
 
-    # TODO: Softcode model creation template.
-    async def create(self, ctx, model, argument="..."):
+    async def create(self, ctx, model, argument="...", include_args=None):
         """
         Sends the `create` template for a model.
 
         Documentation
         -------------
-        TEMPLATE > CREATE > MODEL > ARGUMENT(?)
+        TEMPLATE > CREATE > MODEL > ARGUMENT(?) > INCLUDE_ARGS(?)
         """
-        match model.name.lower():
-            case "ball":
-                template_commands = [
-                    f"CREATE > BALL > {argument}",
-                    f"UPDATE > BALL > {argument} > REGIME > ...",
-                    f"UPDATE > BALL > {argument} > HEALTH > ...",
-                    f"UPDATE > BALL > {argument} > ATTACK > ...",
-                    f"UPDATE > BALL > {argument} > RARITY > ...",
-                    f"UPDATE > BALL > {argument} > EMOJI_ID > ...",
-                    f"UPDATE > BALL > {argument} > CREDITS > ...",
-                    f"UPDATE > BALL > {argument} > CAPACITY_NAME > ...",
-                    f"UPDATE > BALL > {argument} > CAPACITY_DESCRIPTION > ...",
-                    f"UPDATE > BALL > {argument} > WILD_CARD > ...",
-                    f"UPDATE > BALL > {argument} > COLLECTION_CARD > ..."
-                ]
+        def filter_function(field, field_type):
+            if field_type.__class__.__name__ in ["BackwardFKRelation", "JSONField"]:
+                return False
 
-                await ctx.send(f"```sql\n{'\n'.join(template_commands)}\n```")
+            if field_type.null or field_type.default or field.endswith("_id"):
+                return False
+
+            if field in [model.extra_data[0], "id"]:
+                return False
+
+            return True
+
+        args = [x.upper() for x in Utils.fetch_fields(model.value, filter_function)]
+
+        structure = f"UPDATE > {model.name.upper()} > {argument} > $value > ..."
+        template_commands = [f"CREATE > {model.name.upper()} > {argument}"]
+
+        if include_args is not None:
+            args += include_args
+
+        for arg in args:
+            template_commands.append(structure.replace("$value", arg))
+
+        await ctx.send(f"```sql\n{'\n'.join(template_commands)}\n```")
 
 class Dexutils(DexCommand):
     """
     Utility commands for DexScript.
     """
- 
+    
     async def emoji(self, ctx, name):
         """
         Creates an application emoji based on the provided image and name.

@@ -36,7 +36,7 @@ MODELS = [
 
 
 class Types(Enum):
-    DEFAULT = 0
+    STRING = 0
     METHOD = 1
     CLASS = 2
     BOOLEAN = 3
