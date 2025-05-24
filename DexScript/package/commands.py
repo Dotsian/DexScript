@@ -66,7 +66,7 @@ class DexCommand:
         allowed_types: list[Types]
             A list of types that are allowed.
         """
-        if value.type in allowed_types:
+        if value is None or value.type in allowed_types:
             return
 
         raise Exception(f"'{value.type}' is an invalid type for '{name}'.")
