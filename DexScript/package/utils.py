@@ -338,8 +338,9 @@ class Utils:
                 case _:
                     fields[field] = 1
 
-        for key, item in values.items():
-            fields[key] = item
+        if values is not None:
+            for key, item in values.items():
+                fields[key] = item
 
         if fields_only:
             return fields
