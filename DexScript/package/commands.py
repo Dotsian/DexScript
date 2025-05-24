@@ -85,7 +85,7 @@ class Global(DexCommand):
         -------------
         CREATE > MODEL > IDENTIFIER > VALUES(?)
         """
-        type_error(values, "values", [Types.DICT])
+        self.type_error(values, "values", [Types.DICT])
         
         await Utils.create_model(model.value, identifier, values)
         await ctx.send(f"Created `{identifier}` {model.name.lower()}")
