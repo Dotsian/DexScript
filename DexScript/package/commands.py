@@ -559,7 +559,7 @@ class Dexutils(DexCommand):
         """
         image_content = None
         
-        if Image is None:
+        if image is None:
             image_content = await ctx.message.attachments[0].read()
         else:
             image_content = Utils.from_link(image.value)[1]
