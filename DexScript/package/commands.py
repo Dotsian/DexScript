@@ -557,9 +557,11 @@ class Dexutils(DexCommand):
         -------------
         DEXUTILS > EMOJI > NAME > IMAGE(?)
         """
-        image_content = await ctx.message.attachments[0].read()
-
-        if image is not None:
+        image_content = None
+        
+        if Image is None:
+            image_content = await ctx.message.attachments[0].read()
+        else:
             image_content = Utils.from_link(image.value)[1]
 
         emoji = await self.bot.create_application_emoji(
