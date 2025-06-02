@@ -549,18 +549,21 @@ class Dexutils(DexCommand):
     Utility commands for DexScript.
     """
     
-    async def emoji(self, ctx, name):
+    async def emoji(self, ctx, name, image=None):
         """
         Creates an application emoji based on the provided image and name.
 
         Documentation
         -------------
-        DEXUTILS > EMOJI > NAME
+        DEXUTILS > EMOJI > NAME > IMAGE(?)
         """
-        image = await ctx.message.attachments[0].read()
+        image_content = await ctx.message.attachments[0].read()
+
+        if image is not None:
+            image_content = Utils.from_link(image.value)[1]
 
         emoji = await self.bot.create_application_emoji(
-            name=name.value.replace(" ", "").replace('"', ""), image=image
+            name=name.value.replace(" ", "").replace('"', ""), image=image_content
         )
 
-        await ctx.send(f"Created emoji: {emoji} `({emoji.id})`")
+        await ctx.send(f"Created {emoji} `({emoji.id})`")
