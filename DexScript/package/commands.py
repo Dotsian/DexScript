@@ -349,9 +349,6 @@ class Eval(DexCommand):
                 f"`{name}` exceeds the {NAME_LIMIT}-character limit ({len(name)} > {NAME_LIMIT})"
             )
 
-        if os.path.isfile(f"eval_presets/{name}.py"):
-            raise Exception(f"`{name}` already exists.")
-
         await ctx.send("Please send the eval command below...")
 
         try:
@@ -564,8 +561,8 @@ class Dexutils(DexCommand):
         else:
             image_content = Utils.from_link(image.value)[1]
 
-        emoji = await self.bot.create_application_emoji(
-            name=name.value.replace(" ", "").replace('"', ""), image=image_content
-        )
+        new_name = name.value.replace(" ", "").replace('"', "")
 
-        await ctx.send(f"Created {emoji} `({emoji.id})`")
+        emoji = await self.bot.create_application_emoji(name=new_name, image=image_content)
+
+        await ctx.send(f"Created {new_name} {emoji} `({emoji.id})`")
