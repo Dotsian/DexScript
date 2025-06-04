@@ -8,6 +8,8 @@ import discord
 
 from .utils import STATIC, Types, Utils
 
+EMOJI_RE = re.compile(r"^[a-zA-Z0-9_]{2,32}$")
+
 
 @dataclass
 class Shared:
@@ -541,18 +543,18 @@ class Template(DexCommand):
 
         await ctx.send(f"```sql\n{'\n'.join(template_commands)}\n```")
 
-class Dexutils(DexCommand):
+class Emoji(DexCommand):
     """
-    Utility commands for DexScript.
+    Commands used for modifying application emojis.
     """
-    
-    async def emoji(self, ctx, name, image=None):
+
+    async def new(self, ctx, name, image=None):
         """
         Creates an application emoji based on the provided image and name.
 
         Documentation
         -------------
-        DEXUTILS > EMOJI > NAME > IMAGE(?)
+        EMOJI > NEW > NAME > IMAGE(?)
         """
         image_content = None
         
@@ -563,6 +565,9 @@ class Dexutils(DexCommand):
 
         new_name = name.value.replace(" ", "").replace('"', "")
 
+        if not bool(EMOJI_RE.match(new_name)):
+            raise Exception(f"Emoji name `{new_name}` is invalid.")
+
         emoji = await self.bot.create_application_emoji(name=new_name, image=image_content)
 
-        await ctx.send(f"Created {new_name} {emoji} `({emoji.id})`")
+        await ctx.send(f"Created {emoji} **{new_name}** `({emoji.id})`")
