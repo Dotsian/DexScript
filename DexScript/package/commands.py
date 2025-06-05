@@ -571,3 +571,21 @@ class Emoji(DexCommand):
         emoji = await self.bot.create_application_emoji(name=new_name, image=image_content)
 
         await ctx.send(f"Created {emoji} **{new_name}** `({emoji.id})`")
+
+    async def delete(self, ctx, name):
+        """
+        Deletes an application emoji.
+
+        Documentation
+        -------------
+        EMOJI > DELETE > NAME
+        """
+        emojis = await self.bot.fetch_application_emojis()
+        new_name = name.value.replace(" ", "").replace('"', "")
+
+        emoji = discord.utils.get(emojis, name=new_name)
+
+        if not emoji.is_application_owned():
+            raise Exception("This emoji is not owned by the application.")
+
+        await emoji.delete()
