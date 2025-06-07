@@ -84,6 +84,15 @@ class Global(DexCommand):
         """
         Creates a model instance.
 
+        Parameters
+        -------------
+        model: Model
+            The model you want to create an instance for.
+        identifier: Any
+            The identifier (name) of the model instance.
+        values: dict?
+            The values you want to provide to the newly created model instance.
+
         Documentation
         -------------
         CREATE > MODEL > IDENTIFIER > VALUES(?)
@@ -96,6 +105,13 @@ class Global(DexCommand):
     async def delete(self, ctx, model, identifiers):
         """
         Deletes one or multiple model instances.
+
+        Parameters
+        -------------
+        model: Model
+            The model you want to delete the instance from.
+        identifiers: Any | Array[Any]
+            The identifier(s) of the instance(s) you want to delete.
 
         Documentation
         -------------
@@ -117,8 +133,18 @@ class Global(DexCommand):
 
     async def update(self, ctx, model, identifier, attribute, value=None):
         """
-        Updates a model instance's attribute. If value is None, it will check 
-        for any attachments.
+        Updates a model instance's attribute.
+
+        Parameters
+        -------------
+        model: Model
+            The model you want to update the instance from.
+        identifier: Any
+            The identifier of the model instance.
+        attribute: Any
+            The attribute you want to update.
+        value: Any
+            The new value of the specified attribute. If blank, it will search for attachments.
 
         Documentation
         -------------
@@ -369,6 +395,20 @@ class Eval(DexCommand):
 
         await ctx.send(f"`{name}` eval preset has been saved!")
 
+    async def file(self, ctx):
+        """
+        Runs an eval command from a file.
+
+        Documentation
+        -------------
+        EVAL > FILE
+        """
+        content = await ctx.message.attachments[0].read()
+
+        ctx.message.attachments.pop(0)
+
+        await ctx.invoke(self.bot.get_command("eval"), body=content.decode())
+
     async def remove(self, ctx, name):
         """
         Removes an eval preset.
@@ -553,6 +593,13 @@ class Emoji(DexCommand):
         """
         Creates an application emoji based on the provided image and name.
 
+        Parameters
+        -------------
+        name: Any
+            The name of the emoji you want to create.
+        image: Any?
+            The image link you want to use if there are no attachments.
+
         Documentation
         -------------
         EMOJI > NEW > NAME > IMAGE(?)
@@ -577,6 +624,11 @@ class Emoji(DexCommand):
         """
         Deletes an application emoji.
 
+        Parameters
+        -------------
+        name: Any
+            The name of the emoji you want to delete.
+
         Documentation
         -------------
         EMOJI > DELETE > NAME
@@ -589,4 +641,29 @@ class Emoji(DexCommand):
         if not emoji.is_application_owned():
             raise Exception("This emoji is not owned by the application.")
 
+        await ctx.send(f"Deleted {emoji} **{new_name}**")
+
         await emoji.delete()
+
+    async def info(self, ctx, name):
+        """
+        Displays information about an application emoji.
+
+        Parameters
+        -------------
+        name: Any
+            The name of the emoji you want to view.
+
+        Documentation
+        -------------
+        EMOJI > INFO > NAME
+        """
+        emojis = await self.bot.fetch_application_emojis()
+        new_name = name.value.replace(" ", "").replace('"', "")
+
+        emoji = discord.utils.get(emojis, name=new_name)
+
+        if not emoji.is_application_owned():
+            raise Exception("This emoji is not owned by the application.")
+        
+        await ctx.send(f"{emoji} **{new_name}**\nID: `{emoji.id}`")
