@@ -166,7 +166,7 @@ class Global(DexCommand):
         if attribute_name in image_fields:
             file = None
 
-            if value is not None and new_value.startswith("https://"):
+            if new_value is not None and new_value.startswith("https://"):
                 file = Utils.from_link(new_value)
             else:
                 file = self.shared.attachments.pop(0)
@@ -175,7 +175,7 @@ class Global(DexCommand):
 
             new_value = f"/static/uploads/{image_path}" if STATIC else image_path
 
-        if attribute.type == Types.MODEL:
+        if attribute.type == Types.MODEL and value is not None:
             attribute_name = f"{attribute.name.lower()}_id"
             attribute_model = await Utils.get_model(attribute, value)
 
@@ -209,7 +209,9 @@ class Global(DexCommand):
                 fields["content"] += f"{key}: {value}\n"
 
                 if isinstance(value, str) and Utils.is_image(value):
-                    fields.setdefault("files", []).append(discord.File(Utils.image_path(value)))
+                    fields.setdefault(
+                        "files", []).append(discord.File(Utils.image_path(value)) # type: ignore
+                    )
 
             fields["content"] += "```"
             await ctx.send(**fields)
@@ -226,7 +228,7 @@ class Global(DexCommand):
             )
             return
 
-        if attribute.type == Types.MODEL:
+        if attribute.type == Types.MODEL and not isinstance(new_attribute, str):
             new_attribute = await new_attribute.values_list(attribute.extra_data[0], flat=True)
 
         await ctx.send(f"```{new_attribute}```")

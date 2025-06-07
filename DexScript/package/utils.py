@@ -2,7 +2,6 @@ import asyncio
 import contextlib
 import inspect
 import os
-import requests
 import re
 from dataclasses import dataclass
 from difflib import get_close_matches
@@ -12,8 +11,14 @@ from pathlib import Path
 from typing import Any, Callable
 
 import discord
+import requests
 from ballsdex.core.models import (
-    Ball, BallInstance, Economy, Player, Regime, Special  # noqa: F401, I001
+    Ball,  # noqa: F401
+    BallInstance,  # noqa: F401
+    Economy,  # noqa: F401
+    Player,  # noqa: F401
+    Regime,  # noqa: F401
+    Special,  # noqa: F401
 )
 from dateutil.parser import parse as parse_date
 
@@ -68,7 +73,7 @@ class Utils:
     """
 
     @staticmethod
-    def from_link(link: str) -> (str, bytes):
+    def from_link(link: str) -> tuple[str, bytes]:
         """
         Returns a image link's content and filename.
 
@@ -87,7 +92,7 @@ class Utils:
         return (filename, data.content)
 
     @staticmethod
-    def image_path(path: str) -> bool:
+    def image_path(path: str) -> str:
         """
         Formats an image path correctly.
 
@@ -210,7 +215,11 @@ class Utils:
             if response.content.lower() == "more":
                 continue
 
-            await ctx.send(file=discord.File(StringIO("\n".join(messages)), filename="output.txt"))
+            discord_file = discord.File(
+                StringIO("\n".join(messages)), filename="output.txt" # type: ignore
+            )
+
+            await ctx.send(file=discord_file)
 
             break
 
@@ -322,10 +331,12 @@ class Utils:
                 case "ForeignKeyFieldInstance":
                     casing_field = Utils.pascal_case(field)
 
-                    instance = await Utils.fetch_model(casing_field).first()
+                    instance = Utils.fetch_model(casing_field)
 
                     if instance is None:
                         raise Exception(f"Could not find default {casing_field}")
+                    
+                    instance = await instance.first()
 
                     fields[f"{field}_id"] = instance.pk
 
@@ -444,7 +455,12 @@ class Utils:
             The class you want to fetch the `__str__` attribute from.
         """
         source = inspect.getsource(object.__str__).replace("str(", "")
-        extracted = STR_RE.search(source).group(1)
+        extracted = STR_RE.search(source)
+
+        if extracted is None:
+            return "id"
+        
+        extracted = extracted.group(1)
 
         if extracted == "to_string":
             return "id"
