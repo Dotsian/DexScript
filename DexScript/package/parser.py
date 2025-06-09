@@ -112,51 +112,61 @@ class DexScriptParser:
 
         return value
 
-    def parse_split(self, input_string):
-        result = []
-        buffer = ""
-        
-        persist = False
-
-        for character in input_string:
-            if character == "{":
-                persist = True
-                buffer += character
-                continue
-                
-            if character == "}" and persist:
-                persist = False
-                buffer += character
-                continue
-                
-            if character == ">" and not persist:
-                if buffer.strip():
-                    result.append(buffer.strip())
-                
-                buffer = ""
-                continue
-            
-            buffer += character
-
-        if buffer.strip():
-            result.append(buffer.strip())
-
-        return result
-
     def error(self, message, log):
         return (message, log)[config.debug]
 
     async def execute(self, code: str, run_commands=True):
         shared_instance = commands.Shared(self.ctx.message.attachments)
 
+        data = []
+        new_data = []
+        
+        entered_indent = False
+        iteration_level = 0
+        original_index = -1
+        
         split_code = [x for x in code.split("\n") if x.strip() != ""]
-        parsed_code = []
-
-        for line in split_code:
-            if line.strip().startswith("--"):
+        
+        offset = len([x for x in split_code if x.strip().startswith("|")])
+        
+        for index, line in enumerate(split_code):
+            line_new = line.strip()
+            
+            if line_new.startswith("--"):
                 continue
             
-            parsed_code.append([self.create_value(x.strip()) for x in self.parse_split(line)])
+            if not line_new.startswith("|"):
+                data.append([line, {}])
+                original_index = -1
+                
+                if entered_indent:
+                    iteration_level += 1
+                
+                continue
+            
+            if original_index == -1:
+                entered_indent = True
+                original_index = iteration_level
+            
+            split_line = line.split("|")[1].split(">")
+            key = split_line[0].strip()
+            
+            data[original_index][1][key] = split_line[1].strip()
+            
+        for item in data:
+            if item[1] == {}:
+                new_data.append(item[0])
+                continue
+            
+            statement = item[0]
+            
+            for key, value in item[1].items():
+                new_data.append(f"{statement} > {key} > {value}")
+    
+        parsed_code = []
+
+        for line in new_data:
+            parsed_code.append([self.create_value(x.strip()) for x in line.split(">")])
 
         if not run_commands:
             return parsed_code

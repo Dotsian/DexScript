@@ -42,9 +42,9 @@ class DexCommand:
 
         Parameters
         ----------
-        model: Value
+        model:
             The model you want to check in.
-        attribute: Value
+        attribute:
             The attribute you want to check.
         """
         if model.value is None or hasattr(model.value(), attribute):
@@ -62,11 +62,11 @@ class DexCommand:
 
         Parameters
         ----------
-        value: Value
+        value:
             The value that has the original type.
-        name: str
+        name:
             The name of the value.
-        allowed_types: list[Types]
+        allowed_types:
             A list of types that are allowed.
         """
         if value is None or value.type in allowed_types:
@@ -86,11 +86,11 @@ class Global(DexCommand):
 
         Parameters
         -------------
-        model: Model
+        model:
             The model you want to create an instance for.
-        identifier: Any
+        identifier:
             The identifier (name) of the model instance.
-        values: dict?
+        values:
             The values you want to provide to the newly created model instance.
 
         Documentation
@@ -108,9 +108,9 @@ class Global(DexCommand):
 
         Parameters
         -------------
-        model: Model
+        model:
             The model you want to delete the instance from.
-        identifiers: Any | Array[Any]
+        identifiers:
             The identifier(s) of the instance(s) you want to delete.
 
         Documentation
@@ -137,13 +137,13 @@ class Global(DexCommand):
 
         Parameters
         -------------
-        model: Model
+        model:
             The model you want to update the instance from.
-        identifier: Any
+        identifier:
             The identifier of the model instance.
-        attribute: Any
+        attribute:
             The attribute you want to update.
-        value: Any
+        value:
             The new value of the specified attribute. If blank, it will search for attachments.
 
         Documentation
@@ -369,6 +369,11 @@ class Eval(DexCommand):
         """
         Saves an eval preset.
 
+        Parameters
+        ----------
+        name:
+            The name of the eval preset you want to save.
+
         Documentation
         -------------
         EVAL > SAVE > NAME
@@ -415,6 +420,11 @@ class Eval(DexCommand):
         """
         Removes an eval preset.
 
+        Parameters
+        ----------
+        name:
+            The name of the eval preset you want to remove.
+
         Documentation
         -------------
         EVAL > REMOVE > NAME
@@ -443,6 +453,11 @@ class Eval(DexCommand):
     async def run(self, ctx, name):
         """
         Runs an eval preset.
+
+        Parameters
+        ----------
+        name:
+            The name of the eval preset you want to run.
 
         Documentation
         -------------
@@ -597,9 +612,9 @@ class Emoji(DexCommand):
 
         Parameters
         -------------
-        name: Any
+        name:
             The name of the emoji you want to create.
-        image: Any?
+        image:
             The image link you want to use if there are no attachments.
 
         Documentation
@@ -628,7 +643,7 @@ class Emoji(DexCommand):
 
         Parameters
         -------------
-        name: Any
+        name:
             The name of the emoji you want to delete.
 
         Documentation
@@ -653,7 +668,7 @@ class Emoji(DexCommand):
 
         Parameters
         -------------
-        name: Any
+        name:
             The name of the emoji you want to view.
 
         Documentation
