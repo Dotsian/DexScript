@@ -147,6 +147,12 @@ class DexScriptParser:
             if original_index == -1:
                 entered_indent = True
                 original_index = iteration_level
+
+            split_pipe = line.split("|")[1].strip()
+
+            if ">" not in split_pipe:
+                data[original_index][1][split_pipe] = split_pipe
+                continue
             
             split_line = line.split("|")[1].split(">")
             key = split_line[0].strip()
@@ -161,7 +167,12 @@ class DexScriptParser:
             statement = item[0]
             
             for key, value in item[1].items():
-                new_data.append(f"{statement} > {key} > {value}")
+                new_statement = f"{statement} > {key}"
+                
+                if key != value:
+                    new_statement += f" > {value}"
+                    
+                new_data.append(new_statement)
     
         parsed_code = []
 
