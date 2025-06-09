@@ -543,6 +543,23 @@ class File(DexCommand):
 
         await Utils.message_list(ctx, os.listdir(path))
 
+    async def mkdir(self, ctx, file_path):
+        """
+        Creates a new directory.
+
+        Parameters
+        -------------
+        file_path:
+            The file path of the directory.
+
+        Documentation
+        -------------
+        FILE > MKDIR > FILE_PATH
+        """
+        os.mkdir(file_path)
+
+        await ctx.send(f"Created `{file_path}` directory")
+
     async def delete(self, ctx, file_path):
         """
         Deletes a file or directory based on the specified file path.
