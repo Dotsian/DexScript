@@ -49,7 +49,6 @@ class Types(Enum):
     DATETIME = 5
     HEX = 6
     ARRAY = 7
-    DICT = 8
 
 
 @dataclass

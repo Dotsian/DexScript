@@ -58,7 +58,6 @@ class DexScriptParser:
             Types.BOOLEAN: lower in ["true", "false"],
             Types.HEX: lower.startswith("#"),
             Types.ARRAY: lower.startswith("[") and lower.endswith("]"),
-            Types.DICT: lower.startswith("{") and lower.endswith("}")
         }
 
         for key, operation in type_dict.items():
@@ -96,19 +95,6 @@ class DexScriptParser:
 
             case Types.ARRAY:
                 value.value = [self.create_value(x.strip()) for x in line[1:-1].split("|")]
-            
-            case Types.DICT:
-                value_dict = {}
-                new_line = line[1:-1]
-
-                for item in new_line.split("|"):
-                    keyitems = item.strip().split(">")
-
-                    value = self.create_value(keyitems[1].strip())
-    
-                    value_dict[keyitems[0].strip()] = value
-
-                value.value = value_dict
 
         return value
 
@@ -127,9 +113,7 @@ class DexScriptParser:
         
         split_code = [x for x in code.split("\n") if x.strip() != ""]
         
-        offset = len([x for x in split_code if x.strip().startswith("|")])
-        
-        for index, line in enumerate(split_code):
+        for line in split_code:
             line_new = line.strip()
             
             if line_new.startswith("--"):
