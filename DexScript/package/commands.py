@@ -556,7 +556,7 @@ class File(DexCommand):
         -------------
         FILE > MKDIR > FILE_PATH
         """
-        os.mkdir(file_path)
+        os.mkdir(file_path.value)
 
         await ctx.send(f"Created `{file_path}` directory")
 
