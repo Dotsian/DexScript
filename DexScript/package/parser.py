@@ -58,6 +58,7 @@ class DexScriptParser:
             Types.BOOLEAN: lower in ["true", "false"],
             Types.HEX: lower.startswith("#"),
             Types.ARRAY: lower.startswith("[") and lower.endswith("]"),
+            Types.NONE: lower == "NIL"
         }
 
         for key, operation in type_dict.items():
@@ -95,6 +96,9 @@ class DexScriptParser:
 
             case Types.ARRAY:
                 value.value = [self.create_value(x.strip()) for x in line[1:-1].split("|")]
+
+            case Types.NONE:
+                value.value = None
 
         return value
 
