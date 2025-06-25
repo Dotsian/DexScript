@@ -106,8 +106,6 @@ class DexScriptParser:
         return (message, log)[config.debug]
 
     async def execute(self, code: str, run_commands=True):
-        shared_instance = commands.Shared(self.ctx.message.attachments)
-
         data = []
         new_data = []
         
@@ -190,7 +188,7 @@ class DexScriptParser:
             line2.pop(0)
 
             class_loaded = commands.Global if method[0] == commands.Global else method[0]
-            class_loaded = class_loaded(self.bot, shared_instance)
+            class_loaded = class_loaded(self.bot, self.ctx.message.attachments)
             class_loaded.__loaded__()
 
             method_call = getattr(class_loaded, method[1].name.lower())

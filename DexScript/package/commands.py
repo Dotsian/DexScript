@@ -12,23 +12,14 @@ from .utils import STATIC, Types, Utils
 EMOJI_RE = re.compile(r"^[a-zA-Z0-9_]{2,32}$")
 
 
-@dataclass
-class Shared:
-    """
-    Values that will be retained throughout the entire code execution.
-    """
-
-    attachments: list = datafield(default_factory=list)
-
-
 class DexCommand:
     """
     Default class for all dex commands.
     """
 
-    def __init__(self, bot, shared):
+    def __init__(self, bot, attachments):
         self.bot = bot
-        self.shared = shared
+        self.attachments = attachments
 
     def __loaded__(self):
         """
@@ -169,7 +160,7 @@ class Global(DexCommand):
             if new_value is not None and new_value.startswith("https://"):
                 file = Utils.from_link(new_value)
             else:
-                file = self.shared.attachments.pop(0)
+                file = self.attachments.pop(0)
 
             image_path = await Utils.save_file(file)
 
@@ -410,9 +401,9 @@ class Eval(DexCommand):
         -------------
         EVAL > FILE
         """
-        content = await ctx.message.attachments[0].read()
+        content = await self.attachments[0].read()
 
-        ctx.message.attachments.pop(0)
+        self.attachments.pop(0)
 
         await ctx.invoke(self.bot.get_command("eval"), body=content.decode())
 
@@ -507,13 +498,15 @@ class File(DexCommand):
         -------------
         FILE > WRITE > FILE_PATH
         """
-        new_file = ctx.message.attachments[0]
+        new_file = self.attachments[0]
+        
+        self.attachments.pop(0)
 
         with open(file_path.name, "w") as opened_file:
             contents = await new_file.read()
             opened_file.write(contents.decode("utf-8"))
 
-        await ctx.send(f"Wrote to `{file_path}`")
+        await ctx.send(f"Wrote from `{new_file.filename}` to `{file_path}`")
 
     async def clear(self, ctx, file_path):
         """
@@ -641,7 +634,9 @@ class Emoji(DexCommand):
         image_content = None
         
         if image is None:
-            image_content = await ctx.message.attachments[0].read()
+            image_content = await self.attachments[0].read()
+
+            self.attachments.pop(0)
         else:
             image_content = Utils.from_link(image.value)[1]
 
