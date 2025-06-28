@@ -488,23 +488,28 @@ class File(DexCommand):
 
         await ctx.send(files=files)
 
-    async def write(self, ctx, file_path):
+    async def create(self, ctx, file_path):
         """
-        Writes to a file using the attached file's contents.
+        Creates to a file. If an attachment is added, it saves the attachment.
 
         Documentation
         -------------
-        FILE > WRITE > FILE_PATH
+        FILE > CREATE > FILE_PATH
         """
+        if self.attachments == []:
+            with open(file_path.name, "w"):
+                pass
+
+            await ctx.send(f"Created `{file_path}`")
+            return
+        
         new_file = self.attachments[0]
         
         self.attachments.pop(0)
 
-        with open(file_path.name, "w") as opened_file:
-            contents = await new_file.read()
-            opened_file.write(contents.decode("utf-8"))
+        await new_file.save(file_path.name)
 
-        await ctx.send(f"Wrote from `{new_file.filename}` to `{file_path}`")
+        await ctx.send(f"Created `{file_path}` from `{new_file.filename}`")
 
     async def clear(self, ctx, file_path):
         """
