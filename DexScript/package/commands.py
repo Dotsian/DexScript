@@ -488,15 +488,18 @@ class File(DexCommand):
 
         await ctx.send(files=files)
 
-    async def create(self, ctx, file_path):
+    async def write(self, ctx, file_path):
         """
-        Creates to a file. If an attachment is added, it saves the attachment.
+        Writes to a file. If an attachment is added, it will save the attachment.
 
         Documentation
         -------------
-        FILE > CREATE > FILE_PATH
+        FILE > WRITE > FILE_PATH
         """
         if self.attachments == []:
+            if os.path.isfile(file_path.name):
+                raise Exception(f"{file_path} already exists.")
+            
             with open(file_path.name, "w"):
                 pass
 
@@ -509,7 +512,7 @@ class File(DexCommand):
 
         await new_file.save(file_path.name)
 
-        await ctx.send(f"Created `{file_path}` from `{new_file.filename}`")
+        await ctx.send(f"Wrote to `{file_path}` from `{new_file.filename}`")
 
     async def clear(self, ctx, file_path):
         """
