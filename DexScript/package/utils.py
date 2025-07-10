@@ -3,7 +3,7 @@ import contextlib
 import inspect
 import os
 import re
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from difflib import get_close_matches
 from enum import Enum
 from io import StringIO
@@ -61,6 +61,14 @@ class Settings:
     debug: bool = False
     versioncheck: bool = False
     reference: str = "main"
+    modules: list[str] = field(default_factory=lambda: [
+        "Global",
+        "Emoji",
+        "Eval",
+        "File",
+        "Filter",
+        "Template"
+    ])
 
 
 config = Settings()

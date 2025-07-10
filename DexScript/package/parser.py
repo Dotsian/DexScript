@@ -38,10 +38,14 @@ class DexScriptParser:
                 and issubclass(o, commands.DexCommand)
                 and not issubclass(o, commands.Global)
                 and o.__name__ != "DexCommand"
+                and o.__name__ in config.modules
             ),
         )
 
         self.global_methods = [x for x in dir(commands.Global) if not x.startswith("__")]
+
+        if "Global" not in config.modules:
+            self.global_methods = []
 
     def create_value(self, line):
         value = Value(line)
