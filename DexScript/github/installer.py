@@ -188,6 +188,7 @@ class InstallerView(discord.ui.View):
     )
     async def config_button(self, interaction: discord.Interaction, _: discord.ui.Button):
         self.installer.interface.embed = InstallerEmbed(self.installer, "config")
+        self.installer.interface.view = ConfigView(self.installer)
 
         await interaction.message.edit(**self.installer.interface.fields)
         await interaction.response.defer()
@@ -196,6 +197,28 @@ class InstallerView(discord.ui.View):
     async def quit_button(self, interaction: discord.Interaction, _: discord.ui.Button):
         self.install_button.disabled = True
         self.uninstall_button.disabled = True
+        self.quit_button.disabled = True
+
+        await interaction.message.edit(**self.installer.interface.fields)
+        await interaction.response.defer()
+
+
+class ConfigView(discord.ui.View):
+    def __init__(self, installer):
+        super().__init__()
+        self.installer = installer
+
+    @discord.ui.button(style=discord.ButtonStyle.primary, label="Back")
+    async def back_button(self, interaction: discord.Interaction, _: discord.ui.Button):
+        self.installer.interface.embed = InstallerEmbed(self.installer, "setup")
+        self.installer.interface.view = InstallerView(self.installer)
+
+        await interaction.message.edit(**self.installer.interface.fields)
+        await interaction.response.defer()
+
+    @discord.ui.button(style=discord.ButtonStyle.red, label="Exit")
+    async def quit_button(self, interaction: discord.Interaction, _: discord.ui.Button):
+        self.back_button.disabled = True
         self.quit_button.disabled = True
 
         await interaction.message.edit(**self.installer.interface.fields)
