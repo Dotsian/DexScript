@@ -3,6 +3,7 @@ import contextlib
 import inspect
 import os
 import re
+import tomllib
 from dataclasses import dataclass, field
 from difflib import get_close_matches
 from enum import Enum
@@ -58,20 +59,29 @@ class Settings:
     Settings class for DexScript.
     """
 
-    debug: bool = False
-    versioncheck: bool = False
-    reference: str = "main"
-    modules: list[str] = field(default_factory=lambda: [
-        "Global",
-        "Emoji",
-        "Eval",
-        "File",
-        "Filter",
-        "Template"
-    ])
+    def __init__(self, path):
+        with open(path, "rb") as f:
+            data = tomllib.load(f)
+
+        if data is None:
+            return
+        
+        self.version_warning = data.get("version-warning", True)
+        
+        self.command_groups = data.get("command-groups", [
+            "Global",
+            "Emoji",
+            "Eval",
+            "File",
+            "Filter",
+            "Template"
+        ])
+
+        self.debug = data.get("debug", False)
+        self.branch = data.get("branch", "main")
 
 
-config = Settings()
+config = Settings(Path(os.path.dirname(os.path.abspath(__file__)), "./config.toml"))
 
 
 @dataclass

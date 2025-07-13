@@ -25,12 +25,12 @@ class DexScript(commands.Cog):
 
     @staticmethod
     def check_version():
-        if not config.versioncheck:
+        if not config.version_warning:
             return None
 
         request = requests.get(
             "https://api.github.com/repos/Dotsian/DexScript/contents/pyproject.toml",
-            {"ref": config.reference},
+            {"ref": config.branch},
         )
 
         if request.status_code != requests.codes.ok:

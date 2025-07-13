@@ -35,7 +35,7 @@ class InstallerConfig:
     """
 
     github = ["Dotsian/DexScript", "dev"]
-    files = ["__init__.py", "cog.py", "commands.py", "parser.py", "utils.py"]
+    files = ["__init__.py", "cog.py", "commands.py", "parser.py", "utils.py", "config.toml"]
     appearance = {
         "logo": f"{ASSET_PATH}/DexScriptLogo.png",
         "logo_error": f"{ASSET_PATH}/DexScriptLogoError.png",
@@ -71,15 +71,10 @@ class InstallerEmbed(discord.Embed):
 
         self.installer = installer
 
-        match embed_type:
-            case "setup":
-                self.setup()
-            case "error":
-                self.error()
-            case "installed":
-                self.installed()
-            case "uninstalled":
-                self.uninstalled()
+        if not hasattr(self, embed_type):
+            return
+
+        getattr(self, embed_type)()
 
     def setup(self):
         self.title = "DexScript Installation"
@@ -139,6 +134,15 @@ class InstallerEmbed(discord.Embed):
 
         self.set_thumbnail(url=config.appearance["logo"])
 
+    def config(self):
+        with open(f"{config.path}/config.toml") as file:
+            file_contents = file.read()
+
+        self.title = "DexScript Configuration"
+        self.description = f"```toml\n{file_contents}\n```"
+        self.color = discord.Color.from_str("#03BAFC")
+        self.timestamp = datetime.now()
+
 
 class InstallerView(discord.ui.View):
     def __init__(self, installer):
@@ -177,9 +181,16 @@ class InstallerView(discord.ui.View):
         await interaction.message.edit(**self.installer.interface.fields)
         await interaction.response.defer()
 
-    @discord.ui.button(style=discord.ButtonStyle.secondary, label="Config")
+    @discord.ui.button(
+        style=discord.ButtonStyle.secondary,
+        label="Config",
+        disabled=not os.path.isfile(f"{config.path}/config.toml")
+    )
     async def config_button(self, interaction: discord.Interaction, _: discord.ui.Button):
-        pass
+        self.installer.interface.embed = InstallerEmbed(self.installer, "config")
+
+        await interaction.message.edit(**self.installer.interface.fields)
+        await interaction.response.defer()
 
     @discord.ui.button(style=discord.ButtonStyle.red, label="Exit")
     async def quit_button(self, interaction: discord.Interaction, _: discord.ui.Button):
@@ -283,6 +294,10 @@ class Installer:
         os.makedirs(config.path, exist_ok=True)
 
         for file in config.files:
+            if file.endswith(".toml") and os.path.isfile(f"{config.path}/{file}"):
+                logger.log(f"{file} already exists, skipping", "INFO")
+                continue
+
             logger.log(f"Fetching {file} from '{link}/DexScript/package'", "INFO")
 
             request = requests.get(f"{link}/DexScript/package/{file}", {"ref": config.github[1]})
