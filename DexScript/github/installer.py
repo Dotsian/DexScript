@@ -34,7 +34,7 @@ class InstallerConfig:
     Configuration class for the installer.
     """
 
-    github = ["Dotsian/DexScript", "dev"]
+    github = ["Dotsian/DexScript", "installer-config"]
     files = ["__init__.py", "cog.py", "commands.py", "parser.py", "utils.py", "config.toml"]
     appearance = {
         "logo": f"{ASSET_PATH}/DexScriptLogo.png",
@@ -289,7 +289,7 @@ class Installer:
 
             await bot.remove_cog("DexScript")  # type: ignore
 
-        link = f"https://api.github.com/repos/{config.github[0]}/contents/"
+        link = f"https://api.github.com/repos/{config.github[0]}/contents"
 
         os.makedirs(config.path, exist_ok=True)
 
