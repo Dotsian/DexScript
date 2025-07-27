@@ -38,13 +38,13 @@ class DexScriptParser:
                 and issubclass(o, commands.DexCommand)
                 and not issubclass(o, commands.Global)
                 and o.__name__ != "DexCommand"
-                and o.__name__ in config.modules
+                and o.__name__ in config.command_groups
             ),
         )
 
         self.global_methods = [x for x in dir(commands.Global) if not x.startswith("__")]
 
-        if "Global" not in config.modules:
+        if "Global" not in config.command_groups:
             self.global_methods = []
 
     def create_value(self, line):
@@ -62,7 +62,7 @@ class DexScriptParser:
             Types.BOOLEAN: lower in ["true", "false"],
             Types.HEX: lower.startswith("#"),
             Types.ARRAY: lower.startswith("[") and lower.endswith("]"),
-            Types.NONE: lower == "NIL"
+            Types.NONE: lower == "nil"
         }
 
         for key, operation in type_dict.items():

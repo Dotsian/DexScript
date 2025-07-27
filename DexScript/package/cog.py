@@ -15,6 +15,9 @@ __version__ = "1.0"
 ASSET_PATH = "https://raw.githubusercontent.com/Dotsian/DexScript/refs/heads/main/assets"
 
 
+def check_dexscript_user(ctx):
+    return ctx.message.author.id in config.dexscript_user_ids
+ 
 class DexScript(commands.Cog):
     """
     DexScript commands.
@@ -25,12 +28,12 @@ class DexScript(commands.Cog):
 
     @staticmethod
     def check_version():
-        if not config.versioncheck:
+        if not config.version_warning:
             return None
 
         request = requests.get(
             "https://api.github.com/repos/Dotsian/DexScript/contents/pyproject.toml",
-            {"ref": config.reference},
+            {"ref": config.branch},
         )
 
         if request.status_code != requests.codes.ok:
@@ -50,6 +53,7 @@ class DexScript(commands.Cog):
 
     @commands.command()
     @commands.is_owner()
+    @commands.check(check_dexscript_user)
     async def run(self, ctx: commands.Context, *, code: str):
         """
         Executes DexScript code.
@@ -84,6 +88,7 @@ class DexScript(commands.Cog):
 
     @commands.command()
     @commands.is_owner()
+    @commands.check(check_dexscript_user)
     async def about(self, ctx: commands.Context):
         """
         Displays information about DexScript.
@@ -120,6 +125,7 @@ class DexScript(commands.Cog):
 
     @commands.command()
     @commands.is_owner()
+    @commands.check(check_dexscript_user)
     async def installer(self, ctx: commands.Context, reference: str = "main"):
         """
         Displays the DexScript installer.
@@ -148,32 +154,3 @@ class DexScript(commands.Cog):
 
             case _:
                 await ctx.send(f"Request raised error code `{request.status_code}`.")
-
-    @commands.command()
-    @commands.is_owner()
-    async def setting(self, ctx: commands.Context, setting: str, value: str | None = None):
-        """
-        Changes a setting based on the value provided.
-
-        Parameters
-        ----------
-        setting: str
-            The setting you want to toggle.
-        value: str | None
-            The value you want to set the setting to.
-        """
-        setting = setting.lower()
-
-        if setting not in vars(config):
-            await ctx.send(f"`{setting}` is not a valid setting.")
-            return
-
-        setting_value = vars(config)[setting]
-        new_value = value
-
-        if isinstance(setting_value, bool):
-            new_value = bool(value) if value else not setting_value
-
-        setattr(config, setting, new_value)
-
-        await ctx.send(f"`{setting}` has been set to `{new_value}`")
