@@ -14,12 +14,12 @@ from typing import Any, Callable
 import discord
 import requests
 from ballsdex.core.models import (
-    Ball,  # noqa: F401
-    BallInstance,  # noqa: F401
-    Economy,  # noqa: F401
-    Player,  # noqa: F401
-    Regime,  # noqa: F401
-    Special,  # noqa: F401
+    Ball,  # noqa: F401, I001
+    BallInstance,  # noqa: F401, I001
+    Economy,  # noqa: F401, I001
+    Player,  # noqa: F401, I001
+    Regime,  # noqa: F401, I001
+    Special,  # noqa: F401, I001
 )
 from dateutil.parser import parse as parse_date
 
