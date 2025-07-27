@@ -62,7 +62,7 @@ class DexScriptParser:
             Types.BOOLEAN: lower in ["true", "false"],
             Types.HEX: lower.startswith("#"),
             Types.ARRAY: lower.startswith("[") and lower.endswith("]"),
-            Types.NONE: lower == "NIL"
+            Types.NONE: lower == "nil"
         }
 
         for key, operation in type_dict.items():

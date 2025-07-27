@@ -203,10 +203,43 @@ class InstallerView(discord.ui.View):
         await interaction.response.defer()
 
 
+class ConfigSelect(discord.ui.Select):
+    def __init__(self, installer):
+        self.installer = installer
+
+        options = []
+
+        with open("ballsdex/packages/dexscript/config.toml") as file:
+            description = ""
+
+            for line in file.readlines():
+                if line in ["\n", ""]:
+                    continue
+
+                if line.startswith("#"):
+                    description = (line[2:])
+                    continue
+
+                name = line.strip(" ")[0]
+
+                options.append(
+                    discord.SelectOption(label=name, value=name, description=description)
+                )
+
+                description = ""
+
+        super().__init__(placeholder="Edit setting", max_values=1, min_values=1, options=options)
+
+    async def callback(self, interaction: discord.Interaction):
+        pass # self.values[0]
+
+
 class ConfigView(discord.ui.View):
     def __init__(self, installer):
         super().__init__()
         self.installer = installer
+
+        self.add_item(ConfigSelect(installer))
 
     @discord.ui.button(style=discord.ButtonStyle.primary, label="Back")
     async def back_button(self, interaction: discord.Interaction, _: discord.ui.Button):

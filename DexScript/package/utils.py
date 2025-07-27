@@ -4,7 +4,7 @@ import inspect
 import os
 import re
 import tomllib
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from difflib import get_close_matches
 from enum import Enum
 from io import StringIO
@@ -81,7 +81,7 @@ class Settings:
         self.branch = data.get("branch", "main")
 
 
-config = Settings(Path(os.path.dirname(os.path.abspath(__file__)), "./config.toml"))
+config = Settings("./config.toml")
 
 
 @dataclass
