@@ -195,9 +195,8 @@ class InstallerView(discord.ui.View):
 
     @discord.ui.button(style=discord.ButtonStyle.red, label="Exit")
     async def quit_button(self, interaction: discord.Interaction, _: discord.ui.Button):
-        self.install_button.disabled = True
-        self.uninstall_button.disabled = True
-        self.quit_button.disabled = True
+        for item in self.children:
+            item.disabled = True
 
         await interaction.message.edit(**self.installer.interface.fields)
         await interaction.response.defer()
@@ -222,15 +221,20 @@ class ConfigModal(discord.ui.Modal):
                     new_lines.append(line + "\n")
                     continue
 
-                new_value = f'"{self.value.value}"'
+                full_value = self.value.value
+                new_value = f'"{full_value}"'
 
-                if self.value.value.lower() in ["true", "false"]:
-                    new_value = bool(self.value.value.title())
+                if full_value.lower() in ["true", "false"]:
+                    new_value = full_value.lower()
+                elif full_value.startswith("[") and full_value.endswith("]"):
+                    new_value = full_value
 
                 new_lines.append(f"{self.setting} = {new_value}\n")
 
             with open(f"{config.path}/config.toml", "w") as write_file:
                 write_file.writelines(new_lines)
+
+        self.installer.interface.embed = InstallerEmbed(self.installer, "config")
 
         await interaction.message.edit(**self.installer.interface.fields)
 
@@ -288,8 +292,8 @@ class ConfigView(discord.ui.View):
 
     @discord.ui.button(style=discord.ButtonStyle.red, label="Exit")
     async def quit_button(self, interaction: discord.Interaction, _: discord.ui.Button):
-        self.back_button.disabled = True
-        self.quit_button.disabled = True
+        for item in self.children:
+            item.disabled = True
 
         await interaction.message.edit(**self.installer.interface.fields)
         await interaction.response.defer()
