@@ -34,7 +34,7 @@ class InstallerConfig:
     Configuration class for the installer.
     """
 
-    github = ["Dotsian/DexScript", "installer-config"]
+    github = ["Dotsian/DexScript", "dev"]
     files = ["__init__.py", "cog.py", "commands.py", "parser.py", "utils.py", "config.toml"]
     appearance = {
         "logo": f"{ASSET_PATH}/DexScriptLogo.png",
@@ -209,7 +209,7 @@ class ConfigModal(discord.ui.Modal):
 
         super().__init__(title=f"Editing `{setting}`")
 
-    value = discord.ui.TextInput(label=f"New value", required=True)
+    value = discord.ui.TextInput(label="New value", required=True)
 
     async def on_submit(self, interaction: discord.Interaction):
         with open(f"{config.path}/config.toml") as file:
