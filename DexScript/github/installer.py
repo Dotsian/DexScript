@@ -203,6 +203,20 @@ class InstallerView(discord.ui.View):
         await interaction.response.defer()
 
 
+class ConfigModal(discord.ui.Modal):
+    def __init__(self, setting: str):
+        self.setting = setting
+        self.value = discord.ui.TextInput(label=f"New {setting} value")
+
+        super().__init__(title=f"Editing `{setting}`")
+
+    async def on_submit(self, interaction: discord.Interaction):
+        await interaction.response.send_message(
+            f"Updated `{self.setting}` to `{self.value}`!",
+            ephemeral=True
+        )
+
+
 class ConfigSelect(discord.ui.Select):
     def __init__(self, installer):
         self.installer = installer
@@ -213,7 +227,7 @@ class ConfigSelect(discord.ui.Select):
             description = ""
 
             for line in file.readlines():
-                if line in ["\n", ""] or line.startswith(" "):
+                if line in ["\n", "", "]"] or line.startswith(" "):
                     continue
 
                 if line.startswith("#"):
@@ -231,7 +245,7 @@ class ConfigSelect(discord.ui.Select):
         super().__init__(placeholder="Edit setting", max_values=1, min_values=1, options=options)
 
     async def callback(self, interaction: discord.Interaction):
-        pass # self.values[0]
+        await interaction.response.send_modal(ConfigModal(self.values[0]))
 
 
 class ConfigView(discord.ui.View):
