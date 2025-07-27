@@ -204,15 +204,38 @@ class InstallerView(discord.ui.View):
 
 
 class ConfigModal(discord.ui.Modal):
-    def __init__(self, setting: str):
+    def __init__(self, installer, setting: str):
+        self.installer = installer
         self.setting = setting
-        self.value = discord.ui.TextInput(label=f"New {setting} value")
 
         super().__init__(title=f"Editing `{setting}`")
 
+    value = discord.ui.TextInput(label=f"New value", required=True)
+
     async def on_submit(self, interaction: discord.Interaction):
+        with open(f"{config.path}/config.toml") as file:
+            lines = [x.strip() for x in file.readlines()]
+            new_lines = []
+
+            for line in lines:
+                if not line.startswith(self.setting):
+                    new_lines.append(line + "\n")
+                    continue
+
+                new_value = f'"{self.value.value}"'
+
+                if self.value.value.lower() in ["true", "false"]:
+                    new_value = bool(self.value.value.title())
+
+                new_lines.append(f"{self.setting} = {new_value}\n")
+
+            with open(f"{config.path}/config.toml", "w") as write_file:
+                write_file.writelines(new_lines)
+
+        await interaction.message.edit(**self.installer.interface.fields)
+
         await interaction.response.send_message(
-            f"Updated `{self.setting}` to `{self.value}`!",
+            f"Updated `{self.setting}` to `{self.value.value}`!",
             ephemeral=True
         )
 
@@ -223,11 +246,11 @@ class ConfigSelect(discord.ui.Select):
 
         options = []
 
-        with open("ballsdex/packages/dexscript/config.toml") as file:
+        with open(f"{config.path}/config.toml") as file:
             description = ""
 
             for line in file.readlines():
-                if line in ["\n", "", "]"] or line.startswith(" "):
+                if line.rstrip() in ["\n", "", "]"] or line.startswith(" "):
                     continue
 
                 if line.startswith("#"):
@@ -245,7 +268,7 @@ class ConfigSelect(discord.ui.Select):
         super().__init__(placeholder="Edit setting", max_values=1, min_values=1, options=options)
 
     async def callback(self, interaction: discord.Interaction):
-        await interaction.response.send_modal(ConfigModal(self.values[0]))
+        await interaction.response.send_modal(ConfigModal(self.installer, self.values[0]))
 
 
 class ConfigView(discord.ui.View):

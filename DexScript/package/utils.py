@@ -81,7 +81,7 @@ class Settings:
         self.branch = data.get("branch", "main")
 
 
-config = Settings("./config.toml")
+config = Settings(Path(os.path.dirname(os.path.abspath(__file__)), "./config.toml"))
 
 
 @dataclass

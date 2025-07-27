@@ -2,14 +2,7 @@
 version-warning = true
 
 # The command groups that DexScript will load.
-command-groups = [
-    "Global",
-    "Emoji",
-    "Eval",
-    "File",
-    "Filter",
-    "Template"
-]
+command-groups = ["Global", "Emoji", "Eval", "File", "Filter", "Template"]
 
 # Displays additional information for error handling.
 debug = false
