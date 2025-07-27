@@ -77,6 +77,8 @@ class Settings:
             "Template"
         ])
 
+        self.dexscript_user_ids = data.get("dexscript-user-ids", [])
+
         self.debug = data.get("debug", False)
         self.branch = data.get("branch", "main")
 
