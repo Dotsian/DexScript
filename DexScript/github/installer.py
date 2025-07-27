@@ -213,14 +213,14 @@ class ConfigSelect(discord.ui.Select):
             description = ""
 
             for line in file.readlines():
-                if line in ["\n", ""]:
+                if line in ["\n", ""] or line.startswith(" "):
                     continue
 
                 if line.startswith("#"):
-                    description = (line[2:])
+                    description = line[2:]
                     continue
 
-                name = line.strip(" ")[0]
+                name = line.split(" ")[0]
 
                 options.append(
                     discord.SelectOption(label=name, value=name, description=description)
