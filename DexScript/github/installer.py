@@ -280,18 +280,52 @@ class ConfigView(discord.ui.View):
         super().__init__()
         self.installer = installer
 
-        self.add_item(ConfigSelect(installer))
+        back_button = discord.ui.Button(label="Back", style=discord.ButtonStyle.primary)
+        reset_button = discord.ui.Button(label="Reset", style=discord.ButtonStyle.grey)
+        quit_button = discord.ui.Button(label="Exit", style=discord.ButtonStyle.red)
 
-    @discord.ui.button(style=discord.ButtonStyle.primary, label="Back")
-    async def back_button(self, interaction: discord.Interaction, _: discord.ui.Button):
+        back_button.callback = self.back_button
+        reset_button.callback = self.reset_button
+        quit_button.callback = self.quit_button
+
+        self.add_item(back_button)
+        self.add_item(ConfigSelect(installer))
+        self.add_item(reset_button)
+        self.add_item(quit_button)
+
+    async def back_button(self, interaction: discord.Interaction):
         self.installer.interface.embed = InstallerEmbed(self.installer, "setup")
         self.installer.interface.view = InstallerView(self.installer)
 
         await interaction.message.edit(**self.installer.interface.fields)
         await interaction.response.defer()
 
-    @discord.ui.button(style=discord.ButtonStyle.red, label="Exit")
-    async def quit_button(self, interaction: discord.Interaction, _: discord.ui.Button):
+    async def reset_button(self, interaction: discord.Interaction):
+        request = requests.get(
+            f"https://api.github.com/repos/{config.github[0]}/"
+            "contents/DexScript/package/config.toml",
+            {"ref": config.github[1]}
+        )
+
+        if request.status_code != requests.codes.ok:
+            await interaction.response.send_message(
+                f"Failed to reset config file `({request.status_code})`", ephemeral=True
+            )
+            return
+
+        request = request.json()
+        content = b64decode(request["content"])
+
+        with open(f"{config.path}/config.toml", "w") as opened_file:
+            opened_file.write(content.decode())
+
+        self.installer.interface.embed = InstallerEmbed(self.installer, "config")
+
+        await interaction.message.edit(**self.installer.interface.fields)
+
+        await interaction.response.send_message("Successfully reset config file", ephemeral=True)
+
+    async def quit_button(self, interaction: discord.Interaction):
         for item in self.children:
             item.disabled = True
 
@@ -409,7 +443,7 @@ class Installer:
             content = b64decode(request["content"])
 
             with open(f"{config.path}/{file}", "w") as opened_file:
-                opened_file.write(content.decode("UTF-8"))
+                opened_file.write(content.decode())
 
             logger.log(f"Installed {file} from '{link}/DexScript/package'", "INFO")
 
@@ -450,7 +484,7 @@ class Installer:
         if pyproject_request.status_code != requests.codes.ok:
             return
 
-        toml_content = b64decode(pyproject_request.json()["content"]).decode("UTF-8")
+        toml_content = b64decode(pyproject_request.json()["content"]).decode()
         new_version = re.search(r'version\s*=\s*"(.*?)"', toml_content)
 
         if not new_version:

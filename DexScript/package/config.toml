@@ -4,6 +4,9 @@ version-warning = true
 # The command groups that DexScript will load.
 command-groups = ["Global", "Emoji", "Eval", "File", "Filter", "Template"]
 
+# A list of user IDs that will be able to execute DexScript commands.
+dexscript-user-ids = []
+
 # Displays additional information for error handling.
 debug = false
 

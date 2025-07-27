@@ -29,7 +29,7 @@ To install DexScript, you must have the following:
 
 ## DexScript Setup
 
-The DexScript installer is a intuitive menu that can allow you to easily update, install, and uninstall DexScript. To bring up the DexScript installer, all you have to do is run one eval command!
+The DexScript installer is a intuitive menu that can allow you to easily update, install, configure, and uninstall DexScript. To bring up the DexScript installer, all you have to do is run one eval command!
 
 ### Versions
 
@@ -60,6 +60,7 @@ Once you have ran the eval command, the DexScript installer should appear. There
 
 * Install [or] Update
 * Uninstall
+* Config
 * Exit
 
 > [!IMPORTANT]
@@ -72,6 +73,10 @@ If you are installing DexScript for the first time, you will see a button called
 #### Updating
 
 If you already have DexScript, you will see a button called "Update". When you click that button, DexScript will update to the latest version. This will instantly update DexScript, which means you don't have to restart your bot.
+
+#### Configuration
+
+If you have a `config.toml` file already installed within DexScript, the "Config" button will appear. This button will allow you to access the configuration menu, which will let you modify DexScript's internal settings.
 
 #### Uninstalling
 
