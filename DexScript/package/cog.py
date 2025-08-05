@@ -15,8 +15,10 @@ __version__ = "1.0"
 ASSET_PATH = "https://raw.githubusercontent.com/Dotsian/DexScript/refs/heads/main/assets"
 
 
-def check_dexscript_user(ctx):
-    return ctx.message.author.id in config.dexscript_user_ids
+async def check_dexscript_user(ctx):
+    user = ctx.message.author
+
+    return await ctx.bot.is_owner(user) or user.id in config.dexscript_user_ids
  
 class DexScript(commands.Cog):
     """
@@ -52,7 +54,6 @@ class DexScript(commands.Cog):
         return None
 
     @commands.command()
-    @commands.is_owner()
     @commands.check(check_dexscript_user)
     async def run(self, ctx: commands.Context, *, code: str):
         """
@@ -87,7 +88,6 @@ class DexScript(commands.Cog):
             await ctx.message.add_reaction("✅")
 
     @commands.command()
-    @commands.is_owner()
     @commands.check(check_dexscript_user)
     async def about(self, ctx: commands.Context):
         """
@@ -124,7 +124,6 @@ class DexScript(commands.Cog):
         await ctx.send(embed=embed)
 
     @commands.command()
-    @commands.is_owner()
     @commands.check(check_dexscript_user)
     async def installer(self, ctx: commands.Context, reference: str = "main"):
         """
