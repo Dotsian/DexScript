@@ -25,11 +25,12 @@ DexScript has a ton more features too! All of them can be found within our exten
 To install DexScript, you must have the following:
 
 * Ballsdex
-* Eval access
+* Eval access (if using eval)
+* [DexI](https://github.com/Dotsian/DexI) (if using DexI)
 
 ## DexScript Setup
 
-The DexScript installer is a intuitive menu that can allow you to easily update, install, configure, and uninstall DexScript. To bring up the DexScript installer, all you have to do is run one eval command!
+The DexScript installer is a intuitive menu that can allow you to easily update, install, configure, and uninstall DexScript. To bring up the DexScript installer, all you have to do is run one command!
 
 ### Versions
 
@@ -37,21 +38,37 @@ DexScript has two versions, the release version and the development version.
 
 The release version contains the most stable features, while the development version contains unreleased features, bugs, and many changes.
 
-To install DexScript, run the following eval command:
+To install DexScript, run the following command:
 
 #### Release Version
 
-> ```py
-> import base64, requests; await ctx.invoke(bot.get_command("eval"), body=base64.b64decode(requests.get("https://api.github.com/repos/Dotsian/DexScript/contents/DexScript/github/installer.py").json()["content"]).decode())
-> ```
+**Using DexI**
+
+```bash
+dexi add Dotsian/DexScript
+```
+
+**Using Eval**
+
+```py
+import base64, requests; await ctx.invoke(bot.get_command("eval"), body=base64.b64decode(requests.get("https://api.github.com/repos/Dotsian/DexScript/contents/DexScript/github/installer.py").json()["content"]).decode())
+```
 
 #### Development Version
+
+**Using DexI**
+
+```bash
+dexi add Dotsian/DexScript --branch dev
+```
+
+**Using Eval**
 
 > ```py
 > import base64, requests; await ctx.invoke(bot.get_command("eval"), body=base64.b64decode(requests.get("https://api.github.com/repos/Dotsian/DexScript/contents/DexScript/github/installer.py", {"ref": "dev"}).json()["content"]).decode())
 > ```
 
-### DexScript Installer
+### DexScript Installer (Eval)
 
 > [!NOTE]
 > If DexScript is already installed, you can run `b.installer` to show the DexScript installer, replacing `b.` with your application's prefix.

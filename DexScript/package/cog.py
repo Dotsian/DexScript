@@ -10,7 +10,7 @@ from discord.ext import commands
 from .parser import DexScriptParser
 from .utils import Utils, config
 
-__version__ = "1.0"
+__version__ = "1.0.0"
 
 ASSET_PATH = "https://raw.githubusercontent.com/Dotsian/DexScript/refs/heads/main/assets"
 

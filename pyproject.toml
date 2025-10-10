@@ -1,6 +1,6 @@
 [project]
 name = "dexscript"
-version = "1.0"
+version = "1.0.0"
 description = ""
 requires-python = ">=3.12"
 license = "MIT"
@@ -10,7 +10,13 @@ dependencies = [
 ]
 
 [tool.dexi]
-requires-ballsdex = ">=2.22.0"
+public = true
+ballsdex-version = ">=2.22.0"
+include-license = true
+
+[tool.dexi.package]
+source = "DexScript/package"
+target = "DexScript"
 
 [tool.ruff]
 line-length = 99
