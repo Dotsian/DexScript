@@ -17,6 +17,7 @@ include-license = true
 [tool.dexi.package]
 source = "DexScript/package"
 target = "DexScript"
+exclude = []
 
 [tool.ruff]
 line-length = 99
