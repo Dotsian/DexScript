@@ -223,6 +223,43 @@ wheels = [
 ]
 
 [[package]]
+name = "dexscript"
+version = "1.0.0"
+source = { virtual = "." }
+dependencies = [
+    { name = "discord-py" },
+    { name = "django" },
+    { name = "mkdocs-material" },
+    { name = "pytest" },
+    { name = "python-dateutil" },
+    { name = "tortoise-orm" },
+]
+
+[package.dev-dependencies]
+dev = [
+    { name = "django-types" },
+    { name = "pygments" },
+    { name = "ruff" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "discord-py", specifier = ">=2.5.0" },
+    { name = "django", specifier = ">=5.2.8" },
+    { name = "mkdocs-material", specifier = ">=9.7.0" },
+    { name = "pytest", specifier = ">=9.0.1" },
+    { name = "python-dateutil", specifier = ">=2.9.0.post0" },
+    { name = "tortoise-orm", specifier = ">=0.25.1" },
+]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "django-types", specifier = ">=0.22.0" },
+    { name = "pygments", specifier = ">=2.19.2" },
+    { name = "ruff", specifier = ">=0.14.6" },
+]
+
+[[package]]
 name = "discord-py"
 version = "2.6.4"
 source = { registry = "https://pypi.org/simple" }
@@ -259,43 +296,6 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/3d/26/5f2873f7208dee0791710fda494a8d3ef7fb1d34785069b55168a23e2ac2/django_types-0.22.0.tar.gz", hash = "sha256:4cecc9eee846e7ff2a398bec9dfe6543e76efb922a7a58c5d6064bcb0e6a3dc5", size = 187214, upload-time = "2025-07-15T01:05:48.039Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/82/3a/0ecbaab07cfe7b0a4fd72dfde4be8e7c11aad2b88c816cfcbb800c14cbda/django_types-0.22.0-py3-none-any.whl", hash = "sha256:ba15c756c7a732e58afd0737e54489f1c5e6f1bd24132e9199c637b1f88b057c", size = 376869, upload-time = "2025-07-15T01:05:46.621Z" },
-]
-
-[[package]]
-name = "ds-new"
-version = "0.1.0"
-source = { virtual = "." }
-dependencies = [
-    { name = "discord-py" },
-    { name = "django" },
-    { name = "mkdocs-material" },
-    { name = "pytest" },
-    { name = "python-dateutil" },
-    { name = "tortoise-orm" },
-]
-
-[package.dev-dependencies]
-dev = [
-    { name = "django-types" },
-    { name = "pygments" },
-    { name = "ruff" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "discord-py", specifier = ">=2.5.0" },
-    { name = "django", specifier = ">=5.2.8" },
-    { name = "mkdocs-material", specifier = ">=9.7.0" },
-    { name = "pytest", specifier = ">=9.0.1" },
-    { name = "python-dateutil", specifier = ">=2.9.0.post0" },
-    { name = "tortoise-orm", specifier = ">=0.25.1" },
-]
-
-[package.metadata.requires-dev]
-dev = [
-    { name = "django-types", specifier = ">=0.22.0" },
-    { name = "pygments", specifier = ">=2.19.2" },
-    { name = "ruff", specifier = ">=0.14.6" },
 ]
 
 [[package]]
