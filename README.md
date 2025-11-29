@@ -1,4 +1,4 @@
-# DexScript - BETA
+# DexScript
 
 ![DexScript Banner](assets/DexScriptPromo.png)
 

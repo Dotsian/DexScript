@@ -1,20 +1,49 @@
-[tool.poetry]
+[project]
 name = "dexscript"
-version = "0.5"
+version = "1.0.0"
 description = ""
-authors = ["dotzz <official.dotzz@gmail.com>"]
-license = "MIT"
+readme = "README.md"
+requires-python = ">=3.14"
+dependencies = [
+    "discord-py>=2.5.0",
+    "django>=5.2.8",
+    "mkdocs-material>=9.7.0",
+    "pytest>=9.0.1",
+    "python-dateutil>=2.9.0.post0",
+    "tortoise-orm>=0.25.1",
+]
 
-[tool.poetry.dependencies]
-python = ">=3.12"
-"discord.py" = "^2.5.0"
-ruff = "^0.11.6"
-
-[build-system]
-requires = ["poetry-core>=1.0.0"]
-build-backend = "poetry.core.masonry.api"
+[dependency-groups]
+dev = [
+    "django-types>=0.22.0",
+    "pygments>=2.19.2",
+    "ruff>=0.14.6",
+]
 
 [tool.ruff]
-line-length = 99
-lint.ignore = ["E203", "F704", "F706", "F821"]
-lint.extend-select = ["E501", "I001"]
+line-length = 120
+indent-width = 4
+target-version = "py313"
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = true
+docstring-code-format = true
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "W"]
+ignore = ["E203"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["ballsdex"]
+split-on-trailing-comma = false
+
+[tool.setuptools]
+packages = ["plugin"]
+
+[project.entry-points."mkdocs.plugins"]
+dexscript = "plugin.plugin:DexScriptPlugin"
+
+[project.entry-points."pygments.lexers"]
+dexscript = "plugin.lexer:DexScriptLexer"
