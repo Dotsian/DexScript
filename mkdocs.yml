@@ -35,9 +35,15 @@ theme:
 
 nav:
   - Home: index.md
-  - Commands:
-      - commands/edit.md
-      - commands/update.md
+  - Extensions:
+      - Global: extensions/global.md
+      - File: extensions/file.md
+      - Global: 
+          - Edit: commands/edit.md
+          - Update: commands/update.md
+      - File:
+          - Write: commands/write.md
+
 
 markdown_extensions:
   - pymdownx.inlinehilite

@@ -1,11 +1,5 @@
 # Define DexScript methods here.
-METHODS = [
-    "CREATE",
-    "DELETE",
-    "EDIT",
-    "UPDATE",
-    "VIEW",
-]
+METHODS = ["CREATE", "DELETE", "EDIT", "UPDATE", "VIEW", "FILE", "WRITE"]
 
 # Define common models here.
 MODELS = [
@@ -21,7 +15,7 @@ MODELS = [
     "FRIENDSHIP",
     "TRADE",
     "TRADE-OBJECT",
-    "BLOCK"
+    "BLOCK",
 ]
 
 # Define common attributes here.

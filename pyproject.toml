@@ -8,6 +8,7 @@ dependencies = [
     "discord-py>=2.5.0",
     "django>=5.2.8",
     "mkdocs-material>=9.7.0",
+    "packaging>=25.0",
     "pytest>=9.0.1",
     "python-dateutil>=2.9.0.post0",
     "tortoise-orm>=0.25.1",
@@ -21,7 +22,7 @@ dev = [
 ]
 
 [tool.ruff]
-line-length = 120
+line-length = 99
 indent-width = 4
 target-version = "py313"
 
@@ -38,6 +39,13 @@ ignore = ["E203"]
 [tool.ruff.lint.isort]
 known-first-party = ["ballsdex"]
 split-on-trailing-comma = false
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*.py" = ["F401"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+filterwarnings = ["ignore::DeprecationWarning:discord.*"]
 
 [tool.setuptools]
 packages = ["plugin"]

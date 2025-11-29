@@ -1,6 +1,6 @@
 # Edit
 
-**Edit** is a model declarative command used to change a model instance's attribute. If you wanted to change a ball's health, you would use this command.
+**Edit** is a [global](../extensions/global.md) model declarative command used to change a model instance's attribute. If you wanted to change a ball's health, you would use this command.
 
 === "Default"
 
@@ -69,7 +69,7 @@
     Editing Ancient Greece's health with model declaration:
 
     ```ds
-    EDIT > BALL > Ancient Greece > HEALTH > 1000
+    BALL > EDIT > Ancient Greece > HEALTH > 1000
     ```
 
     Editing Ancient Greece's attack and health:

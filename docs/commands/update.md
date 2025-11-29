@@ -2,9 +2,9 @@
 
 !!! danger "Deprecated"
 
-    `UPDATE` is deprecated and **will** be removed in a later version. Please use `EDIT` instead.
+    `UPDATE` is deprecated and **will** be removed in a later version. Please use [EDIT](edit.md) instead.
 
-**Update** is a **deprecated** model declarative command used to change a model instance's attribute.
+**Update** is a **deprecated** [global](../extensions/global.md) model declarative command used to change a model instance's attribute.
 
 ```ds
 UPDATE > [MODEL] > [MODEL-NAME] > [ATTRIBUTE] > [VALUE]
