@@ -6,8 +6,6 @@ from discord.ext import commands
 if TYPE_CHECKING:
     from ballsdex.core.bot import BallsDexBot
 
-__version__ = "1.0.0"
-
 ASSET_PATH = "https://raw.githubusercontent.com/Dotsian/DexScript/refs/heads/main/assets"
 
 
@@ -16,8 +14,9 @@ class DexScript(commands.Cog):
     DexScript commands.
     """
 
-    def __init__(self, bot: "BallsDexBot"):
+    def __init__(self, bot: "BallsDexBot", version: str):
         self.bot = bot
+        self.version = version
 
     @commands.command()
     async def dexscript(self, ctx: commands.Context):
@@ -43,6 +42,6 @@ class DexScript(commands.Cog):
         )
 
         embed.set_thumbnail(url=f"{ASSET_PATH}/DexScriptLogo.png")
-        embed.set_footer(text=f"DexScript {__version__}")
+        embed.set_footer(text=f"DexScript {self.version}")
 
         await ctx.send(embed=embed)

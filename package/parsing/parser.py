@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
-import discord
+from discord.ext import commands
 
 from .argument import Argument
 from .enums import Types
@@ -30,7 +30,7 @@ class Parser:
     """
 
     bot: "BallsDexBot"
-    ctx: discord.Context["BallsDexBot"]
+    ctx: commands.Context["BallsDexBot"]
 
     @staticmethod
     def _parse(
@@ -48,7 +48,7 @@ class Parser:
         force: bool
             Whether or not the determination of an argument's value should ignore errors.
         """
-        parsed: list[str] = []
+        parsed: list[Argument] = []
         lines: list[str] = [line for line in code.split("\n") if line.strip() != ""]
 
         for line in lines:
@@ -81,11 +81,12 @@ class Parser:
             Whether or not the determination of an argument's value should ignore errors.
         """
         success = True
+        content: list[Argument] | str = ""
 
         try:
             content = Parser._parse(code, type_map, force)
         except Exception as error:
-            content = error
+            content = str(error)
             success = False
 
         return ParseRequest(content, success)

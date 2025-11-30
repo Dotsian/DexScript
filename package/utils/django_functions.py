@@ -7,7 +7,7 @@ from ..errors import ModelNotDeclaredError
 
 def all_models(names: bool = False, key: Callable | None = None) -> list:
     models = apps.get_app_config("bd_models").get_models()
-    iterator = [x.__name__ for x in models] if names else [x for x in models]
+    iterator = [x.__name__ for x in models] if names else [x for x in models]  # type: ignore
 
     if key is None:
         return cast(list, iterator)

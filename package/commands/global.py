@@ -10,16 +10,15 @@ class Edit(Command):
 
     async def default(self, identifier: str, attribute: str, value: Any):
         print(identifier, attribute, value)
-        print(self.pre_args)
 
-    async def attr(attribute: str):
-        pass
+    async def attr(self):
+        raise NotImplementedError
 
-    async def multi():
-        pass
+    async def multi(self):
+        raise NotImplementedError
 
-    async def filter():
-        pass
+    async def filter(self):
+        raise NotImplementedError
 
 
 class Global(Extension):

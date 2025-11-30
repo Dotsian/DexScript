@@ -19,6 +19,8 @@ dev = [
     "django-types>=0.22.0",
     "pygments>=2.19.2",
     "ruff>=0.14.6",
+    "mypy>=1.19.0",
+    "types-python-dateutil>=2.9.0.20251115",
 ]
 
 [tool.ruff]
@@ -42,6 +44,9 @@ split-on-trailing-comma = false
 
 [tool.ruff.lint.per-file-ignores]
 "tests/*.py" = ["F401"]
+
+[tool.mypy]
+ignore_missing_imports = true
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

@@ -1,5 +1,3 @@
-import pytest
-
 from package.parsing.enums import Types
 from package.parsing.parser import Parser, ParseRequest
 

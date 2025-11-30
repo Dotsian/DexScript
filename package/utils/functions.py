@@ -1,4 +1,4 @@
-import importlib
+import importlib.util
 import inspect
 import re
 from typing import Any, Callable
@@ -6,9 +6,9 @@ from typing import Any, Callable
 IS_DJANGO = importlib.util.find_spec("tortoise") is None
 
 if IS_DJANGO:
-    from . import django_functions as functions
+    from . import django_functions as functions  # type: ignore
 else:
-    from . import tortoise_functions as functions
+    from . import tortoise_functions as functions  # type: ignore
 
 STR_RE = re.compile(r"return\s+(?:str\(\s*self\.(\w+)\s*\)|self\.(\w+))")
 
@@ -71,4 +71,4 @@ def fetch_str(object: Any) -> str | None:
     if str_match is None:
         return None
 
-    return str_match.group(1)
+    return str_match.group(1) or str_match.group(2)
