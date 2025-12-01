@@ -18,14 +18,14 @@ class Write(Command):
             with open(path, "w"):
                 pass
 
-            self.output_log(f"Created `{path}`")
+            await self.ctx.send(f"Created `{path}`")
             return
 
         new_file = self.attachment
 
         await new_file.save(path)
 
-        self.output_log(f"Wrote to `{path}` from `{new_file.filename}`")
+        await self.ctx.send(f"Wrote to `{path}` from `{new_file.filename}`")
 
 
 class File(Extension):

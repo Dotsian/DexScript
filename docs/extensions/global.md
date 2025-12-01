@@ -5,6 +5,7 @@ The **Global** extension is an extension which holds commands that don't fit in 
 ## Commands
 
 - [Edit](../commands/edit.md)
+- [Delete](../commands/delete.md)
 
 ## Deprecated Commands
 

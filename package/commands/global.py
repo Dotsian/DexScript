@@ -21,10 +21,30 @@ class Edit(Command):
         raise NotImplementedError
 
 
+class Update(Command):
+    """
+    View documentation.
+    """
+
+    deprecated = True
+
+    async def default(self, model: str, identifier: str, attribute: str, value: Any):
+        await self.redirect("Edit", [model, identifier, attribute, value])
+
+
+class Delete(Command):
+    """
+    View documentation.
+    """
+
+    async def default(self, identifier: str):
+        print(identifier)
+
+
 class Global(Extension):
     """
     Holds global commands for DexScript.
     """
 
     prefix = False
-    commands = [Edit]
+    commands = [Edit, Update, Delete]

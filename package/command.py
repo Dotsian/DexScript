@@ -26,20 +26,19 @@ class Command:
         self,
         bot: "BallsDexBot",
         ctx: commands.Context["BallsDexBot"],
+        deprecated: bool = False,
         bd_version: str | None = None,
     ):
         self.bot = bot
         self.ctx = ctx
         self.attachments = ctx.message.attachments
 
+        self.deprecated = deprecated
         self.bd_version = bd_version
-
-        self._log: list[str] = []
 
     @property
     def attachment(self):
-        self.attachments.pop(0)
-        return self.attachments[0]
+        return self.attachments.pop(0)
 
     @property
     def can_load(self) -> bool:
@@ -52,8 +51,8 @@ class Command:
         return True
 
     @final
-    def output_log(self, content: str):
-        self._log.append(content)
+    async def redirect(self, command: str, args: list):
+        raise NotImplementedError
 
     async def default(self, *args, **kwargs) -> None:
         raise NotImplementedError
@@ -114,3 +113,20 @@ def load_extensions(path: str = "package/commands", bot: "BallsDexBot | None" = 
         extensions.append(extension[0][1])
 
     return extensions
+
+
+def get_commands(extensions: list[type[Extension]]) -> set[str]:
+    """
+    Returns a set of commands from a list of extensions.
+
+    Parameters
+    ----------
+    extensions: list[type[Extension]]
+        The extensions you want retrieve the commands from.
+    """
+    commands: set[str] = set()
+
+    for extension in extensions:
+        commands.update([x.__name__ for x in extension.commands])
+
+    return commands

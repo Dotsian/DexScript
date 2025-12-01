@@ -7,8 +7,8 @@ class Types(Enum):
     """
 
     STRING = 0
-    METHOD = 1
-    CLASS = 2
+    EXTENSION = 1
+    COMMAND = 2
     BOOLEAN = 3
     MODEL = 4
     DATETIME = 5

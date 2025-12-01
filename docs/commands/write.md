@@ -13,4 +13,4 @@ FILE > WRITE > [PATH] > [ATTACHMENT]
 - `PATH` - The path you want to write to.
 - `ATTACHMENT` - The new contents of the file.
 
-*Requires an attachment*
+*Requires an attachment.*

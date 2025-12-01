@@ -1,6 +1,7 @@
 from dataclasses import dataclass, field
 from typing import Any
 
+from ..command import get_commands, load_extensions
 from ..utils.autocorrect import autocorrect
 from ..utils.basic import is_date, pascal
 from ..utils.functions import all_models, fetch_model
@@ -44,10 +45,10 @@ class Argument:
             return Types.HEX
         elif string == "EMPTY":
             return Types.NONE
-        elif lower in []:
-            return Types.METHOD
-        elif lower in []:
-            return Types.CLASS
+        elif pascal(lower) in [x.__name__ for x in load_extensions()]:
+            return Types.EXTENSION
+        elif pascal(lower) in get_commands(load_extensions()):
+            return Types.COMMAND
         elif is_date(lower) and lower.count("-") >= 2:
             return Types.DATETIME
         elif lower.startswith("[") and lower.endswith("]"):

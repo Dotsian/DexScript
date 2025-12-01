@@ -22,13 +22,15 @@ COMMANDS = [
     "DELETE > BALL > Canada",
     "EDIT > SPECIAL > Shiny > START_DATE > 2022-09-23",
     "EDIT > BALL-INSTANCE > #123 > HEALTH_BONUS > 20",
+    "FILE > WRITE > file.py",
 ]
 
 TYPES = [
-    [0, 0, 0, Types.BOOLEAN],
-    [0, Types.MODEL, 0],
-    [0, Types.MODEL, 0, 0, Types.DATETIME],
-    [0, Types.MODEL, Types.HEX, 0, 0],
+    [Types.COMMAND, 0, 0, Types.BOOLEAN],
+    [Types.COMMAND, Types.MODEL, 0],
+    [Types.COMMAND, Types.MODEL, 0, 0, Types.DATETIME],
+    [Types.COMMAND, Types.MODEL, Types.HEX, 0, 0],
+    [Types.EXTENSION, Types.COMMAND, 0],
 ]
 
 
@@ -66,6 +68,8 @@ def test_types():
 
     for index, request in enumerate(requests):
         for argument, arg_type in zip(request.content, TYPES[index]):
+            assert not isinstance(argument, str)
+
             if argument.type == Types.STRING and arg_type == 0:
                 continue
 

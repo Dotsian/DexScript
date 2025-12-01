@@ -49,7 +49,6 @@
     - `OLD-VALUE` - The value to look for when filtering model instances.
     - `NEW-VALUE` - The value to assign to all matching instances.
 
-
 ## Operations
 
 - **ATTR** - Declares a single attribute first, then edits its value across multiple model instances.
