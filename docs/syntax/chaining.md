@@ -16,7 +16,7 @@ EDIT > Kingdom of Greece > RARITY > 4.0
 ## With chaining
 
 ```ds
-EDIT-MULTI > RARITY >
+EDIT-MULTI > RARITY > 4.0
 | Ancient Greece
 | Sparta
 | Northern Cyprus
