@@ -16,7 +16,7 @@ class ParseRequest:
     Hold's the parsed content and whether it succeeded or not.
     """
 
-    content: list[Argument] | str
+    content: list[Argument | list[Argument]] | str
     success: bool = True
 
     def __str__(self) -> str:
@@ -35,7 +35,7 @@ class Parser:
     @staticmethod
     def _parse(
         code: str, type_map: dict[Types, list[str]] | None = None, force: bool = False
-    ) -> list[Argument]:
+    ) -> list[Argument | list[Argument]]:
         """
         Parses DexScript code.
 
@@ -48,7 +48,7 @@ class Parser:
         force: bool
             Whether or not the determination of an argument's value should ignore errors.
         """
-        parsed: list[Argument] = []
+        parsed: list[Argument | list[Argument]] = []
         lines: list[str] = [line for line in code.split("\n") if line.strip() != ""]
 
         for line in lines:
@@ -93,7 +93,7 @@ class Parser:
             Whether or not the determination of an argument's value should ignore errors.
         """
         success = True
-        content: list[Argument] | str = ""
+        content: list[Argument | list[Argument]] | str = ""
 
         try:
             content = Parser._parse(code, type_map, force)
