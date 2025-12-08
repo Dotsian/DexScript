@@ -35,6 +35,8 @@ theme:
 
 nav:
   - Home: index.md
+  - Syntax:
+      - Chaining: syntax/chaining.md
   - Extensions:
       - Global: extensions/global.md
       - File: extensions/file.md

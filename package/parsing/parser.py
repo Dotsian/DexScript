@@ -59,6 +59,18 @@ class Parser:
 
             arguments = [x.strip() for x in s_line.split(">")]
 
+            if s_line.startswith("|"):
+                chained: list[Argument] = []
+
+                for argument in arguments:
+                    if argument.startswith("|"):
+                        argument = argument[1:].lstrip()
+
+                    chained.append(Argument.from_str(argument, type_map, force))
+
+                parsed.append(chained)
+                continue
+
             for argument in arguments:
                 parsed.append(Argument.from_str(argument, type_map, force))
 

@@ -105,3 +105,6 @@ class Argument:
                     raise Exception(f"'{p_line}' is not a valid model{suffix}")
 
         return cls(value=string, type=argument_type)
+
+    def __repr__(self) -> str:
+        return f"Argument(value='{self.value}', type=Types.{self.type.name}, extra={self.extra})"

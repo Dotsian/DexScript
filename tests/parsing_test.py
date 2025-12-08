@@ -23,6 +23,7 @@ COMMANDS = [
     "EDIT > SPECIAL > Shiny > START_DATE > 2022-09-23",
     "EDIT > BALL-INSTANCE > #123 > HEALTH_BONUS > 20",
     "FILE > WRITE > file.py",
+    "EDIT > Ancient Greece\n| HEALTH > 1000\n| ATTACK > 500",
 ]
 
 TYPES = [
@@ -31,6 +32,7 @@ TYPES = [
     [Types.COMMAND, Types.MODEL, 0, 0, Types.DATETIME],
     [Types.COMMAND, Types.MODEL, Types.HEX, 0, 0],
     [Types.EXTENSION, Types.COMMAND, 0],
+    [Types.COMMAND, 0],
 ]
 
 
@@ -74,3 +76,16 @@ def test_types():
                 continue
 
             assert argument.type == arg_type
+
+
+def test_chaining():
+    """
+    Ensures chaining functions correctly.
+    """
+    request = multi_parse(COMMANDS[5])[0]
+
+    for index, value in enumerate(request.content):
+        if index < 2:
+            continue
+
+        assert isinstance(value, list)

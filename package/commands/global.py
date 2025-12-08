@@ -14,7 +14,7 @@ class Edit(Command):
     async def attr(self):
         raise NotImplementedError
 
-    async def multi(self):
+    async def multi(self, identifier: str, attributes: list[str], values: list[str]):
         raise NotImplementedError
 
     async def filter(self):
