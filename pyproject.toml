@@ -23,6 +23,15 @@ dev = [
     "types-python-dateutil>=2.9.0.20251115",
 ]
 
+[tool.dexi]
+public = true
+ballsdex-version = ">=2.22.0"
+include-license = true
+
+[tool.dexi.package]
+source = "package"
+target = "dexscript"
+
 [tool.ruff]
 line-length = 99
 indent-width = 4
