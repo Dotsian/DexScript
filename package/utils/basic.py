@@ -14,6 +14,11 @@ def is_date(string: str) -> bool:
     ----------
     string: str
         The string you want to check.
+
+    Returns
+    -------
+    bool
+        Whether the string is a valid date.
     """
     try:
         dateparser.parse(string)
@@ -30,6 +35,11 @@ def pascal(string: str) -> str:
     ----------
     string: str
         The string you want to convert.
+
+    Returns
+    -------
+    str
+        A PascalCase version of the string.
     """
     string = string.lower()
 
@@ -44,6 +54,11 @@ def strip_markdown(content: str) -> str:
     ----------
     content: str
         The content you want to remove the code markdown from.
+
+    Returns
+    -------
+    str
+        A string with all code blocks removed.
     """
     if content.startswith("```") and content.endswith("```"):
         return CODE_RE.sub("", content)[:-3]

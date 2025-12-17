@@ -23,11 +23,16 @@ def all_models(names: bool = False, key: Callable | None = None) -> list:
         Whether or not a list of the model's names should be returned instead.
     key: Callable | None
         The model instance of name will be passed through this callable per model.
+
+    Returns
+    -------
+    list
+        A list of all models.
     """
     return functions.all_models(names, key)
 
 
-def fetch_model(model: str):
+def fetch_model(model: str) -> Any | None:
     """
     Returns a model's class based on its identifier.
 
@@ -35,6 +40,11 @@ def fetch_model(model: str):
     ----------
     model: str
         The model you want to fetch based on its identifier.
+
+    Returns
+    -------
+    Any | None
+        The model's class if found.
     """
     fetched_model = [x for x in functions.all_models() if x.__name__ == model]
 
@@ -53,6 +63,11 @@ def find_model_from_identifier(identifier: str) -> Any:
     ----------
     identifier: str
         The identifier of the instance.
+
+    Returns
+    -------
+    str
+        The model's class.
     """
     return functions.find_model_from_identifier(identifier)
 

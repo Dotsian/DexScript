@@ -19,7 +19,20 @@ class DexScript(commands.Cog):
         self.version = version
 
     @commands.command()
-    async def dexscript(self, ctx: commands.Context):
+    @commands.is_owner()
+    async def run(self, ctx: commands.Context["BallsDexBot"], code: str):
+        """
+        Executes DexScript code.
+
+        Parameters
+        ----------
+        code: str
+            The code you want to execute.
+        """
+        pass
+
+    @commands.command()
+    async def dexscript(self, ctx: commands.Context["BallsDexBot"]):
         """
         Displays information about DexScript.
         """

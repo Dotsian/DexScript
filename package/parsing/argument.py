@@ -43,7 +43,7 @@ class Argument:
             return Types.BOOLEAN
         elif lower.startswith("#"):
             return Types.HEX
-        elif string == "EMPTY":
+        elif string == "$N":
             return Types.NONE
         elif pascal(lower) in [x.__name__ for x in load_extensions()]:
             return Types.EXTENSION

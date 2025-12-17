@@ -6,6 +6,7 @@ This documentation will provide resources on how to use the DexScript Ballsdex p
 
 ## Syntax
 
+- [Types](syntax/types.md)
 - [Chaining](syntax/chaining.md)
 
 ## Extensions
