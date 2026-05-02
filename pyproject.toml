@@ -17,7 +17,7 @@ dev = [
 ]
 
 [tool.setuptools]
-packages = ["dexscript"]
+packages = ["DexScript"]
 
 [tool.ruff]
 line-length = 120
