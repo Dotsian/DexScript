@@ -47,8 +47,8 @@ body:
     attributes:
       label: Which major Ballsdex version are you using?
       options:
-        - 3.0
-        - 2.0
+        - "3.0"
+        - "2.0"
     validations:
       required: true
   - type: textarea
