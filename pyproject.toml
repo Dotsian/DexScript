@@ -16,8 +16,8 @@ dev = [
     "ruff>=0.15.12",
 ]
 
-[tool.setuptools]
-packages = ["DexScript"]
+[tool.setuptools.packages.find]
+exclude = ["assets"]
 
 [tool.ruff]
 line-length = 120
