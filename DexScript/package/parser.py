@@ -48,7 +48,7 @@ class DexScriptParser:
     def create_value(self, line):
         value = Value(line)
         value.value = line
-        
+
         lower = line.lower()
 
         type_dict = {
@@ -112,9 +112,7 @@ class DexScriptParser:
             method = line2[0]
 
             if method.type not in (Types.METHOD, Types.CLASS):
-                return self.error(
-                    f"'{method.name}' is not a valid command.", traceback.format_exc()
-                )
+                return self.error(f"'{method.name}' is not a valid command.", traceback.format_exc())
 
             if method.type == Types.CLASS:
                 line2.pop(0)
@@ -133,6 +131,4 @@ class DexScriptParser:
             try:
                 await method_call(self.ctx, *line2)
             except TypeError:
-                return self.error(
-                    f"Argument missing when calling '{method[1].name}'.", traceback.format_exc()
-                )
+                return self.error(f"Argument missing when calling '{method[1].name}'.", traceback.format_exc())

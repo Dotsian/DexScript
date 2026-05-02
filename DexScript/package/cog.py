@@ -4,13 +4,16 @@ import traceback
 
 import discord
 import requests
-from ballsdex.settings import settings
 from discord.ext import commands
+
+from settings.models import settings
 
 from .parser import DexScriptParser
 from .utils import Utils, config
 
-__version__ = "0.5"
+__version__ = "0.5.1"
+
+GITHUB = "Caylies/DexScript"
 
 
 class DexScript(commands.Cog):
@@ -27,8 +30,7 @@ class DexScript(commands.Cog):
             return None
 
         request = requests.get(
-            "https://api.github.com/repos/Dotsian/DexScript/contents/pyproject.toml",
-            {"ref": config.reference},
+            f"https://api.github.com/repos/{GITHUB}/contents/pyproject.toml", {"ref": config.reference}
         )
 
         if request.status_code != requests.codes.ok:
@@ -86,57 +88,31 @@ class DexScript(commands.Cog):
         """
         Displays information about DexScript.
         """
-        guide_link = "https://github.com/Dotsian/DexScript/wiki/Commands"
+        guide_link = f"https://github.com/{GITHUB}/wiki/Commands"
         discord_link = "https://discord.gg/EhCxuNQfzt"
 
         description = (
-            "DexScript is a set of commands for Ballsdex created by DotZZ "
-            "that expands on the standalone admin commands and substitutes for the admin panel. "
-            "It simplifies editing, adding, deleting, and displaying data for models such as "
-            "balls, regimes, specials, etc.\n\n"
+            "DexScript is a DSL package for Ballsdex created by Cayla that allows you to easily perform operations "
+            "on balls, regimes, specials, etc.\n\n"
             f"Refer to the official [DexScript guide](<{guide_link}>) for information "
             f"about DexScript's functionality\n"
-            f"To update or uninstall DexScript, run `{settings.prefix}installer`.\n\n"
             "If you want to follow DexScript or require assistance, join the official "
             f"[DexScript Discord server](<{discord_link}>)."
         )
 
         embed = discord.Embed(
-            title="DexScript - BETA",
-            description=description,
-            color=discord.Color.from_str("#03BAFC"),
+            title="DexScript - BETA", description=description, color=discord.Color.from_str("#03BAFC")
         )
 
         version_check = "OUTDATED" if self.check_version() is not None else "LATEST"
 
         embed.set_thumbnail(
-            url="https://raw.githubusercontent.com/Dotsian/DexScript/refs/heads/dev/assets/DexScriptLogo.png"
+            url=f"https://raw.githubusercontent.com/{GITHUB}/refs/heads/{config.reference}/assets/DexScriptLogo.png"
         )
-        embed.set_footer(text=f"DexScript {__version__} ({version_check})")
+
+        embed.set_footer(text=f"DexScript {__version__} ({version_check}) • Ballsdex 3.0")
 
         await ctx.send(embed=embed)
-
-    @commands.command()
-    @commands.is_owner()
-    async def installer(self, ctx: commands.Context):
-        link = (
-            "https://api.github.com/repos/Dotsian/DexScript/contents/DexScript/github/installer.py"
-        )
-        request = requests.get(link, {"ref": config.reference})
-
-        match request.status_code:
-            case requests.codes.not_found:
-                await ctx.send(f"Could not find installer for the {config.reference} branch.")
-
-            case requests.codes.ok:
-                content = requests.get(link, {"ref": config.reference}).json()["content"]
-
-                await ctx.invoke(
-                    self.bot.get_command("eval"), body=base64.b64decode(content).decode()
-                )
-
-            case _:
-                await ctx.send(f"Request raised error code `{request.status_code}`.")
 
     @commands.command()
     @commands.is_owner()

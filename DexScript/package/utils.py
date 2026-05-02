@@ -7,25 +7,18 @@ from dataclasses import dataclass
 from difflib import get_close_matches
 from enum import Enum
 from io import StringIO
-from pathlib import Path
 from typing import Any, Callable
 
 import discord
-from ballsdex.core.models import Ball, Economy, Regime, Special  # noqa: F401, I001
 from dateutil.parser import parse as parse_date
+from django.core.exceptions import FieldDoesNotExist
+
+from bd_models.models import Ball, Economy, Regime, Special  # noqa: F401, I001
 
 START_CODE_BLOCK_RE = re.compile(r"^((```sql?)(?=\s)|(```))")
 FILENAME_RE = re.compile(r"^(.+)(\.\S+)$")
 
-STATIC = os.path.isdir("static")
-MEDIA_PATH = "./static/uploads" if STATIC else "./admin_panel/media"
-
-MODELS = [
-    "Ball",
-    "Regime",
-    "Economy",
-    "Special",
-]
+MODELS = ["Ball", "Regime", "Economy", "Special"]
 
 
 class Types(Enum):
@@ -45,7 +38,7 @@ class Settings:
 
     debug: bool = False
     versioncheck: bool = False
-    reference: str = "main"
+    reference: str = "BD-3.0"
 
 
 config = Settings()
@@ -58,7 +51,7 @@ class Utils:
     """
 
     @staticmethod
-    def image_path(path: str) -> bool:
+    def image_path(path: str) -> str:
         """
         Formats an image path correctly.
 
@@ -67,12 +60,7 @@ class Utils:
         path: str
             The path you want to format.
         """
-        full_path = path.replace("/static/uploads/", "")
-
-        if STATIC and full_path[0] == ".":
-            full_path = full_path[1:]
-
-        return f"{MEDIA_PATH}/{full_path}"
+        return f"media/{path}"  # What even is the point of this, I should just remove this but I'm too lazy rn so...
 
     @staticmethod
     def is_image(path: str) -> bool:
@@ -113,9 +101,7 @@ class Utils:
             The string you want to convert.
         """
         string = string.lower()
-        return re.sub(
-            r"(_[a-z])", lambda m: m.group(1)[1].upper(), string[:1].upper() + string[1:]
-        )
+        return re.sub(r"(_[a-z])", lambda m: m.group(1)[1].upper(), string[:1].upper() + string[1:])
 
     @staticmethod
     async def message_list(ctx, messages: list[str]):
@@ -136,10 +122,7 @@ class Utils:
         def check(message):
             valid_choice = message.content.lower() in ("more", "file")
 
-            return (
-                message.author == ctx.message.author and
-                message.channel == ctx.channel and valid_choice
-            )
+            return message.author == ctx.message.author and message.channel == ctx.channel and valid_choice
 
         for message in messages:
             if page_length >= 750:
@@ -162,9 +145,7 @@ class Utils:
             if remaining == 1:
                 text = "There is `1` page remaining."
 
-            message = await ctx.send(
-                f"{text} Type `more` to continue or `file` to send all messages in a file"
-            )
+            message = await ctx.send(f"{text} Type `more` to continue or `file` to send all messages in a file")
 
             try:
                 response = await ctx.bot.wait_for("message", check=check, timeout=15)
@@ -183,32 +164,6 @@ class Utils:
             await ctx.send(file=discord.File(StringIO("\n".join(messages)), filename="output.txt"))
 
             break
-
-    @staticmethod
-    async def save_file(attachment: discord.Attachment) -> Path:
-        """
-        Saves a `discord.Attachment` object into a directory.
-
-        Parameters
-        ----------
-        attachment: discord.Attachment
-            The attachment you want to save.
-        """
-        path = Path(f"{MEDIA_PATH}/{attachment.filename}")
-        match = FILENAME_RE.match(attachment.filename)
-
-        if not match:
-            raise TypeError("The file you uploaded lacks an extension.")
-
-        i = 1
-
-        while path.exists():
-            path = Path(f"{MEDIA_PATH}/{match.group(1)}-{i}{match.group(2)}")
-            i = i + 1
-
-        await attachment.save(path)
-
-        return path.relative_to(MEDIA_PATH)
 
     @staticmethod
     def fetch_model(model: str):
@@ -237,9 +192,7 @@ class Utils:
         model_list = MODELS
 
         if not names:
-            model_list = [
-                Utils.fetch_model(x) for x in model_list if Utils.fetch_model(x) is not None
-            ]
+            model_list = [Utils.fetch_model(x) for x in model_list if Utils.fetch_model(x) is not None]
 
         if key is not None:
             model_list = [key(x) for x in model_list]
@@ -254,7 +207,7 @@ class Utils:
         Parameters
         ----------
         model: Model
-            The tortoise model you want to use.
+            The Django model you want to use.
         identifier: str
             The name of the model instance.
         fields_only: bool
@@ -262,45 +215,49 @@ class Utils:
         """
         fields = {}
 
-        special_list = {
-            "Identifiers": ["country", "catch_names", "name"],
-            "Ignore": ["id", "short_name"],
-        }
+        special_list = {"Identifiers": ["country", "catch_names", "name"], "Ignore": ["id", "short_name"]}
 
         model_ids = Utils.models(True, lambda s: f"{str.lower(s)}_id")
 
-        for field, field_type in model._meta.fields_map.items():
-            if field_type.null or field in special_list["Ignore"] or field in model_ids:
+        for field in model._meta.get_fields():
+            field_name = field.name
+            is_nullable = getattr(field, "null", False)
+
+            if is_nullable or field_name in special_list["Ignore"] or field_name in model_ids:
                 continue
 
-            if field in special_list["Identifiers"]:
-                fields[field] = str(identifier)
+            if field_name in special_list["Identifiers"]:
+                fields[field_name] = str(identifier)
                 continue
 
-            match field_type.__class__.__name__:
-                case "ForeignKeyFieldInstance":
-                    casing_field = Utils.pascal_case(field)
+            match field.__class__.__name__:
+                case "ForeignKey":
+                    casing_field = Utils.pascal_case(field_name)
 
-                    instance = await Utils.fetch_model(casing_field).first()
+                    related_model = field.related_model
+                    instance = await related_model.objects.afirst()
 
                     if instance is None:
                         raise Exception(f"Could not find default {casing_field}")
 
-                    fields[f"{field}_id"] = instance.pk
+                    fields[field.attname] = instance.pk
 
-                case "BigIntField":
-                    fields[field] = 100**8
+                case "BigIntegerField":
+                    fields[field_name] = 100**8
 
-                case "BackwardFKRelation" | "JSONField":
+                case "ImageField":
+                    fields[field_name] = "capitalist.png"  # Placeholder image
+
+                case "ManyToOneRel" | "ManyToManyRel" | "ManyToManyField" | "JSONField":
                     continue
 
                 case _:
-                    fields[field] = 1
+                    fields[field_name] = 1
 
         if fields_only:
             return fields
 
-        await model.create(**fields)
+        await model.objects.acreate(**fields)
 
     @staticmethod
     async def get_model(model, identifier: str):
@@ -314,16 +271,19 @@ class Utils:
         identifier: str
             The identifier of the model instance you are trying to return.
         """
-        correction_list = await model.value.all().values_list(model.extra_data[0], flat=True)
+        correction_list = [value async for value in model.value.objects.values_list(model.extra_data[0], flat=True)]
 
         try:
-            returned_model = await model.value.filter(
+            returned_model = await model.value.objects.filter(
                 **{model.extra_data[0]: Utils.autocorrect(str(identifier), correction_list)}
-            )
+            ).afirst()
         except AttributeError:
             raise Exception(f"'{model}' is not a valid model.")
 
-        return returned_model[0]
+        if returned_model is None:
+            raise Exception(f"No match found for '{identifier}'.")
+
+        return returned_model
 
     @staticmethod
     def fetch_fields(model, field_filter: Callable | None = None) -> list[str]:
@@ -339,11 +299,11 @@ class Utils:
         """
         fetched_list = []
 
-        for field, field_type in model._meta.fields_map.items():
-            if field_filter is not None and not field_filter(field, field_type):
+        for field in model._meta.get_fields():
+            if field_filter is not None and not field_filter(field.name, field):
                 continue
 
-            fetched_list.append(field)
+            fetched_list.append(field.name)
 
         return fetched_list
 
@@ -355,16 +315,19 @@ class Utils:
         Parameters
         ----------
         model: Model
-            The tortoise model you want to use.
+            The Django model you want to use.
         field: str
             The field you want to fetch.
         """
-        return model._meta.fields_map.get(field)
+        try:
+            return model._meta.get_field(field)
+        except FieldDoesNotExist:
+            return None
 
     @staticmethod
     def autocorrect(string: str, correction_list: list[str], error="does not exist."):
         """
-        Autocorrects a string based on the specified `correction_list` 
+        Autocorrects a string based on the specified `correction_list`
         and raises an error if there are no strings similiar to the string provided.
 
         Parameters

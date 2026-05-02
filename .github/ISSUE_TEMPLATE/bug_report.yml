@@ -10,7 +10,7 @@ body:
   - type: checkboxes
     attributes:
       label: Error Page
-      description: The [error page](https://github.com/Dotsian/DexScript/wiki/Errors) explains what common errors mean and how to solve them.
+      description: The [error page](https://github.com/Caylies/DexScript/wiki/Errors) explains what common errors mean and how to solve them.
       options:
         - label: Did you read the error page and view the common errors?
           required: true
@@ -20,12 +20,8 @@ body:
       label: Bug Location
       description: Where did this bug occur? If you select "Other", please specify in the Bug Description section.
       options:
-        - While installing.
-        - While updating.
-        - While uninstalling.
-        - When running a command.
         - When trying to run a command.
-        - When using a text command, such as ".about" or ".installer".
+        - When using a text command, such as "[p]about".
         - When trying to turn on the bot.
         - Other (please specify in the Bug Description section)
     validations:
@@ -42,17 +38,17 @@ body:
     id: version
     attributes:
       label: Version
-      description: Add your version number here. You can fetch it using the `.about` command.
+      description: Add your DexScript version number here. You can fetch it using the `[p]about` command.
       placeholder: Version number...
     validations:
       required: true
   - type: dropdown
-    id: platform
+    id: bdversion
     attributes:
-      label: What fork are you using?
+      label: Which major Ballsdex version are you using?
       options:
-        - Ballsdex
-        - CarFigures
+        - 3.0
+        - 2.0
     validations:
       required: true
   - type: textarea

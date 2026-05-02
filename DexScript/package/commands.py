@@ -1,12 +1,13 @@
-import asyncio
 import os
 import shutil
 from dataclasses import dataclass
 from dataclasses import field as datafield
 
 import discord
+from django.core.files.base import ContentFile
+from django.db.models.fields.files import ImageFieldFile
 
-from .utils import STATIC, Types, Utils
+from .utils import Types, Utils
 
 
 @dataclass
@@ -66,8 +67,8 @@ class Global(DexCommand):
         DELETE > MODEL > IDENTIFIER
         """
         fetched_model = await Utils.get_model(model, identifier)
-        
-        await fetched_model.delete()
+
+        await fetched_model.adelete()
 
         await ctx.send(f"Deleted `{identifier}` {model.name.lower()}")
 
@@ -87,15 +88,12 @@ class Global(DexCommand):
         self.attribute_error(model, attribute_name)
 
         image_fields = Utils.fetch_fields(
-            model.value,
-            lambda _, field_type: (
-                field_type.__class__.__name__ == "CharField" and field_type.max_length == 200
-            ),
+            model.value, lambda _, field_type: field_type.__class__.__name__ == "ImageField"
         )
 
         if value is None and self.shared.attachments and attribute_name in image_fields:
-            image_path = await Utils.save_file(self.shared.attachments.pop(0))
-            new_value = f"/static/uploads/{image_path}" if STATIC else f"/{image_path}"
+            new_attachment = self.shared.attachments.pop(0)
+            new_value = ContentFile(await new_attachment.read(), new_attachment.filename)
 
         if attribute.type == Types.MODEL:
             attribute_name = f"{attribute.name.lower()}_id"
@@ -103,9 +101,9 @@ class Global(DexCommand):
             new_value = attribute_model.pk
 
         setattr(returned_model, attribute_name, new_value)
-        await returned_model.save(update_fields=[attribute_name])
+        await returned_model.asave(update_fields=(attribute_name,))
 
-        suffix = "" if value is None else f" to `{value.name}`" 
+        suffix = "" if value is None else f" to `{value.name}`"
 
         await ctx.send(f"Updated `{identifier}'s` {attribute}{suffix}")
 
@@ -141,10 +139,8 @@ class Global(DexCommand):
 
         new_attribute = getattr(returned_model, attribute_name)
 
-        if isinstance(new_attribute, str) and Utils.is_image(new_attribute):
-            await ctx.send(
-                f"```{new_attribute}```", file=discord.File(Utils.image_path(new_attribute))
-            )
+        if isinstance(new_attribute, ImageFieldFile) and Utils.is_image(new_attribute):
+            await ctx.send(f"```{new_attribute}```", file=discord.File(Utils.image_path(new_attribute)))
             return
 
         if attribute.type == Types.MODEL:
@@ -160,19 +156,20 @@ class Global(DexCommand):
         -------------
         ATTRIBUTES > MODEL > FILTER(?)
         """
+
         def filter_function(_, field_type):
             if field_type == "BackwardFKRelation":
                 return False
-            
+
             if filter is None:
                 return True
-            
+
             match filter.value.lower():
                 case "null":
                     return field_type.null
                 case "valid":
                     return not field_type.null
-            
+
             return True
 
         fields = [f"- {x.upper()}" for x in Utils.fetch_fields(model.value, filter_function)]
@@ -186,21 +183,21 @@ class Filter(DexCommand):
     Filter commands used for mass updating, deleting, and viewing models.
     """
 
-    async def update(self, ctx, model, attribute, old_value, new_value, tortoise_operator=None):
+    async def update(self, ctx, model, attribute, old_value, new_value, lookup=None):
         """
         Updates all instances of a model to the specified value where the specified attribute
-        meets the condition  defined by the optional `TORTOISE_OPERATOR` argument
+        meets the condition defined by the optional `LOOKUP` argument
         (e.g., greater than, equal to, etc.).
 
         Documentation
         -------------
-        FILTER > UPDATE > MODEL > ATTRIBUTE > OLD_VALUE > NEW_VALUE > TORTOISE_OPERATOR(?)
+        FILTER > UPDATE > MODEL > ATTRIBUTE > OLD_VALUE > NEW_VALUE > LOOKUP(?)
         """
         casing_name = attribute.name.lower()
         self.attribute_error(model, casing_name)
 
-        if tortoise_operator is not None:
-            casing_name += f"__{tortoise_operator.name.lower()}"
+        if lookup is not None:
+            casing_name += f"__{lookup.name.lower()}"
 
         value_old, value_new = old_value.value, new_value.value
 
@@ -208,157 +205,70 @@ class Filter(DexCommand):
             value_old = await Utils.get_model(attribute, value_old)
             value_new = await Utils.get_model(attribute, value_new)
 
-        await model.value.filter(**{casing_name: value_old}).update(**{casing_name: value_new})
+        await model.value.objects.filter(**{casing_name: value_old}).aupdate(**{casing_name: value_new})
 
         await ctx.send(
-            f"Updated all `{model.name}` instances from a `{attribute}` "
-            f"value of `{old_value}` to `{new_value}`"
+            f"Updated all `{model.name}` instances from a `{attribute}` value of `{old_value}` to `{new_value}`"
         )
 
-    async def delete(self, ctx, model, attribute, value, tortoise_operator=None):
+    async def delete(self, ctx, model, attribute, value, lookup=None):
         """
         Deletes all instances of a model where the specified attribute meets the condition
-        defined by the optional `TORTOISE_OPERATOR` argument
+        defined by the optional `LOOKUP` argument
         (e.g., greater than, equal to, etc.).
 
         Documentation
         -------------
-        FILTER > DELETE > MODEL > ATTRIBUTE > VALUE > TORTOISE_OPERATOR(?)
+        FILTER > DELETE > MODEL > ATTRIBUTE > VALUE > LOOKUP(?)
         """
         casing_name = attribute.name.lower()
         self.attribute_error(model, casing_name)
 
-        if tortoise_operator is not None:
-            casing_name += f"__{tortoise_operator.name.lower()}"
+        if lookup is not None:
+            casing_name += f"__{lookup.name.lower()}"
 
         new_value = value.value
 
         if attribute.type == Types.MODEL:
             new_value = await Utils.get_model(attribute, new_value)
 
-        await model.value.filter(**{casing_name: new_value}).delete()
+        await model.value.objects.filter(**{casing_name: new_value}).adelete()
 
-        await ctx.send(
-            f"Deleted all `{model.name}` instances with a `{attribute}` value of `{value}`"
-        )
+        await ctx.send(f"Deleted all `{model.name}` instances with a `{attribute}` value of `{value}`")
 
-    async def view(self, ctx, model, attribute, value, tortoise_operator=None):
+    async def view(self, ctx, model, attribute, value, lookup=None):
         """
         Displays all instances of a model where the specified attribute meets the condition
-        defined by the optional `TORTOISE_OPERATOR` argument
+        defined by the optional `LOOKUP` argument
         (e.g., greater than, equal to, etc.).
 
         Documentation
         -------------
-        FILTER > VIEW > MODEL > ATTRIBUTE > VALUE > TORTOISE_OPERATOR(?)
+        FILTER > VIEW > MODEL > ATTRIBUTE > VALUE > LOOKUP(?)
         """
         casing_name = attribute.name.lower()
         self.attribute_error(model, casing_name)
 
-        if tortoise_operator is not None:
-            casing_name += f"__{tortoise_operator.name.lower()}"
+        if lookup is not None:
+            casing_name += f"__{lookup.name.lower()}"
 
         new_value = value.value
 
         if attribute.type == Types.MODEL:
             new_value = await Utils.get_model(attribute, new_value)
 
-        instances = await model.value.filter(**{casing_name: new_value}).values_list(
-            model.extra_data[0], flat=True
-        )
+        instances = [
+            value
+            async for value in model.value.objects.filter(**{casing_name: new_value}).values_list(
+                model.extra_data[0], flat=True
+            )
+        ]
 
         if instances == []:
-            await ctx.send(
-                f"No {model.name}s found with a `{attribute}` value of `{value}`"
-            )
+            await ctx.send(f"No {model.name}s found with a `{attribute}` value of `{value}`")
             return
 
         await Utils.message_list(ctx, instances)
-
-
-class Eval(DexCommand):
-    """
-    Commands for managing eval presets.
-    """
-
-    def __loaded__(self):
-        os.makedirs("eval_presets", exist_ok=True)
-
-    async def save(self, ctx, name):
-        """
-        Saves an eval preset.
-
-        Documentation
-        -------------
-        EVAL > SAVE > NAME
-        """
-        NAME_LIMIT = 100
-
-        if len(name.name) > NAME_LIMIT:
-            raise Exception(
-                f"`{name}` exceeds the {NAME_LIMIT}-character limit ({len(name)} > {NAME_LIMIT})"
-            )
-
-        if os.path.isfile(f"eval_presets/{name}.py"):
-            raise Exception(f"`{name}` already exists.")
-
-        await ctx.send("Please send the eval command below...")
-
-        try:
-            message = await self.bot.wait_for(
-                "message",
-                check=lambda m: m.author == ctx.author and m.channel == ctx.channel,
-                timeout=20,
-            )
-        except asyncio.TimeoutError:
-            await ctx.send("Eval preset saving has timed out.")
-            return
-
-        with open(f"eval_presets/{name}.py", "w") as file:
-            file.write(Utils.remove_code_markdown(message.content))
-
-        await ctx.send(f"`{name}` eval preset has been saved!")
-
-    async def remove(self, ctx, name):
-        """
-        Removes an eval preset.
-
-        Documentation
-        -------------
-        EVAL > REMOVE > NAME
-        """
-        if not os.path.isfile(f"eval_presets/{name}.py"):
-            raise Exception(f"`{name}` does not exists")
-
-        os.remove(f"eval_presets/{name}.py")
-
-        await ctx.send(f"Removed `{name}` preset.")
-
-    async def list(self, ctx):
-        if os.listdir("eval_presets") == []:
-            await ctx.send("You have no eval presets saved.")
-            return
-
-        await Utils.message_list(ctx, os.listdir("eval_presets"))
-
-    async def run(self, ctx, name):  # TODO: Allow args to be passed through `run`.
-        """
-        Runs an eval preset.
-
-        Documentation
-        -------------
-        EVAL > RUN > NAME
-        """
-        if not os.path.isfile(f"eval_presets/{name}.py"):
-            raise Exception(f"`{name}` does not exists")
-
-        with open(f"eval_presets/{name}.py", "r") as file:
-            try:
-                await ctx.invoke(self.bot.get_command("eval"), body=file.read())
-            except Exception as error:
-                raise Exception(error)
-            else:
-                await ctx.message.add_reaction("✅")
 
 
 class File(DexCommand):
@@ -446,7 +356,7 @@ class Template(DexCommand):
     """
 
     # TODO: Softcode model creation template.
-    async def create(self, ctx, model, argument="..."):
+    async def create(self, ctx, model, argument="[...]"):
         """
         Sends the `create` template for a model.
 
