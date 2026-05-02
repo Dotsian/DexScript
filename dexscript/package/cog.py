@@ -40,10 +40,7 @@ class DexScript(commands.Cog):
         new_version = re.search(r'version\s*=\s*"(.*?)"', toml_content).group(1)
 
         if new_version != __version__:
-            return (
-                f"Your DexScript version ({__version__}) is outdated. "
-                f"Please update to version ({new_version})"
-            )
+            return f"Your DexScript version ({__version__}) is outdated. Please update to version ({new_version})"
 
         return None
 
