@@ -11,8 +11,9 @@ from pathlib import Path
 from typing import Any, Callable
 
 import discord
-from ballsdex.core.models import Ball, Economy, Regime, Special  # noqa: F401, I001
 from dateutil.parser import parse as parse_date
+
+from ballsdex.core.models import Ball, Economy, Regime, Special  # noqa: F401, I001
 
 START_CODE_BLOCK_RE = re.compile(r"^((```sql?)(?=\s)|(```))")
 FILENAME_RE = re.compile(r"^(.+)(\.\S+)$")
@@ -20,12 +21,7 @@ FILENAME_RE = re.compile(r"^(.+)(\.\S+)$")
 STATIC = os.path.isdir("static")
 MEDIA_PATH = "./static/uploads" if STATIC else "./admin_panel/media"
 
-MODELS = [
-    "Ball",
-    "Regime",
-    "Economy",
-    "Special",
-]
+MODELS = ["Ball", "Regime", "Economy", "Special"]
 
 
 class Types(Enum):
@@ -58,7 +54,7 @@ class Utils:
     """
 
     @staticmethod
-    def image_path(path: str) -> bool:
+    def image_path(path: str) -> str:
         """
         Formats an image path correctly.
 
@@ -113,9 +109,7 @@ class Utils:
             The string you want to convert.
         """
         string = string.lower()
-        return re.sub(
-            r"(_[a-z])", lambda m: m.group(1)[1].upper(), string[:1].upper() + string[1:]
-        )
+        return re.sub(r"(_[a-z])", lambda m: m.group(1)[1].upper(), string[:1].upper() + string[1:])
 
     @staticmethod
     async def message_list(ctx, messages: list[str]):
@@ -136,10 +130,7 @@ class Utils:
         def check(message):
             valid_choice = message.content.lower() in ("more", "file")
 
-            return (
-                message.author == ctx.message.author and
-                message.channel == ctx.channel and valid_choice
-            )
+            return message.author == ctx.message.author and message.channel == ctx.channel and valid_choice
 
         for message in messages:
             if page_length >= 750:
@@ -162,9 +153,7 @@ class Utils:
             if remaining == 1:
                 text = "There is `1` page remaining."
 
-            message = await ctx.send(
-                f"{text} Type `more` to continue or `file` to send all messages in a file"
-            )
+            message = await ctx.send(f"{text} Type `more` to continue or `file` to send all messages in a file")
 
             try:
                 response = await ctx.bot.wait_for("message", check=check, timeout=15)
@@ -237,9 +226,7 @@ class Utils:
         model_list = MODELS
 
         if not names:
-            model_list = [
-                Utils.fetch_model(x) for x in model_list if Utils.fetch_model(x) is not None
-            ]
+            model_list = [Utils.fetch_model(x) for x in model_list if Utils.fetch_model(x) is not None]
 
         if key is not None:
             model_list = [key(x) for x in model_list]
@@ -262,10 +249,7 @@ class Utils:
         """
         fields = {}
 
-        special_list = {
-            "Identifiers": ["country", "catch_names", "name"],
-            "Ignore": ["id", "short_name"],
-        }
+        special_list = {"Identifiers": ["country", "catch_names", "name"], "Ignore": ["id", "short_name"]}
 
         model_ids = Utils.models(True, lambda s: f"{str.lower(s)}_id")
 
@@ -364,7 +348,7 @@ class Utils:
     @staticmethod
     def autocorrect(string: str, correction_list: list[str], error="does not exist."):
         """
-        Autocorrects a string based on the specified `correction_list` 
+        Autocorrects a string based on the specified `correction_list`
         and raises an error if there are no strings similiar to the string provided.
 
         Parameters

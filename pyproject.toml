@@ -1,20 +1,45 @@
-[tool.poetry]
+[project]
 name = "dexscript"
-version = "0.5"
-description = ""
-authors = ["dotzz <official.dotzz@gmail.com>"]
+version = "0.5.1"
+description = "A DSL package for Ballsdex created by Cayla that allows you to easily perform operations on balls, regimes, specials, etc."
 license = "MIT"
+license-files = ["LICENSE"]
+authors = [
+    { name = "Cayla", email = "official.dotzz@gmail.com" },
+]
+readme = "README.md"
 
-[tool.poetry.dependencies]
-python = ">=3.12"
-"discord.py" = "^2.5.0"
-ruff = "^0.11.6"
+dependencies = []
 
-[build-system]
-requires = ["poetry-core>=1.0.0"]
-build-backend = "poetry.core.masonry.api"
+[dependency-groups]
+dev = [
+    "ruff>=0.15.12",
+]
+
+[tool.setuptools.packages.find]
+exclude = ["assets"]
 
 [tool.ruff]
-line-length = 99
-lint.ignore = ["E203", "F704", "F706", "F821"]
-lint.extend-select = ["E501", "I001"]
+line-length = 120
+indent-width = 4
+target-version = "py313"
+exclude = [
+    "DexScript/github",
+]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = true
+docstring-code-format = true
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "W"]
+ignore = ["E203"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["ballsdex"]
+split-on-trailing-comma = false
+
+[project.urls]
+Homepage = "https://github.com/Caylies/DexScript"

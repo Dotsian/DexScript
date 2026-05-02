@@ -21,8 +21,9 @@ from traceback import format_exc
 
 import discord
 import requests
-from ballsdex.settings import settings
 from discord.ext import commands
+
+from ballsdex.settings import settings
 
 UPDATING = os.path.isdir("ballsdex/packages/dexscript")
 
@@ -38,12 +39,12 @@ class InstallerConfig:
     Configuration class for the installer.
     """
 
-    github = ["Dotsian/DexScript", "main"]
+    github = ["Caylies/DexScript", "main"]
     files = ["__init__.py", "cog.py", "commands.py", "parser.py", "utils.py"]
     appearance = {
-        "logo": "https://raw.githubusercontent.com/Dotsian/DexScript/refs/heads/dev/assets/DexScriptLogo.png",
-        "logo_error": "https://raw.githubusercontent.com/Dotsian/DexScript/refs/heads/dev/assets/DexScriptLogoError.png",
-        "banner": "https://raw.githubusercontent.com/Dotsian/DexScript/refs/heads/dev/assets/DexScriptPromo.png",
+        "logo": "https://raw.githubusercontent.com/Caylies/DexScript/refs/heads/main/assets/DexScriptLogo.png",
+        "logo_error": "https://raw.githubusercontent.com/Caylies/DexScript/refs/heads/main/assets/DexScriptLogoError.png",
+        "banner": "https://raw.githubusercontent.com/Caylies/DexScript/refs/heads/main/assets/DexScriptPromo.png",
     }
     install_migrations = [
         (
@@ -156,9 +157,7 @@ class InstallerView(discord.ui.View):
         super().__init__()
         self.installer = installer
 
-    @discord.ui.button(
-        style=discord.ButtonStyle.primary, label="Update" if UPDATING else "Install"
-    )
+    @discord.ui.button(style=discord.ButtonStyle.primary, label="Update" if UPDATING else "Install")
     async def install_button(self, interaction: discord.Interaction, _: discord.ui.Button):
         self.quit_button.disabled = True
 
@@ -240,7 +239,7 @@ class Installer:
 
         if "packages:\n" not in lines:
             return False
-        
+
         if item in lines:
             return True
 
@@ -356,8 +355,7 @@ class Installer:
     @property
     def latest_version(self):
         pyproject_request = requests.get(
-            "https://api.github.com/repos/Dotsian/DexScript/contents/pyproject.toml",
-            {"ref": config.github[1]},
+            f"https://api.github.com/repos/{config.github[0]}/contents/pyproject.toml", {"ref": config.github[1]}
         )
 
         if pyproject_request.status_code != requests.codes.ok:

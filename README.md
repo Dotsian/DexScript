@@ -2,15 +2,15 @@
 
 ![DexScript Banner](assets/DexScriptPromo.png)
 
-[![Ruff](https://github.com/Dotsian/DexScript/actions/workflows/ruff.yml/badge.svg)](https://github.com/Dotsian/DexScript/actions/workflows/ruff.yml)
-[![Issues](https://img.shields.io/github/issues/Dotsian/DexScript)](https://github.com/Dotsian/DexScript/issues)
+[![Ruff](https://github.com/Caylies/DexScript/actions/workflows/ruff.yml/badge.svg)](https://github.com/Caylies/DexScript/actions/workflows/ruff.yml)
+[![Issues](https://img.shields.io/github/issues/Caylies/DexScript)](https://github.com/Caylies/DexScript/issues)
 [![discord.py](https://img.shields.io/badge/discord-py-blue.svg)](https://github.com/Rapptz/discord.py)
 
 ## What is DexScript?
 
-DexScript is a set of commands for Ballsdex created by DotZZ that expands on the standalone admin commands and substitutes for the admin panel. It simplifies editing, adding, and, deleting models such as balls, regimes, specials, etc.
+DexScript is a DSL package for Ballsdex created by Cayla that allows you to easily perform operations on balls, regimes, specials, etc.
 
-Let's say you wanted to update a ball's rarity to 2. You could run `UPDATE > BALL > Mongolia > RARITY > 2.0`.
+Let's say you wanted to update a ball's rarity to `2.0`. You could run `UPDATE > BALL > Mongolia > RARITY > 2.0`.
 
 ![Updating rarity showcase](assets/screenshots/showcase1.png)
 

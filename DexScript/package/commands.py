@@ -66,7 +66,7 @@ class Global(DexCommand):
         DELETE > MODEL > IDENTIFIER
         """
         fetched_model = await Utils.get_model(model, identifier)
-        
+
         await fetched_model.delete()
 
         await ctx.send(f"Deleted `{identifier}` {model.name.lower()}")
@@ -88,9 +88,7 @@ class Global(DexCommand):
 
         image_fields = Utils.fetch_fields(
             model.value,
-            lambda _, field_type: (
-                field_type.__class__.__name__ == "CharField" and field_type.max_length == 200
-            ),
+            lambda _, field_type: field_type.__class__.__name__ == "CharField" and field_type.max_length == 200,
         )
 
         if value is None and self.shared.attachments and attribute_name in image_fields:
@@ -105,7 +103,7 @@ class Global(DexCommand):
         setattr(returned_model, attribute_name, new_value)
         await returned_model.save(update_fields=[attribute_name])
 
-        suffix = "" if value is None else f" to `{value.name}`" 
+        suffix = "" if value is None else f" to `{value.name}`"
 
         await ctx.send(f"Updated `{identifier}'s` {attribute}{suffix}")
 
@@ -142,9 +140,7 @@ class Global(DexCommand):
         new_attribute = getattr(returned_model, attribute_name)
 
         if isinstance(new_attribute, str) and Utils.is_image(new_attribute):
-            await ctx.send(
-                f"```{new_attribute}```", file=discord.File(Utils.image_path(new_attribute))
-            )
+            await ctx.send(f"```{new_attribute}```", file=discord.File(Utils.image_path(new_attribute)))
             return
 
         if attribute.type == Types.MODEL:
@@ -160,19 +156,20 @@ class Global(DexCommand):
         -------------
         ATTRIBUTES > MODEL > FILTER(?)
         """
+
         def filter_function(_, field_type):
             if field_type == "BackwardFKRelation":
                 return False
-            
+
             if filter is None:
                 return True
-            
+
             match filter.value.lower():
                 case "null":
                     return field_type.null
                 case "valid":
                     return not field_type.null
-            
+
             return True
 
         fields = [f"- {x.upper()}" for x in Utils.fetch_fields(model.value, filter_function)]
@@ -211,8 +208,7 @@ class Filter(DexCommand):
         await model.value.filter(**{casing_name: value_old}).update(**{casing_name: value_new})
 
         await ctx.send(
-            f"Updated all `{model.name}` instances from a `{attribute}` "
-            f"value of `{old_value}` to `{new_value}`"
+            f"Updated all `{model.name}` instances from a `{attribute}` value of `{old_value}` to `{new_value}`"
         )
 
     async def delete(self, ctx, model, attribute, value, tortoise_operator=None):
@@ -238,9 +234,7 @@ class Filter(DexCommand):
 
         await model.value.filter(**{casing_name: new_value}).delete()
 
-        await ctx.send(
-            f"Deleted all `{model.name}` instances with a `{attribute}` value of `{value}`"
-        )
+        await ctx.send(f"Deleted all `{model.name}` instances with a `{attribute}` value of `{value}`")
 
     async def view(self, ctx, model, attribute, value, tortoise_operator=None):
         """
@@ -263,14 +257,10 @@ class Filter(DexCommand):
         if attribute.type == Types.MODEL:
             new_value = await Utils.get_model(attribute, new_value)
 
-        instances = await model.value.filter(**{casing_name: new_value}).values_list(
-            model.extra_data[0], flat=True
-        )
+        instances = await model.value.filter(**{casing_name: new_value}).values_list(model.extra_data[0], flat=True)
 
         if instances == []:
-            await ctx.send(
-                f"No {model.name}s found with a `{attribute}` value of `{value}`"
-            )
+            await ctx.send(f"No {model.name}s found with a `{attribute}` value of `{value}`")
             return
 
         await Utils.message_list(ctx, instances)
@@ -295,9 +285,7 @@ class Eval(DexCommand):
         NAME_LIMIT = 100
 
         if len(name.name) > NAME_LIMIT:
-            raise Exception(
-                f"`{name}` exceeds the {NAME_LIMIT}-character limit ({len(name)} > {NAME_LIMIT})"
-            )
+            raise Exception(f"`{name}` exceeds the {NAME_LIMIT}-character limit ({len(name)} > {NAME_LIMIT})")
 
         if os.path.isfile(f"eval_presets/{name}.py"):
             raise Exception(f"`{name}` already exists.")
@@ -306,9 +294,7 @@ class Eval(DexCommand):
 
         try:
             message = await self.bot.wait_for(
-                "message",
-                check=lambda m: m.author == ctx.author and m.channel == ctx.channel,
-                timeout=20,
+                "message", check=lambda m: m.author == ctx.author and m.channel == ctx.channel, timeout=20
             )
         except asyncio.TimeoutError:
             await ctx.send("Eval preset saving has timed out.")
