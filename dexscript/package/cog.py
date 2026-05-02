@@ -6,8 +6,6 @@ import discord
 import requests
 from discord.ext import commands
 
-from settings.models import settings
-
 from .parser import DexScriptParser
 from .utils import Utils, config
 
