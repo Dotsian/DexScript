@@ -1,6 +1,6 @@
 from django.apps import AppConfig
 
 
-class DexscriptConfig(AppConfig):
-    name = "dexscript"
+class DexScriptConfig(AppConfig):
+    name = "DexScript"
     dpy_package = "DexScript.package"
