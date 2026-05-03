@@ -20,7 +20,7 @@ Add the following into your `config/extra.toml` file.
 
 ```toml
 [[ballsdex.packages]]
-location = "git+https://github.com/Caylies/DexScript.git@BD-3.0"
+location = "git+https://github.com/Caylies/DexScript.git@v0.5.1#BD-3.0"
 path = "dexscript"
 enabled = true
 ```
