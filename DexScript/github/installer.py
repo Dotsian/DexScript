@@ -299,7 +299,7 @@ class Installer:
 
             await bot.remove_cog("DexScript")  # type: ignore
 
-        link = f"https://api.github.com/repos/{config.github[0]}/contents/"
+        link = f"https://api.github.com/repos/{config.github[0]}/contents"
 
         os.makedirs(config.path, exist_ok=True)
 
