@@ -40,3 +40,4 @@ split-on-trailing-comma = false
 
 [project.urls]
 Homepage = "https://github.com/Caylies/DexScript"
+Funding = "https://ko-fi.com/caylies"
